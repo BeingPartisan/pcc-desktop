@@ -1,0 +1,58 @@
+{
+  "name": "personal-command-center",
+  "version": "1.0.0",
+  "description": "Partisan's Personal Command Center — desktop shell",
+  "main": "main.js",
+  "author": "Ansh (Partisan)",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "release": "electron-builder --publish always"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "auto-launch": "^5.0.6",
+    "systeminformation": "^5.22.11",
+    "imapflow": "^1.0.171",
+    "mailparser": "^3.7.1",
+    "electron-updater": "^6.3.0"
+  },
+  "build": {
+    "appId": "com.partisan.pcc",
+    "productName": "Personal Command Center",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "assets/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "BeingPartisan",
+        "repo": "pcc-desktop"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Personal Command Center"
+    }
+  }
+}

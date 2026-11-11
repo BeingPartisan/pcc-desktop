@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Command Center</title>
+<!-- Web fonts load without blocking first paint; offline, the system fallbacks in the font stacks are used. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
   :root[data-theme="dark"]{
     --bg:#0A0C12; --panel:#12151F; --panel-alt:#181C28; --ink:#E8EAF2; --ink-dim:#7A80A0;
@@ -202,6 +205,18 @@
 
   .muted{color:var(--ink-dim);}
 
+  /* System Vitals */
+  .vitals-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-bottom:12px;}
+  .vitals-metric{background:var(--panel-alt); border:1px solid var(--line); border-radius:10px; padding:10px 12px;}
+  .vitals-label{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-dim); display:flex; justify-content:space-between; margin-bottom:6px;}
+  .vitals-label span{color:var(--ink); font-weight:600;}
+  .vitals-metric svg{width:100%; height:44px; display:block;}
+  .vitals-disks{display:flex; flex-direction:column; gap:8px;}
+  .vitals-disk-row{display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-dim);}
+  .vitals-disk-row .vdname{width:36px; flex-shrink:0; color:var(--ink);}
+  .vitals-disk-row .budget-bar-bg{flex:1;}
+  .vitals-disk-row .vdpct{width:110px; text-align:right; flex-shrink:0;}
+
   /* Games Library */
   .games-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px;}
   .game-tile{display:flex; flex-direction:column; border-radius:10px; background:var(--panel-alt); border:1px solid var(--line); overflow:hidden; transition: all 0.2s;}
@@ -255,6 +270,27 @@
   #settings-overlay.open{display:flex;}
   #settings-modal{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:32px; width:100%; max-width:400px; display:flex; flex-direction:column; gap:20px; box-shadow:var(--shadow);}
 
+  /* Console overlay */
+  #console-overlay{position:fixed; inset:0; background:rgba(5,6,10,.6); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:100;}
+  #console-overlay.open{display:flex;}
+  #console-modal{background:#05060A; border:1px solid var(--line); border-radius:14px; width:100%; max-width:920px; height:76vh; display:flex; flex-direction:column; box-shadow:var(--shadow); overflow:hidden;}
+  .console-header{display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--panel); flex-shrink:0;}
+  .console-title{font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:8px; color:var(--ink);}
+  .console-title .dot-live{width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 6px var(--cyan); animation: console-pulse 1.6s infinite;}
+  @keyframes console-pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+  .console-controls{display:flex; gap:6px; align-items:center;}
+  .console-filter-btn{font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:4px 10px; border-radius:6px; border:1px solid var(--line); background:transparent; color:var(--ink-dim); cursor:pointer;}
+  .console-filter-btn:hover{border-color:var(--cyan);}
+  .console-filter-btn.active{border-color:var(--cyan); color:var(--cyan); background:var(--cyan-soft);}
+  #console-body{flex:1; overflow-y:auto; padding:10px 16px; font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.65;}
+  .console-line{display:flex; gap:10px; padding:1px 0; white-space:pre-wrap; word-break:break-word;}
+  .console-line .ctime{color:var(--ink-dim); flex-shrink:0; opacity:.55;}
+  .console-line.level-info .cmsg{color:var(--ink);}
+  .console-line.level-warn .cmsg{color:var(--amber);}
+  .console-line.level-error .cmsg{color:var(--red);}
+  .console-line .cmeta{color:var(--ink-dim); opacity:.65; margin-left:6px;}
+  .console-empty{color:var(--ink-dim); font-style:italic; opacity:.5; font-family:'JetBrains Mono',monospace; font-size:12px;}
+
   /* Timetable */
   .tt-wrap{overflow-x:auto;}
   .tt-table{width:100%; border-collapse:collapse; font-size:12.5px; min-width:640px;}
@@ -295,6 +331,7 @@
     <span class="cmd-hint">Ctrl K</span>
   </div>
   <div class="topbar-actions">
+    <button class="btn btn-icon" onclick="openConsole()" aria-label="Console" title="System Console">&gt;_</button>
     <button class="btn btn-icon" onclick="openSettings()" aria-label="Settings">&#9881;</button>
   </div>
 </div>
@@ -441,7 +478,7 @@
         <div class="card-title"><span class="dot"></span>Games Library</div>
         <div style="display:flex; gap:8px;">
           <button class="btn" onclick="chooseGamesFolder()">Set Folder</button>
-          <button class="btn" onclick="loadGames()">Refresh</button>
+          <button class="btn" onclick="loadGames(true)">Refresh</button>
         </div>
       </div>
       <div id="games-folder-label" class="muted" style="font-family:'JetBrains Mono',monospace; font-size:11px; margin-bottom:10px;"></div>
@@ -526,18 +563,23 @@
     </section>
   </main>
 
-  <div class="section-title">Recreation</div>
+  <div class="section-title">System</div>
   <main class="grid-container">
-    <section class="card span2" id="card-games">
+    <section class="card span2" id="card-vitals">
       <div class="card-head">
-        <div class="card-title"><span class="dot"></span>Games Library</div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-icon" onclick="chooseGamesFolder()" title="Set Games Folder">📁</button>
-          <button class="btn btn-icon" onclick="loadGamesLibrary()" title="Refresh Library">&#8635;</button>
+        <div class="card-title"><span class="dot"></span>System Vitals</div>
+      </div>
+      <div class="vitals-grid">
+        <div class="vitals-metric">
+          <div class="vitals-label">CPU <span id="vitals-cpu-pct">--%</span></div>
+          <svg id="vitals-cpu-spark" viewBox="0 0 300 50" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="vitals-metric">
+          <div class="vitals-label">RAM <span id="vitals-ram-pct">--%</span></div>
+          <svg id="vitals-ram-spark" viewBox="0 0 300 50" preserveAspectRatio="none"></svg>
         </div>
       </div>
-      <div id="games-folder-hint" class="muted" style="font-size:11px; margin-bottom:10px;"></div>
-      <div id="games-grid" class="games-grid"></div>
+      <div id="vitals-disks" class="vitals-disks"></div>
     </section>
   </main>
 
@@ -575,6 +617,11 @@
         <input id="set-city" type="text" placeholder="City name" onchange="updateSettings('weatherCity',this.value)" />
       </div>
       <div style="border-top:1px solid var(--line); padding-top:14px; margin-top: 8px; display:flex; flex-direction:column; gap:10px;">
+        <label class="mono" style="font-size:11px; color:var(--ink-dim);">GLOBAL HOTKEY (show/hide PCC from anywhere)</label>
+        <input id="hotkey-display" type="text" readonly placeholder="Click and press keys..." style="cursor:pointer; text-align:center; font-family:'JetBrains Mono',monospace;" onclick="startHotkeyCapture()" />
+        <div id="hotkey-status" class="mono" style="font-size:10.5px; color:var(--ink-dim);"></div>
+      </div>
+      <div style="border-top:1px solid var(--line); padding-top:14px; margin-top: 8px; display:flex; flex-direction:column; gap:10px;">
         <label class="mono" style="font-size:11px; color:var(--ink-dim);">MAIL SCAN CONFIGURATION</label>
         <input id="mail-email" type="text" placeholder="Email address (e.g. you@gmail.com)" />
         <input id="mail-password" type="password" placeholder="App password (leave blank to keep existing)" />
@@ -590,6 +637,23 @@
     </div>
   </div>
 
+  <div id="console-overlay" onclick="if(event.target===this)closeConsole()">
+    <div id="console-modal">
+      <div class="console-header">
+        <div class="console-title"><span class="dot-live"></span>System Console</div>
+        <div class="console-controls">
+          <button class="console-filter-btn active" data-level="all" onclick="setConsoleFilter('all')">All</button>
+          <button class="console-filter-btn" data-level="info" onclick="setConsoleFilter('info')">Info</button>
+          <button class="console-filter-btn" data-level="warn" onclick="setConsoleFilter('warn')">Warn</button>
+          <button class="console-filter-btn" data-level="error" onclick="setConsoleFilter('error')">Error</button>
+          <button class="btn btn-icon" onclick="clearConsole()" aria-label="Clear">&#128465;&#65039;</button>
+          <button class="btn btn-icon" onclick="closeConsole()" aria-label="Close">&times;</button>
+        </div>
+      </div>
+      <div id="console-body"></div>
+    </div>
+  </div>
+
   <div id="toast">Action completed</div>
 </div>
 
@@ -598,7 +662,15 @@
 /* ---------- Storage & Helpers ---------- */
 function uid(){ return 'id' + Math.random().toString(36).slice(2,10); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function todayStr(d){ d = d || new Date(); return d.toISOString().slice(0,10); }
+// Local calendar date as YYYY-MM-DD. (toISOString() would give the UTC date,
+// which is still "yesterday" until 5:30 AM in IST.)
+function todayStr(d){
+  d = d || new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+// Parse a stored YYYY-MM-DD as local midnight rather than UTC midnight.
+function parseLocalDate(s){ return new Date(s + 'T00:00'); }
 
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -1269,7 +1341,7 @@ function renderAgenda(){
   if(!items.length) { el.innerHTML = '<div class="empty">No deadlines found.</div>'; return; }
   el.innerHTML = items.map(a => `
     <div class="item-row">
-      <span class="pill mono" style="background:var(--accent-soft); color:var(--accent);">${new Date(a.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
+      <span class="pill mono" style="background:var(--accent-soft); color:var(--accent);">${parseLocalDate(a.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
       <span class="txt">${esc(a.title)}</span>
       <button class="btn btn-icon btn-danger" onclick="state.agenda=state.agenda.filter(x=>x.id!=='${a.id}'); Store.set('agenda', state.agenda); renderAgenda();">&times;</button>
     </div>
@@ -1277,26 +1349,46 @@ function renderAgenda(){
 }
 
 /* ---------- Pomodoro ---------- */
-let pomo = {mode:'focus', remaining: 25*60, total: 25*60, running:false, timer:null};
+// The timer is driven by a wall-clock end time (endsAt), not by counting
+// ticks, so it stays accurate when the window is hidden in the tray and
+// its timers get throttled.
+const POMO_MINUTES = { focus: 25, break: 5 };
+let pomo = {mode:'focus', remaining: 25*60, total: 25*60, running:false, timer:null, endsAt:0};
 function pomoToggle(){
   pomo.running = !pomo.running;
   document.getElementById('pomo-toggle').textContent = pomo.running ? 'Pause' : 'Initiate';
-  if(pomo.running) pomo.timer = setInterval(pomoTick, 1000);
-  else clearInterval(pomo.timer);
+  clearInterval(pomo.timer);
+  if(pomo.running){
+    pomo.endsAt = Date.now() + pomo.remaining * 1000;
+    pomo.timer = setInterval(pomoTick, 1000);
+  } else {
+    pomo.remaining = Math.max(1, Math.ceil((pomo.endsAt - Date.now()) / 1000));
+    renderPomo();
+  }
 }
 function pomoReset(){
   pomo.running = false; clearInterval(pomo.timer);
-  pomo.mode = 'focus'; pomo.total = 25*60; pomo.remaining = pomo.total;
+  pomo.mode = 'focus'; pomo.total = POMO_MINUTES.focus*60; pomo.remaining = pomo.total;
   document.getElementById('pomo-toggle').textContent = 'Initiate';
   renderPomo();
 }
 function pomoTick(){
-  pomo.remaining--;
-  if(pomo.remaining <= 0){
+  let switched = false;
+  // Loop in case more than one phase elapsed while timers were throttled.
+  while(Date.now() >= pomo.endsAt){
     pomo.mode = pomo.mode==='focus' ? 'break' : 'focus';
-    pomo.total = (pomo.mode==='focus' ? 25 : 5) * 60;
-    pomo.remaining = pomo.total;
+    pomo.total = POMO_MINUTES[pomo.mode] * 60;
+    pomo.endsAt += pomo.total * 1000;
+    switched = true;
+  }
+  pomo.remaining = Math.ceil((pomo.endsAt - Date.now()) / 1000);
+  if(switched){
+    const msg = pomo.mode === 'break'
+      ? `Focus session done. Take a ${POMO_MINUTES.break}-minute break.`
+      : `Break over. Back to a ${POMO_MINUTES.focus}-minute focus session.`;
     showToast(`Timer switched to ${pomo.mode}`);
+    // Native notification so it's noticed even when PCC is in the tray.
+    if(window.pcc && window.pcc.showNotification) window.pcc.showNotification('Deep Work Timer', msg);
   }
   renderPomo();
 }
@@ -1382,8 +1474,9 @@ function renderLinks(){
   }).join('');
 
   body.querySelectorAll('.link-tile').forEach(tile => {
-    tile.addEventListener('click', () => {
-      window.pcc.launchItem(tile.dataset.type, tile.dataset.target);
+    tile.addEventListener('click', async () => {
+      const result = await window.pcc.launchItem(tile.dataset.type, tile.dataset.target);
+      if(result && !result.ok) showToast('Could not open: ' + (result.error || 'unknown error'));
     });
   });
   body.querySelectorAll('.link-remove').forEach(btn => {
@@ -1426,10 +1519,17 @@ async function loadGamesFolderLabel(){
   document.getElementById('games-folder-label').textContent = cfg.gamesDir || 'No folder set — click "Set Folder" to choose one.';
 }
 
-async function loadGames(){
+// force=true (the Refresh button) recomputes folder sizes instead of using
+// the cached ones.
+async function loadGames(force){
   const body = document.getElementById('games-body');
   body.innerHTML = '<div class="empty">Scanning library&hellip;</div>';
-  gamesCache = await window.pcc.scanGames();
+  try{
+    gamesCache = await window.pcc.scanGames(!!force);
+  } catch(e){
+    gamesCache = [];
+    console.error('Games scan failed', e);
+  }
   renderGames();
 }
 
@@ -1451,8 +1551,9 @@ function renderGames(){
   `).join('');
 
   body.querySelectorAll('.game-tile-launch').forEach(btn => {
-    btn.addEventListener('click', () => {
-      window.pcc.launchGame(btn.dataset.exe);
+    btn.addEventListener('click', async () => {
+      const result = await window.pcc.launchGame(btn.dataset.exe);
+      if(result && !result.ok) showToast('Could not launch game: ' + (result.error || 'unknown error'));
     });
   });
 }
@@ -1628,10 +1729,37 @@ function guessDayFromText(text){
   return null;
 }
 
+// Turns a date fragment pulled out of an email ("12/07/2026", "15 Jul",
+// "3 August 26") into YYYY-MM-DD. Numeric dates are read day-first (Indian
+// convention). Falls back to today if it can't make sense of the text.
 function parseGuessedDate(raw){
-  const parsed = new Date(raw);
-  if(!isNaN(parsed.getTime())) return todayStr(parsed);
-  return todayStr();
+  const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const now = new Date();
+  const text = String(raw || '').trim();
+  let day, month, year;
+
+  let m = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(m){
+    day = +m[1]; month = +m[2] - 1; year = +m[3];
+  } else if((m = text.match(/^(\d{1,2})\s+([A-Za-z]{3})[A-Za-z]*\s*(\d{2,4})?$/))){
+    day = +m[1]; month = MONTHS.indexOf(m[2].toLowerCase()); year = m[3] ? +m[3] : null;
+  } else {
+    return todayStr();
+  }
+
+  if(year !== null && year < 100) year += 2000;
+  if(year === null){
+    // No year in the email: assume the nearest upcoming occurrence, allowing
+    // for a deadline that passed within the last month.
+    year = now.getFullYear();
+    const candidate = new Date(year, month, day);
+    if(now - candidate > 30 * 24 * 60 * 60 * 1000) year++;
+  }
+
+  const result = new Date(year, month, day);
+  // Reject impossible dates (month 13, 31 Feb, ...) instead of rolling over.
+  if(month < 0 || result.getMonth() !== month || result.getDate() !== day) return todayStr();
+  return todayStr(result);
 }
 
 /* ---------- Life (Habits & Weather) ---------- */
@@ -1710,7 +1838,7 @@ function updateAestheticWidget(){
 }
 
 /* ---------- Settings & Search ---------- */
-function openSettings(){ document.getElementById('settings-overlay').classList.add('open'); loadMailSettingsUI(); }
+function openSettings(){ document.getElementById('settings-overlay').classList.add('open'); loadMailSettingsUI(); loadHotkeyUI(); }
 function closeSettings(){ document.getElementById('settings-overlay').classList.remove('open'); }
 
 async function loadMailSettingsUI(){
@@ -1737,6 +1865,234 @@ async function saveMailSettings(){
   showToast('Mail settings saved');
   loadMailSettingsUI();
 }
+
+// --- System Vitals ---
+
+const VITALS_HISTORY_MAX = 60; // 5 min at 5s interval
+let cpuHistory = [];
+let ramHistory = [];
+
+function buildSparklinePoints(history){
+  const w = 300, h = 50;
+  if(history.length < 2) return '';
+  const step = w / (VITALS_HISTORY_MAX - 1);
+  const offset = VITALS_HISTORY_MAX - history.length;
+  return history.map((v, i) => {
+    const x = (offset + i) * step;
+    const y = h - Math.max(0, Math.min(100, v)) / 100 * h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+}
+
+function renderSparkline(svgId, history, colorVar){
+  const svgEl = document.getElementById(svgId);
+  if(!svgEl) return;
+  const points = buildSparklinePoints(history);
+  svgEl.innerHTML = points
+    ? `<polyline points="${points}" fill="none" stroke="${colorVar}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round" />`
+    : '';
+}
+
+async function loadSystemVitals(){
+  if(!window.pcc || !window.pcc.getSystemInfo) return;
+  if(document.hidden) return; // don't poll while PCC is hidden in the tray
+  try{
+    const info = await window.pcc.getSystemInfo();
+    const cpuPct = parseFloat(info.load.currentLoadPercent) || 0;
+    const ramTotal = parseFloat(info.memory.totalGB) || 0;
+    const ramUsed = parseFloat(info.memory.usedGB) || 0;
+    const ramPct = ramTotal ? (ramUsed / ramTotal * 100) : 0;
+
+    cpuHistory.push(cpuPct); if(cpuHistory.length > VITALS_HISTORY_MAX) cpuHistory.shift();
+    ramHistory.push(ramPct); if(ramHistory.length > VITALS_HISTORY_MAX) ramHistory.shift();
+
+    const cpuLabel = document.getElementById('vitals-cpu-pct');
+    const ramLabel = document.getElementById('vitals-ram-pct');
+    if(cpuLabel) cpuLabel.textContent = cpuPct.toFixed(0) + '%';
+    if(ramLabel) ramLabel.textContent = ramPct.toFixed(0) + '%';
+
+    renderSparkline('vitals-cpu-spark', cpuHistory, 'var(--cyan)');
+    renderSparkline('vitals-ram-spark', ramHistory, 'var(--accent)');
+
+    const disksBody = document.getElementById('vitals-disks');
+    if(disksBody && info.disks){
+      disksBody.innerHTML = info.disks.map(d => `
+        <div class="vitals-disk-row">
+          <span class="vdname">${esc(d.mount)}</span>
+          <div class="budget-bar-bg"><div class="budget-bar-fill" style="width:${d.usePercent}%; background:${d.usePercent > 85 ? 'var(--red)' : 'var(--cyan)'};"></div></div>
+          <span class="vdpct">${d.usedGB} / ${d.sizeGB} GB</span>
+        </div>
+      `).join('');
+    }
+  } catch(e){
+    console.error('Failed to load system vitals', e);
+  }
+}
+
+loadSystemVitals();
+setInterval(loadSystemVitals, 5000);
+// Refresh straight away when the window comes back from the tray.
+document.addEventListener('visibilitychange', () => { if(!document.hidden) loadSystemVitals(); });
+
+// --- Global Hotkey ---
+
+async function loadHotkeyUI(){
+  const hotkey = await window.pcc.getHotkey();
+  document.getElementById('hotkey-display').value = hotkey;
+  document.getElementById('hotkey-status').textContent = '';
+}
+
+let hotkeyCaptureStop = null; // set while a capture is in progress
+
+function startHotkeyCapture(){
+  const input = document.getElementById('hotkey-display');
+  const status = document.getElementById('hotkey-status');
+  if(hotkeyCaptureStop) return; // already capturing
+  input.value = 'Press keys... (Esc to cancel)';
+  status.textContent = '';
+  input.focus();
+
+  function stop(){
+    input.removeEventListener('keydown', handler);
+    input.removeEventListener('blur', cancel);
+    hotkeyCaptureStop = null;
+  }
+  function cancel(){
+    stop();
+    loadHotkeyUI(); // put the current hotkey back
+  }
+  hotkeyCaptureStop = stop;
+
+  function handler(e){
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Ignore standalone modifier presses — wait for a real key
+    if(['Control','Alt','Shift','Meta'].includes(e.key)) return;
+
+    const hasModifier = e.ctrlKey || e.altKey || e.metaKey;
+    if(e.key === 'Escape' && !hasModifier && !e.shiftKey){ cancel(); return; }
+
+    const parts = [];
+    if(e.ctrlKey) parts.push('CommandOrControl');
+    if(e.altKey) parts.push('Alt');
+    if(e.shiftKey) parts.push('Shift');
+    if(e.metaKey) parts.push('Super'); // Windows key
+
+    let key = e.key;
+    if(key === ' ') key = 'Space';
+    else if(key === 'Escape') key = 'Esc';
+    else if(/^Arrow/.test(key)) key = key.replace('Arrow', '');
+    else if(key.length === 1) key = key.toUpperCase();
+
+    // A global shortcut takes its key away from every other app, so it
+    // needs Ctrl/Alt/Win — unless it's a function key. Keep listening.
+    if(!hasModifier && !/^F\d{1,2}$/.test(key)){
+      status.textContent = 'Add Ctrl, Alt or the Windows key to the combination.';
+      status.style.color = 'var(--amber)';
+      return;
+    }
+
+    parts.push(key);
+    const accelerator = parts.join('+');
+
+    stop();
+    input.value = accelerator;
+
+    window.pcc.setHotkey(accelerator).then(result => {
+      if(result.ok){
+        status.textContent = 'Hotkey updated.';
+        status.style.color = 'var(--cyan)';
+      } else {
+        status.textContent = result.error || 'Failed to set hotkey.';
+        status.style.color = 'var(--red)';
+        loadHotkeyUI(); // revert display back to the last working hotkey
+      }
+    });
+  }
+
+  input.addEventListener('keydown', handler);
+  input.addEventListener('blur', cancel);
+}
+
+// --- System Console ---
+
+let consoleLogs = [];
+let consoleFilter = 'all';
+let consoleAutoScroll = true;
+let consoleHistoryLoaded = false;
+
+function openConsole(){
+  document.getElementById('console-overlay').classList.add('open');
+  loadConsoleHistory();
+}
+function closeConsole(){
+  document.getElementById('console-overlay').classList.remove('open');
+}
+
+async function loadConsoleHistory(){
+  if(!consoleHistoryLoaded && window.pcc && window.pcc.getLogHistory){
+    consoleLogs = await window.pcc.getLogHistory();
+    consoleHistoryLoaded = true;
+  }
+  renderConsole();
+}
+
+function setConsoleFilter(level){
+  consoleFilter = level;
+  document.querySelectorAll('.console-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.level === level));
+  renderConsole();
+}
+
+function clearConsole(){
+  consoleLogs = [];
+  renderConsole();
+}
+
+function formatLogTime(ts){
+  const d = new Date(ts);
+  return d.toLocaleTimeString('en-GB', { hour12:false });
+}
+
+function renderConsole(){
+  const body = document.getElementById('console-body');
+  if(!body) return;
+  const filtered = consoleFilter === 'all' ? consoleLogs : consoleLogs.filter(l => l.level === consoleFilter);
+  if(!filtered.length){
+    body.innerHTML = '<div class="console-empty">No log entries yet.</div>';
+    return;
+  }
+  body.innerHTML = filtered.map(l => {
+    const metaStr = l.meta ? (typeof l.meta === 'string' ? l.meta : JSON.stringify(l.meta)) : '';
+    return `
+    <div class="console-line level-${esc(l.level)}">
+      <span class="ctime">${formatLogTime(l.timestamp)}</span>
+      <span class="cmsg">${esc(l.message)}${metaStr ? `<span class="cmeta">${esc(metaStr)}</span>` : ''}</span>
+    </div>
+  `;
+  }).join('');
+  if(consoleAutoScroll){
+    body.scrollTop = body.scrollHeight;
+  }
+}
+
+const consoleBodyEl = document.getElementById('console-body');
+if(consoleBodyEl){
+  consoleBodyEl.addEventListener('scroll', function(){
+    consoleAutoScroll = (this.scrollHeight - this.scrollTop - this.clientHeight) < 40;
+  });
+}
+
+if(window.pcc && window.pcc.onLogEntry){
+  window.pcc.onLogEntry((entry) => {
+    consoleLogs.push(entry);
+    if(consoleLogs.length > 500) consoleLogs.shift();
+    if(document.getElementById('console-overlay').classList.contains('open')){
+      renderConsole();
+    }
+  });
+}
+
 function updateSettings(key, val){
   state.settings[key] = val; Store.set('settings', state.settings);
   if(key==='name') renderGreeting();

@@ -6,6 +6,13 @@ contextBridge.exposeInMainWorld('pcc', {
   getAutostartStatus: () => ipcRenderer.invoke('get-autostart-status'),
   setAutostart: (enable) => ipcRenderer.invoke('set-autostart', enable),
 
+  // Data backup
+  exportData: (data) => ipcRenderer.invoke('export-data', data),
+  backupData: (data, reason) => ipcRenderer.invoke('backup-data', { data, reason }),
+  openBackupsFolder: () => ipcRenderer.invoke('open-backups-folder'),
+  pickImportFile: () => ipcRenderer.invoke('pick-import-file'),
+  applyImport: () => ipcRenderer.invoke('apply-import'),
+
   // Quick Launcher (URL or local app)
   pickAppFile: () => ipcRenderer.invoke('pick-app-file'),
   launchItem: (type, target) => ipcRenderer.invoke('launch-item', { type, target }),

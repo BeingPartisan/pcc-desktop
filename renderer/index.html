@@ -268,7 +268,8 @@
   /* Settings overlay */
   #settings-overlay{position:fixed; inset:0; background:rgba(5,6,10,.6); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:100;}
   #settings-overlay.open{display:flex;}
-  #settings-modal{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:32px; width:100%; max-width:400px; display:flex; flex-direction:column; gap:20px; box-shadow:var(--shadow);}
+  #settings-modal{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:32px; width:100%; max-width:400px; max-height:88vh; overflow-y:auto; display:flex; flex-direction:column; gap:20px; box-shadow:var(--shadow);}
+  #settings-modal > *{flex-shrink:0;}
 
   /* Console overlay */
   #console-overlay{position:fixed; inset:0; background:rgba(5,6,10,.6); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:100;}
@@ -630,6 +631,25 @@
         <input id="mail-allowed-senders" type="text" placeholder="Allowed senders, comma-separated" />
         <input id="mail-days-back" type="number" min="1" max="30" placeholder="Days back (default: 7)" />
         <button class="btn btn-primary" style="width:100%;" onclick="saveMailSettings()">Save Mail Settings</button>
+      </div>
+      <div style="border-top:1px solid var(--line); padding-top:14px; margin-top: 8px; display:flex; flex-direction:column; gap:10px;">
+        <label class="mono" style="font-size:11px; color:var(--ink-dim);">STARTUP</label>
+        <label style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer;">
+          <input id="autostart-toggle" type="checkbox" class="chk" onchange="toggleAutostart(this.checked)" />
+          <span>Start PCC when I sign in (in the tray)</span>
+        </label>
+        <div id="autostart-status" class="mono" style="font-size:10.5px; color:var(--ink-dim);"></div>
+      </div>
+      <div style="border-top:1px solid var(--line); padding-top:14px; margin-top: 8px; display:flex; flex-direction:column; gap:10px;">
+        <label class="mono" style="font-size:11px; color:var(--ink-dim);">DATA BACKUP</label>
+        <div class="row-form">
+          <button class="btn" onclick="exportData()">Export&hellip;</button>
+          <button class="btn" onclick="importData()">Import&hellip;</button>
+        </div>
+        <div class="mono" style="font-size:10.5px; color:var(--ink-dim); line-height:1.5;">
+          An automatic backup is also saved once a day.
+          <a href="#" onclick="window.pcc.openBackupsFolder(); return false;" style="color:var(--cyan);">Open backups folder</a>
+        </div>
       </div>
       <div style="border-top:1px solid var(--line); padding-top:16px; margin-top: 8px;">
         <button class="btn btn-danger" style="width: 100%;" onclick="resetAllData()">Factory Reset All Data</button>
@@ -1838,7 +1858,86 @@ function updateAestheticWidget(){
 }
 
 /* ---------- Settings & Search ---------- */
-function openSettings(){ document.getElementById('settings-overlay').classList.add('open'); loadMailSettingsUI(); loadHotkeyUI(); }
+function openSettings(){ document.getElementById('settings-overlay').classList.add('open'); loadMailSettingsUI(); loadHotkeyUI(); loadAutostartUI(); }
+
+// --- Autostart ---
+
+function showAutostartState(state){
+  const toggle = document.getElementById('autostart-toggle');
+  const status = document.getElementById('autostart-status');
+  toggle.checked = !!state.enabled;
+  toggle.disabled = !state.supported;
+  status.textContent = state.supported ? '' : 'Only available in the installed app, not in a development run.';
+}
+async function loadAutostartUI(){
+  showAutostartState(await window.pcc.getAutostartStatus());
+}
+async function toggleAutostart(enable){
+  const state = await window.pcc.setAutostart(enable);
+  showAutostartState(state);
+  if(state.supported) showToast(state.enabled ? 'PCC will start when you sign in' : 'Autostart turned off');
+}
+
+// --- Data backup: export / import / automatic daily backup ---
+// Everything the app stores lives in localStorage. Keys starting with "__"
+// are internal bookkeeping and are left out of backups.
+
+const LAST_BACKUP_KEY = '__lastAutoBackup';
+const AUTO_BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+function collectData(){
+  const data = {};
+  for(let i = 0; i < localStorage.length; i++){
+    const key = localStorage.key(i);
+    if(key.startsWith('__')) continue;
+    const raw = localStorage.getItem(key);
+    try { data[key] = JSON.parse(raw); } catch { data[key] = raw; }
+  }
+  return data;
+}
+
+async function exportData(){
+  const result = await window.pcc.exportData(collectData());
+  if(result.ok) showToast('Data exported');
+  else if(!result.canceled) showToast('Export failed: ' + (result.error || 'unknown error'));
+}
+
+async function importData(){
+  const picked = await window.pcc.pickImportFile();
+  if(!picked.ok){
+    if(!picked.canceled) showToast(picked.error || 'Import failed');
+    return;
+  }
+  const when = picked.exportedAt ? new Date(picked.exportedAt).toLocaleString() : 'an unknown date';
+  const sure = confirm(
+    `Replace ALL current data with "${picked.fileName}" (saved ${when})?\n\n` +
+    'Your current data is backed up automatically first, so this can be undone from the backups folder.'
+  );
+  if(!sure) return;
+
+  // Safety copy of what's about to be replaced. Don't go ahead without it.
+  const backup = await window.pcc.backupData(collectData(), 'before import');
+  if(!backup.ok){ showToast('Import cancelled: could not back up current data'); return; }
+
+  const applied = await window.pcc.applyImport();
+  if(!applied.ok){ showToast('Import failed: ' + (applied.error || 'unknown error')); return; }
+
+  Object.keys(collectData()).forEach(key => localStorage.removeItem(key));
+  for(const [key, value] of Object.entries(picked.data)){
+    if(key.startsWith('__')) continue;
+    try { localStorage.setItem(key, JSON.stringify(value)); }
+    catch(e){ console.error('Could not restore "' + key + '"', e); }
+  }
+  location.reload();
+}
+
+async function autoBackupIfDue(){
+  if(!window.pcc || !window.pcc.backupData) return;
+  const last = Number(localStorage.getItem(LAST_BACKUP_KEY)) || 0;
+  if(Date.now() - last < AUTO_BACKUP_INTERVAL_MS) return;
+  const result = await window.pcc.backupData(collectData(), 'daily');
+  if(result.ok) localStorage.setItem(LAST_BACKUP_KEY, String(Date.now()));
+}
 function closeSettings(){ document.getElementById('settings-overlay').classList.remove('open'); }
 
 async function loadMailSettingsUI(){
@@ -2098,12 +2197,17 @@ function updateSettings(key, val){
   if(key==='name') renderGreeting();
   if(key==='weatherCity') loadWeather(true);
 }
-function resetAllData(){
-  if(!confirm('DANGER: Erase all database records?')) return;
+async function resetAllData(){
+  if(!confirm('DANGER: Erase all database records?\n\nA backup of the current data is saved to the backups folder first.')) return;
+  const backup = await window.pcc.backupData(collectData(), 'before factory reset');
+  if(!backup.ok && !confirm('The safety backup failed. Erase everything anyway?')) return;
   localStorage.clear(); location.reload();
 }
 
 init();
+autoBackupIfDue();
+// Also check hourly, for when PCC is left running for days.
+setInterval(autoBackupIfDue, 60 * 60 * 1000);
 </script>
 </body>
 </html>

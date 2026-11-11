@@ -11,15 +11,14 @@
     "release": "electron-builder --publish always"
   },
   "devDependencies": {
-    "electron": "^31.0.0",
-    "electron-builder": "^24.13.3"
+    "electron": "^45.3.0",
+    "electron-builder": "^26.18.0"
   },
   "dependencies": {
-    "auto-launch": "^5.0.6",
-    "systeminformation": "^5.22.11",
+    "electron-updater": "^6.8.11",
     "imapflow": "^1.0.171",
     "mailparser": "^3.7.1",
-    "electron-updater": "^6.3.0"
+    "systeminformation": "^5.22.11"
   },
   "build": {
     "appId": "com.partisan.pcc",

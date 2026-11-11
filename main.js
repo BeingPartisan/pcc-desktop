@@ -4,7 +4,6 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 const si = require('systeminformation');
-const AutoLaunch = require('auto-launch');
 const { autoUpdater } = require('electron-updater');
 
 let mainWindow = null;
@@ -128,20 +127,31 @@ function addPlaytime(exePath, seconds) {
   return map[exePath];
 }
 
-function saveMailPassword(plainPassword) {
-  if (!safeStorage.isEncryptionAvailable()) {
+// Uses Electron's async safeStorage API (the sync one is deprecated).
+// Passwords saved by older versions of PCC still decrypt with it.
+async function saveMailPassword(plainPassword) {
+  if (!(await safeStorage.isAsyncEncryptionAvailable())) {
     throw new Error('OS-level encryption is not available on this system.');
   }
-  const encrypted = safeStorage.encryptString(plainPassword);
+  const encrypted = await safeStorage.encryptStringAsync(plainPassword);
   fs.writeFileSync(MAIL_SECRET_FILE, encrypted);
 }
 
-function loadMailPassword() {
+async function loadMailPassword() {
   if (!fs.existsSync(MAIL_SECRET_FILE)) return null;
-  if (!safeStorage.isEncryptionAvailable()) return null;
   try {
+    if (!(await safeStorage.isAsyncEncryptionAvailable())) return null;
     const encrypted = fs.readFileSync(MAIL_SECRET_FILE);
-    return safeStorage.decryptString(encrypted);
+    const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(encrypted);
+    if (shouldReEncrypt) {
+      // The OS key was rotated; store the password again under the new key.
+      try {
+        await saveMailPassword(result);
+      } catch (e) {
+        logEvent('warn', 'Could not re-encrypt mail password', String(e));
+      }
+    }
+    return result;
   } catch (e) {
     logEvent('error', 'Failed to decrypt mail password', String(e));
     return null;
@@ -314,10 +324,19 @@ if (process.platform === 'win32') {
 
 const ICON_PATH = path.join(__dirname, 'assets', 'icon.png');
 
-const pccAutoLauncher = new AutoLaunch({
-  name: 'Personal Command Center (Beta)',
-  path: app.getPath('exe'),
-});
+// --- Autostart (Electron's built-in login item support) ---
+// When Windows starts PCC at login it passes --hidden, so the app comes up
+// in the tray instead of opening its window over whatever you're doing.
+const HIDDEN_FLAG = '--hidden';
+const startHidden = process.argv.includes(HIDDEN_FLAG);
+const LOGIN_ITEM = { path: process.execPath, args: [HIDDEN_FLAG] };
+
+function getAutostartState() {
+  // In development the executable is the bare Electron binary, so
+  // registering it would launch an empty Electron at login.
+  if (!app.isPackaged) return { supported: false, enabled: false };
+  return { supported: true, enabled: app.getLoginItemSettings(LOGIN_ITEM).openAtLogin };
+}
 
 // --- Single instance lock: prevent multiple copies running ---
 const gotLock = app.requestSingleInstanceLock();
@@ -341,7 +360,8 @@ function createWindow() {
     minHeight: 600,
     icon: ICON_PATH,
     title: 'Personal Command Center (Beta)',
-    
+    show: !startHidden, // started at login: stay in the tray until asked for
+
     // --- NATIVE AESTHETICS UPGRADES ---
     titleBarStyle: 'hidden', // Hides the default OS title bar
     titleBarOverlay: {       // Keeps OS window controls (Win/Mac) but styles them to match your dark theme
@@ -377,10 +397,13 @@ function createWindow() {
   });
 
   // Forward renderer-side console.log/warn/error into the same Console panel
-  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
-    const levelMap = { 0: 'info', 1: 'warn', 2: 'error', 3: 'error' };
+  // (Details are read from the event object; the old positional arguments
+  // are deprecated in current Electron.)
+  mainWindow.webContents.on('console-message', (event) => {
+    const levelMap = { debug: 'info', info: 'info', warning: 'warn', error: 'error' };
+    const { level, message, lineNumber, sourceId } = event;
     const shortSource = sourceId ? sourceId.split(/[\\/]/).pop() : '';
-    logEvent(levelMap[level] || 'info', `[renderer] ${message}`, shortSource ? `${shortSource}:${line}` : null);
+    logEvent(levelMap[level] || 'info', `[renderer] ${message}`, shortSource ? `${shortSource}:${lineNumber}` : null);
   });
 
   // Minimize to tray instead of closing, unless we're actually quitting
@@ -527,20 +550,134 @@ ipcMain.handle('show-notification', (event, { title, body }) => {
   return { ok: false, reason: 'Notifications not supported on this system' };
 });
 
-ipcMain.handle('get-autostart-status', async () => {
-  return await pccAutoLauncher.isEnabled();
+ipcMain.handle('get-autostart-status', () => getAutostartState());
+
+ipcMain.handle('set-autostart', (event, enable) => {
+  if (app.isPackaged) {
+    app.setLoginItemSettings({ ...LOGIN_ITEM, openAtLogin: !!enable });
+    logEvent('info', enable ? 'Autostart enabled' : 'Autostart disabled');
+  }
+  return getAutostartState();
 });
 
-ipcMain.handle('set-autostart', async (event, enable) => {
-  const isEnabled = await pccAutoLauncher.isEnabled();
-  if (enable && !isEnabled) {
-    await pccAutoLauncher.enable();
-    logEvent('info', 'Autostart enabled');
-  } else if (!enable && isEnabled) {
-    await pccAutoLauncher.disable();
-    logEvent('info', 'Autostart disabled');
+// --- Data backup: export / import / automatic backups ---
+// The renderer owns the day-to-day data (tasks, notes, finances...) in its
+// localStorage and hands it over as a plain object. The main process adds
+// its own settings and playtime, and does the file work. The mail password
+// is never included.
+
+const BACKUP_APP_ID = 'personal-command-center';
+const BACKUP_DIR = path.join(app.getPath('userData'), 'backups');
+const BACKUP_KEEP = 10;
+let pendingImport = null; // a picked backup file waiting for the user's confirmation
+
+function buildBackup(rendererData) {
+  return {
+    app: BACKUP_APP_ID,
+    appVersion: app.getVersion(),
+    exportedAt: new Date().toISOString(),
+    data: rendererData && typeof rendererData === 'object' ? rendererData : {},
+    main: { config: getConfig(), playtime: getPlaytimeMap() },
+  };
+}
+
+function backupStamp() {
+  // e.g. 2026-11-11_14-05-09 (local time, safe in a file name)
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`;
+}
+
+ipcMain.handle('export-data', async (event, rendererData) => {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export PCC data',
+    defaultPath: path.join(app.getPath('documents'), `pcc-export-${backupStamp().slice(0, 10)}.json`),
+    filters: [{ name: 'PCC backup', extensions: ['json'] }],
+  });
+  if (result.canceled || !result.filePath) return { ok: false, canceled: true };
+  try {
+    await fs.promises.writeFile(result.filePath, JSON.stringify(buildBackup(rendererData), null, 2), 'utf-8');
+    logEvent('info', `Data exported to ${result.filePath}`);
+    return { ok: true, filePath: result.filePath };
+  } catch (e) {
+    logEvent('error', 'Data export failed', String(e));
+    return { ok: false, error: String(e.message || e) };
   }
-  return await pccAutoLauncher.isEnabled();
+});
+
+// Automatic safety copy, kept in the app's own data folder. Only the most
+// recent BACKUP_KEEP files are kept.
+ipcMain.handle('backup-data', async (event, { data, reason }) => {
+  try {
+    await fs.promises.mkdir(BACKUP_DIR, { recursive: true });
+    const filePath = path.join(BACKUP_DIR, `pcc-backup-${backupStamp()}.json`);
+    await fs.promises.writeFile(filePath, JSON.stringify(buildBackup(data)), 'utf-8');
+
+    const old = (await fs.promises.readdir(BACKUP_DIR))
+      .filter((f) => /^pcc-backup-.*\.json$/.test(f))
+      .sort()
+      .reverse()
+      .slice(BACKUP_KEEP);
+    await Promise.all(old.map((f) => fs.promises.unlink(path.join(BACKUP_DIR, f)).catch(() => {})));
+
+    logEvent('info', `Backup saved (${reason || 'manual'})`, path.basename(filePath));
+    return { ok: true, filePath };
+  } catch (e) {
+    logEvent('error', 'Backup failed', String(e));
+    return { ok: false, error: String(e.message || e) };
+  }
+});
+
+ipcMain.handle('open-backups-folder', async () => {
+  await fs.promises.mkdir(BACKUP_DIR, { recursive: true });
+  const err = await shell.openPath(BACKUP_DIR);
+  return { ok: !err, error: err || undefined };
+});
+
+// Step 1 of an import: pick and validate a file. Nothing is changed yet.
+ipcMain.handle('pick-import-file', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Import PCC data',
+    defaultPath: app.getPath('documents'),
+    properties: ['openFile'],
+    filters: [{ name: 'PCC backup', extensions: ['json'] }],
+  });
+  if (result.canceled || !result.filePaths.length) return { ok: false, canceled: true };
+  try {
+    const parsed = JSON.parse(await fs.promises.readFile(result.filePaths[0], 'utf-8'));
+    const validData = parsed && parsed.data && typeof parsed.data === 'object' && !Array.isArray(parsed.data);
+    if (!parsed || parsed.app !== BACKUP_APP_ID || !validData) {
+      return { ok: false, error: 'That file is not a PCC backup.' };
+    }
+    pendingImport = parsed;
+    return {
+      ok: true,
+      fileName: path.basename(result.filePaths[0]),
+      exportedAt: parsed.exportedAt || null,
+      data: parsed.data,
+    };
+  } catch (e) {
+    logEvent('error', 'Could not read import file', String(e));
+    return { ok: false, error: 'Could not read that file: ' + String(e.message || e) };
+  }
+});
+
+// Step 2, after the user confirms: restore the main-process side (settings
+// and playtime). The renderer restores its own data and reloads.
+ipcMain.handle('apply-import', () => {
+  const backup = pendingImport;
+  pendingImport = null;
+  if (!backup) return { ok: false, error: 'No import in progress' };
+  const main = backup.main || {};
+  if (main.config && typeof main.config === 'object') {
+    writeJsonSafe(CONFIG_FILE, main.config);
+    registerHotkey(getHotkey());
+  }
+  if (main.playtime && typeof main.playtime === 'object') {
+    writeJsonSafe(PLAYTIME_FILE, main.playtime);
+  }
+  logEvent('info', 'Data imported from backup', backup.exportedAt || null);
+  return { ok: true };
 });
 
 // --- Global Hotkey ---
@@ -573,21 +710,21 @@ ipcMain.handle('set-hotkey', (event, accelerator) => {
 
 // --- Mail scan (schedule/deadline detection) ---
 
-ipcMain.handle('get-mail-config', () => {
+ipcMain.handle('get-mail-config', async () => {
   const mail = getMailConfig();
   return {
     email: mail.email || '',
     imapHost: mail.imapHost || 'imap.gmail.com',
     allowedSenders: mail.allowedSenders || [],
     daysBack: mail.daysBack || 7,
-    hasPassword: !!loadMailPassword(),
+    hasPassword: !!(await loadMailPassword()),
   };
 });
 
-ipcMain.handle('set-mail-config', (event, { email, imapHost, allowedSenders, daysBack, appPassword }) => {
+ipcMain.handle('set-mail-config', async (event, { email, imapHost, allowedSenders, daysBack, appPassword }) => {
   setMailConfig({ email, imapHost, allowedSenders, daysBack });
   if (appPassword) {
-    saveMailPassword(appPassword);
+    await saveMailPassword(appPassword);
     logEvent('info', 'Mail settings saved (app password updated)', { email, imapHost, daysBack });
   } else {
     logEvent('info', 'Mail settings saved', { email, imapHost, daysBack });
@@ -614,7 +751,7 @@ ipcMain.handle('scan-email', () => {
 
 async function runMailScan() {
   const mail = getMailConfig();
-  const password = loadMailPassword();
+  const password = await loadMailPassword();
 
   if (!mail.email || !password) {
     logEvent('warn', 'Mail scan skipped: not configured');

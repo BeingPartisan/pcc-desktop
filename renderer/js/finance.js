@@ -31,6 +31,7 @@ function deleteFinance(id) {
 }
 
 function renderFinances() {
+  renderFinanceCharts();
   document.getElementById('fin-budget-input').value = state.settings.budget;
 
   let totalBurn = 0;
@@ -158,4 +159,48 @@ function cycleMonth() {
   renderFinances();
   if(finViewMode === 'history') renderFinanceHistory();
   showToast('Month archived. Subscriptions carried over.');
+}
+
+/* ---------- Spending charts ---------- */
+// Two read-only views of the ledger, redrawn whenever it changes:
+//   by category  - this month's spending split by tag
+//   month by month - totals of archived months (financeHistory) plus this month
+
+function renderFinanceCharts(){
+  const catEl = document.getElementById('fin-category-chart');
+  const monthEl = document.getElementById('fin-month-chart');
+  if(!catEl || !monthEl) return;
+
+  // By category
+  const byTag = {};
+  state.finances.forEach(f => { const t = f.tag || 'OTHER'; byTag[t] = (byTag[t] || 0) + f.amount; });
+  const tags = Object.entries(byTag).sort((a, b) => b[1] - a[1]);
+  const total = tags.reduce((sum, [, v]) => sum + v, 0);
+  const max = tags.length ? tags[0][1] : 0;
+  catEl.innerHTML = !tags.length ? '<div class="empty">Nothing spent yet this month.</div>' : tags.map(([tag, amount]) => `
+    <div class="bar-row">
+      <div class="bar-row-top">
+        <span>${esc(tag.charAt(0) + tag.slice(1).toLowerCase())}</span>
+        <span class="bar-row-value">₹${amount} <i>${Math.round(amount / total * 100)}%</i></span>
+      </div>
+      <div class="att-bar"><div class="att-bar-fill" style="width:${amount / max * 100}%; background:${colorForSubject(tag)}"></div></div>
+    </div>`).join('');
+
+  // Month by month: up to five archived months (oldest first), then this month
+  const past = state.financeHistory.slice(0, 5).reverse().map(h => ({
+    label: new Date(h.date).toLocaleDateString(undefined, { month: 'short' }), value: h.total, current: false,
+  }));
+  const months = [...past, { label: 'Now', value: total, current: true }];
+  const monthMax = Math.max(1, ...months.map(m => m.value));
+  const budget = state.settings.budget || 0;
+  monthEl.innerHTML = `
+    <div class="gpa-chart month-chart">
+      ${months.map(m => `
+        <div class="gpa-col ${m.current ? 'active' : ''} ${budget && m.value > budget ? 'over' : ''}" title="${budget && m.value > budget ? 'Over budget' : ''}">
+          <span class="gpa-value">₹${m.value}</span>
+          <span class="gpa-bar"><span style="height:${Math.max(3, m.value / monthMax * 100)}%"></span></span>
+          <span class="gpa-label">${esc(m.label)}</span>
+        </div>`).join('')}
+    </div>
+    <div class="att-meta" style="margin-top:8px;">${past.length ? (budget ? 'Months over your ₹' + budget + ' budget are shown in red.' : '') : 'Past months appear here after you start a new month.'}</div>`;
 }

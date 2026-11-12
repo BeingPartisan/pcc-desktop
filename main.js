@@ -1,4 +1,5 @@
-const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, nativeImage, dialog, shell, safeStorage, globalShortcut } = require('electron');
+const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, nativeImage, dialog, shell, safeStorage, globalShortcut, nativeTheme, systemPreferences } = require('electron');
+const { pathToFileURL } = require('url');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -1092,6 +1093,80 @@ function checkForUpdates(manual) {
     }
   });
 }
+
+// --- Appearance (Settings > Appearance) ---
+
+// Windows accent colour as #rrggbb, or null where the system has none.
+ipcMain.handle('get-system-accent', () => {
+  try {
+    const rgba = systemPreferences.getAccentColor(); // "rrggbbaa"
+    return rgba ? '#' + rgba.slice(0, 6) : null;
+  } catch (e) {
+    return null;
+  }
+});
+
+// Keeps the window chrome and the Windows backdrop in step with the app's
+// theme: 'light', 'dark', or 'system' to follow Windows.
+ipcMain.handle('set-theme-source', (event, source) => {
+  if (['light', 'dark', 'system'].includes(source)) nativeTheme.themeSource = source;
+  return nativeTheme.shouldUseDarkColors;
+});
+
+// The display name chosen in Settings. The window title follows the page's
+// own title; the tray tooltip is set here.
+ipcMain.handle('set-app-name', (event, name) => {
+  if (tray && typeof name === 'string' && name.trim()) tray.setToolTip(name.trim().slice(0, 60));
+  return { ok: true };
+});
+
+// A custom logo or wallpaper is copied into the app's data folder, so it
+// keeps working if the original file is moved or deleted.
+const CUSTOM_IMAGE_KINDS = ['logo', 'wallpaper'];
+
+function findCustomImage(kind) {
+  const dir = app.getPath('userData');
+  const file = fs.readdirSync(dir).find((f) => f.startsWith(`custom-${kind}.`));
+  if (!file) return null;
+  const full = path.join(dir, file);
+  // The timestamp makes the page reload the image after it's replaced.
+  return `${pathToFileURL(full).href}?t=${Math.round(fs.statSync(full).mtimeMs)}`;
+}
+
+function removeCustomImage(kind) {
+  const dir = app.getPath('userData');
+  for (const f of fs.readdirSync(dir)) {
+    if (f.startsWith(`custom-${kind}.`)) fs.unlinkSync(path.join(dir, f));
+  }
+}
+
+ipcMain.handle('get-custom-image', (event, kind) => (CUSTOM_IMAGE_KINDS.includes(kind) ? findCustomImage(kind) : null));
+
+ipcMain.handle('pick-custom-image', async (event, kind) => {
+  if (!CUSTOM_IMAGE_KINDS.includes(kind)) return { ok: false, error: 'Unknown image kind' };
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: kind === 'logo' ? 'Choose a logo image' : 'Choose a background image',
+    properties: ['openFile'],
+    filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }],
+  });
+  if (result.canceled || !result.filePaths.length) return { ok: false, canceled: true };
+  try {
+    const source = result.filePaths[0];
+    removeCustomImage(kind);
+    const dest = path.join(app.getPath('userData'), `custom-${kind}${path.extname(source).toLowerCase()}`);
+    await fs.promises.copyFile(source, dest);
+    logEvent('info', `Custom ${kind} image set`);
+    return { ok: true, url: findCustomImage(kind) };
+  } catch (e) {
+    logEvent('error', `Could not set custom ${kind} image`, String(e));
+    return { ok: false, error: String(e.message || e) };
+  }
+});
+
+ipcMain.handle('remove-custom-image', (event, kind) => {
+  if (CUSTOM_IMAGE_KINDS.includes(kind)) removeCustomImage(kind);
+  return { ok: true };
+});
 
 // --- App lifecycle ---
 

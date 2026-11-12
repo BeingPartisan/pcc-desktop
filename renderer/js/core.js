@@ -133,6 +133,8 @@ function init(){
   document.getElementById('set-name').value = state.settings.name;
   document.getElementById('set-city').value = state.settings.weatherCity;
 
+  initPrefs();       // fills in any missing preferences with defaults
+  applyAppearance(); // theme, accent, layout… before anything is drawn
   startClock();
   initFlashcards();
   renderAll();
@@ -152,7 +154,7 @@ function renderAll() {
 function startClock(){ updateClock(); setInterval(updateClock, 1000); }
 function updateClock(){
   const now = new Date();
-  document.getElementById('hero-clock').textContent = now.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'}) + '  ·  ' + now.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+  document.getElementById('hero-clock').textContent = now.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'}) + '  ·  ' + now.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',hour12:!use24Hour()});
 }
 function renderGreeting(){
   const h = new Date().getHours();

@@ -6,18 +6,22 @@ const PAGES = {
   today: 'Today',
   focus: 'Focus',
   study: 'Study',
+  academics: 'Academics',
   money: 'Money',
   life: 'Life',
   launch: 'Launch',
   system: 'System',
 };
-const PAGE_ORDER = Object.keys(PAGES);
+// The pages currently on the rail, in rail order. Settings > Layout can
+// hide and reorder them (see applyRailLayout in appearance.js).
+let PAGE_ORDER = Object.keys(PAGES);
 
 let currentPage = 'today';
 const pagesVisited = { today: true };
 
 function navigate(page){
   if(!PAGES[page]) return;
+  if(!PAGE_ORDER.includes(page)) page = 'today'; // hidden pages fall back to Today
   const firstVisit = !pagesVisited[page];
   currentPage = page;
   pagesVisited[page] = true;
@@ -36,7 +40,7 @@ function navigate(page){
   if(page === 'system') loadSystemVitals();
 }
 
-// Ctrl+1 … Ctrl+7 jump straight to a page.
+// Ctrl+1 … Ctrl+8 jump straight to a page.
 document.addEventListener('keydown', e => {
   if(!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
   const n = Number(e.key);

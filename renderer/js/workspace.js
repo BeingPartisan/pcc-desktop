@@ -52,7 +52,7 @@ function renderAgenda(){
   if(!items.length) { el.innerHTML = '<div class="empty">No deadlines yet.</div>'; return; }
   el.innerHTML = items.map(a => `
     <div class="item-row">
-      <span class="pill" style="background:var(--accent-soft); color:var(--accent);">${parseLocalDate(a.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
+      <span class="pill" style="background:var(--accent-soft); color:var(--accent-text);">${parseLocalDate(a.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
       <span class="txt">${esc(a.title)}</span>
       <button class="btn btn-icon btn-danger" onclick="state.agenda=state.agenda.filter(x=>x.id!=='${a.id}'); Store.set('agenda', state.agenda); renderAgenda();">&times;</button>
     </div>
@@ -63,7 +63,12 @@ function renderAgenda(){
 // The timer is driven by a wall-clock end time (endsAt), not by counting
 // ticks, so it stays accurate when the window is hidden in the tray and
 // its timers get throttled.
+// Lengths come from Settings > General (applied by appearance.js).
 const POMO_MINUTES = { focus: 25, break: 5 };
+function setPomoMinutes(focus, brk){
+  POMO_MINUTES.focus = focus; POMO_MINUTES.break = brk;
+  if(!pomo.running) pomoReset(); // a running session keeps its current length
+}
 let pomo = {mode:'focus', remaining: 25*60, total: 25*60, running:false, timer:null, endsAt:0};
 function pomoToggle(){
   pomo.running = !pomo.running;

@@ -3,8 +3,15 @@ let isPaletteOpen = false;
 let paletteSelectionIdx = 0;
 let filteredCommands = [];
 
-const PALETTE_COMMANDS = [
-  ...PAGE_ORDER.map((page, i) => ({ id: 'go-' + page, title: PAGES[page], hint: `Ctrl ${i + 1}`, cat: 'Go to', action: () => navigate(page) })),
+// "Go to" entries are built on demand because the set of pages can change in Settings.
+function paletteCommands(){
+  return [
+    ...PAGE_ORDER.map((page, i) => ({ id: 'go-' + page, title: PAGES[page], hint: `Ctrl ${i + 1}`, cat: 'Go to', action: () => navigate(page) })),
+    ...PALETTE_ACTIONS,
+  ];
+}
+
+const PALETTE_ACTIONS = [
   { id: 'focus', title: 'Start focus timer', cat: 'Actions', action: () => { navigate('focus'); if(!pomo.running) pomoToggle(); } },
   { id: 'tasks', title: 'Add task', cat: 'Actions', action: () => { navigate('focus'); document.getElementById('task-input').focus(); } },
   { id: 'notes', title: 'New note', cat: 'Actions', action: () => { navigate('study'); addNote(); } },
@@ -63,7 +70,7 @@ function filterPalette() {
   } else if (lowerQuery.startsWith('yt:')) {
     filteredCommands = [{ id: 'yt', title: `Search YouTube for "${query.substring(3).trim()}"`, cat: 'Web', action: () => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query.substring(3).trim())}`, '_blank') }];
   } else {
-    filteredCommands = PALETTE_COMMANDS.filter(c => c.title.toLowerCase().includes(lowerQuery) || c.cat.toLowerCase().includes(lowerQuery));
+    filteredCommands = paletteCommands().filter(c => c.title.toLowerCase().includes(lowerQuery) || c.cat.toLowerCase().includes(lowerQuery));
     if (query.length > 0) {
       filteredCommands.push({ id: 'search', title: `Search the web for "${query}"`, cat: 'Web', action: () => window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank') });
     }

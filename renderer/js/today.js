@@ -156,6 +156,11 @@ function renderTodayStatus(){
     { page: 'life',  label: 'Habits', value: habits.length ? `${habitsDone} / ${habits.length} today` : 'none tracked', cls: '' },
     { page: 'study', label: 'Flashcards', value: `${state.flashcards.length} cards`, cls: '' },
   ];
+  // Attendance appears once it has been synced from Digiicampus.
+  const att = campus.data && campus.data.attendance;
+  if(att && att.total){
+    chips.unshift({ page: 'academics', label: 'Attendance', value: `${Math.round(att.percentage)}%`, cls: att.percentage < attendanceTarget() ? 'warn' : '' });
+  }
   document.getElementById('today-status').innerHTML = chips.map(c => `
     <button class="status-chip ${c.cls}" onclick="navigate('${c.page}')">
       <span>${c.label}</span><b>${esc(c.value)}</b>

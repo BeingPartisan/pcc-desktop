@@ -35,13 +35,18 @@ module.exports = function registerCampus({ logEvent, getMainWindow }) {
 
   // --- Token ---
 
-  function tokenExpiry(token) {
+  // The token is a JWT; its payload carries the expiry and the user's id.
+  function tokenClaims(token) {
     try {
-      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf-8'));
-      return payload.exp ? payload.exp * 1000 : null;
+      return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf-8'));
     } catch (e) {
-      return null;
+      return {};
     }
+  }
+
+  function tokenExpiry(token) {
+    const { exp } = tokenClaims(token);
+    return exp ? exp * 1000 : null;
   }
 
   // Returns { token, expiresAt } for a signed-in, unexpired session, else null.
@@ -109,9 +114,104 @@ module.exports = function registerCampus({ logEvent, getMainWindow }) {
     return { name: clean(ev.name), type: clean(ev.type).toLowerCase(), starts: ev.starts, ends: ev.ends || ev.starts };
   }
 
-  async function sync() {
+  // --- Attendance and results ---
+
+  // Attendance for one term -> totals plus one row per course. `missed`
+  // lists the dates of counted absences.
+  function toAttendance(raw) {
+    if (!raw || !Array.isArray(raw.courseAttendance)) return null;
+    return {
+      termId: raw.termId,
+      present: raw.totalPresent || 0,
+      absent: raw.totalAbsent || 0,
+      total: raw.totalClasses || 0,
+      percentage: raw.percentage || 0,
+      courses: raw.courseAttendance.map((c) => {
+        const components = c.components || [];
+        const sessions = components.flatMap((comp) => comp.attendance || []);
+        return {
+          name: clean(c.courseName),
+          code: clean(components[0] && components[0].courseCode),
+          credits: c.courseCredits || null,
+          present: c.totalPresent || 0,
+          absent: c.totalAbsent || 0,
+          total: c.totalClasses || 0,
+          scheduled: sessions.length, // every session in the term, including ones not held yet
+          percentage: c.percentage || 0,
+          missed: sessions
+            .filter((s) => s && s.status === 'ABSENT' && !s.doNotConsiderForAttendance)
+            .map((s) => String(s.lessonStartTime || '').slice(0, 10))
+            .filter((d) => /^\d{4}-\d\d-\d\d$/.test(d))
+            .sort(),
+        };
+      }),
+    };
+  }
+
+  // One declared term's result -> SGPA plus a row per course.
+  function toTermResult(raw, listEntry) {
+    return {
+      examId: listEntry.examId,
+      termId: listEntry.termId,
+      name: clean(raw.termName || listEntry.termName || listEntry.examName),
+      declaredAt: raw.appliedAt || listEntry.appliedAt || null,
+      sgpa: typeof raw.sgpa === 'number' ? raw.sgpa : null,
+      courses: (raw.courses || []).map((c) => ({
+        name: clean(c.courseName),
+        code: clean(c.courseCode),
+        credits: c.courseCredits || 0,
+        marks: typeof c.marks === 'number' ? c.marks : null,
+        grade: clean(c.grade),
+        gradePoint: typeof c.gradePoint === 'number' ? c.gradePoint : null,
+        failed: !!c.hasFailed,
+        counts: c.considerForSgpaCalculation !== false,
+      })),
+    };
+  }
+
+  // Declared results don't change, so a term already in the cache isn't
+  // fetched again unless `refetchAll` is set.
+  async function fetchResults(userId, token, cached, refetchAll) {
+    const list = await api(`/api/v2/resultDeclaration/student/terms/${userId}`, token);
+    const known = {};
+    if (!refetchAll && cached && Array.isArray(cached.terms)) {
+      for (const t of cached.terms) known[t.examId] = t;
+    }
+    const terms = [];
+    for (const entry of list.terms || []) {
+      if (!entry.isRegularDeclared) continue;
+      if (known[entry.examId]) {
+        terms.push(known[entry.examId]);
+        continue;
+      }
+      const raw = await api(`/api/v2/resultDeclaration/student/term/${entry.examId}/${userId}`, token);
+      terms.push(toTermResult(raw, entry));
+    }
+    return {
+      cgpa: typeof list.overallCgpa === 'number' ? list.overallCgpa : null,
+      totalCredits: list.totalCredits || null,
+      terms,
+    };
+  }
+
+  // Runs one optional part of the sync. A failure there is logged and the
+  // previous copy kept, so it never costs the timetable; a lapsed sign-in
+  // still stops the whole sync.
+  async function optionalPart(label, fallback, work) {
+    try {
+      return await work();
+    } catch (e) {
+      if (e instanceof SignInRequired) throw e;
+      logEvent('warn', `Digiicampus: could not load ${label}`, String(e.message || e));
+      return fallback;
+    }
+  }
+
+  async function sync(options = {}) {
     const auth = await getToken();
     if (!auth) return { ok: false, needsSignIn: true };
+    const userId = tokenClaims(auth.token).ukid;
+    const previous = readCache() || {};
 
     const from = mondayOfThisWeek();
     const to = new Date(from);
@@ -131,13 +231,27 @@ module.exports = function registerCampus({ logEvent, getMainWindow }) {
       }
 
       // The university calendar is a bonus; a failure here shouldn't lose the classes.
-      let events = [];
-      try {
-        events = await api('/rest/institutionalCalendar/events', auth.token);
-      } catch (e) {
-        if (e instanceof SignInRequired) throw e;
-        logEvent('warn', 'Digiicampus: could not load the university calendar', String(e.message || e));
+      const events = await optionalPart('the university calendar', [], () =>
+        api('/rest/institutionalCalendar/events', auth.token)
+      );
+
+      // The current term is whichever one most of the synced lessons belong to.
+      const termCounts = {};
+      for (const l of Array.isArray(lessons) ? lessons : []) {
+        const termId = l.termId || (l.classList && l.classList[0] && l.classList[0].termId);
+        if (termId) termCounts[termId] = (termCounts[termId] || 0) + 1;
       }
+      const currentTermId = Object.keys(termCounts).sort((a, b) => termCounts[b] - termCounts[a])[0];
+
+      const attendance = await optionalPart('attendance', previous.attendance || null, async () => {
+        if (!userId || !currentTermId) return previous.attendance || null;
+        return toAttendance(await api(`/api/attendance/student/${userId}/term/${currentTermId}`, auth.token));
+      });
+
+      const results = await optionalPart('results', previous.results || null, async () => {
+        if (!userId) return previous.results || null;
+        return fetchResults(userId, auth.token, previous.results, !!options.refetchResults);
+      });
 
       const fromStr = ymd(from);
       const toStr = ymd(to);
@@ -152,10 +266,17 @@ module.exports = function registerCampus({ logEvent, getMainWindow }) {
         events: (Array.isArray(events) ? events : [])
           .map(toEvent)
           .filter((e) => e && e.ends >= fromStr && e.starts <= toStr),
+        attendance,
+        results,
       };
 
       fs.writeFileSync(CACHE_FILE, JSON.stringify(data), 'utf-8');
-      logEvent('info', `Digiicampus sync complete: ${data.sessions.length} session(s), ${data.events.length} calendar entr(ies)`);
+      logEvent(
+        'info',
+        `Digiicampus sync complete: ${data.sessions.length} session(s), ${data.events.length} calendar entr(ies), ` +
+          `attendance ${attendance ? 'for ' + attendance.courses.length + ' course(s)' : 'unavailable'}, ` +
+          `results ${results ? 'for ' + results.terms.length + ' term(s)' : 'unavailable'}`
+      );
       return { ok: true, data };
     } catch (e) {
       if (e instanceof SignInRequired) {
@@ -248,6 +369,6 @@ module.exports = function registerCampus({ logEvent, getMainWindow }) {
   });
   ipcMain.handle('campus-data', () => readCache());
   ipcMain.handle('campus-connect', () => connect());
-  ipcMain.handle('campus-sync', () => sync());
+  ipcMain.handle('campus-sync', (event, options) => sync(options || {}));
   ipcMain.handle('campus-disconnect', () => disconnect());
 };

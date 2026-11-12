@@ -20,6 +20,7 @@ function campusEventsOn(dateStr){ return (campus.data.events || []).filter(e => 
 // "09:00" -> "9:00 AM"
 function formatClock(hhmm){
   const [h, m] = String(hhmm).split(':').map(Number);
+  if(use24Hour()) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 }
 function clockToMinutes(hhmm){ const [h, m] = String(hhmm).split(':').map(Number); return h * 60 + m; }
@@ -91,6 +92,8 @@ async function disconnectCampus(){
 function refreshCampusViews(){
   renderTimetable(); // also refreshes Today's class list
   renderCampusSettings();
+  renderAcademics();
+  renderTodayStatus();
 }
 
 /* ----- Settings section ----- */

@@ -5,12 +5,40 @@ function addHabit(){
   state.habits.list.push({id:uid(), name:name});
   document.getElementById('habit-input').value=''; Store.set('habits', state.habits); renderHabits();
 }
+// Streaks are worked out from the habit log, which is keyed by date.
+//   current: consecutive days ending today (or yesterday, if today isn't
+//            ticked yet, so a streak isn't shown as broken mid-day)
+//   best:    the longest run ever recorded
+function habitStreaks(habitId){
+  const done = Object.keys(state.habits.log).filter(d => state.habits.log[d] && state.habits.log[d][habitId]).sort();
+  const doneSet = new Set(done);
+  const dayBefore = (ds) => { const d = parseLocalDate(ds); d.setDate(d.getDate() - 1); return todayStr(d); };
+
+  let cursor = todayStr();
+  if(!doneSet.has(cursor)) cursor = dayBefore(cursor);
+  let current = 0;
+  while(doneSet.has(cursor)){ current++; cursor = dayBefore(cursor); }
+
+  let best = 0, run = 0, prev = null;
+  for(const d of done){
+    run = prev && dayBefore(d) === prev ? run + 1 : 1;
+    if(run > best) best = run;
+    prev = d;
+  }
+  return { current, best };
+}
+
+function habitStreakCell(habitId){
+  const { current, best } = habitStreaks(habitId);
+  return `<td class="habit-streak ${current >= 3 ? 'hot' : ''}"><b>${current}</b> ${current === 1 ? 'day' : 'days'}${best > current ? `<span>best ${best}</span>` : ''}</td>`;
+}
+
 function renderHabits(){
   const table = document.getElementById('habit-table');
   if(!state.habits.list.length){ table.innerHTML = '<tr><td class="empty">No habits yet.</td></tr>'; return; }
   
   const days = Array.from({length:7}, (_,i) => { let d=new Date(); d.setDate(d.getDate()-(6-i)); return d; });
-  const head = '<tr><th></th>' + days.map(d => `<th>${d.toLocaleDateString(undefined,{weekday:'narrow'})}</th>`).join('') + '</tr>';
+  const head = '<tr><th></th>' + days.map(d => `<th>${d.toLocaleDateString(undefined,{weekday:'narrow'})}</th>`).join('') + '<th class="habit-streak-head">Streak</th></tr>';
   
   const rows = state.habits.list.map(h => {
     const cells = days.map(d => {
@@ -21,6 +49,7 @@ function renderHabits(){
     return `<tr>
       <td class="habit-name">${esc(h.name)} <button class="btn-icon" style="background:transparent; border:none; padding:0 4px;" onclick="state.habits.list=state.habits.list.filter(x=>x.id!=='${h.id}'); Store.set('habits', state.habits); renderHabits();">&times;</button></td>
       ${cells}
+      ${habitStreakCell(h.id)}
     </tr>`;
   }).join('');
   table.innerHTML = head + rows;

@@ -1,5 +1,5 @@
 /* ---------- Settings & Search ---------- */
-function openSettings(){ document.getElementById('settings-overlay').classList.add('open'); loadMailSettingsUI(); loadHotkeyUI(); loadAutostartUI(); loadAboutUI(); renderCampusSettings(); }
+function openSettings(){ document.getElementById('settings-overlay').classList.add('open'); loadMailSettingsUI(); loadHotkeyUI(); loadAutostartUI(); loadAboutUI(); renderCampusSettings(); renderAppearanceSettings(); }
 
 // --- Autostart ---
 
@@ -208,7 +208,7 @@ function startHotkeyCapture(){
     window.pcc.setHotkey(accelerator).then(result => {
       if(result.ok){
         status.textContent = 'Hotkey updated.';
-        status.style.color = 'var(--accent)';
+        status.style.color = 'var(--accent-text)';
       } else {
         status.textContent = result.error || 'Failed to set hotkey.';
         status.style.color = 'var(--red)';

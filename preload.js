@@ -31,6 +31,14 @@ contextBridge.exposeInMainWorld('pcc', {
   setMailConfig: (config) => ipcRenderer.invoke('set-mail-config', config),
   scanEmail: () => ipcRenderer.invoke('scan-email'),
 
+  // Appearance
+  getSystemAccent: () => ipcRenderer.invoke('get-system-accent'),
+  setThemeSource: (source) => ipcRenderer.invoke('set-theme-source', source),
+  setAppName: (name) => ipcRenderer.invoke('set-app-name', name),
+  getCustomImage: (kind) => ipcRenderer.invoke('get-custom-image', kind),
+  pickCustomImage: (kind) => ipcRenderer.invoke('pick-custom-image', kind),
+  removeCustomImage: (kind) => ipcRenderer.invoke('remove-custom-image', kind),
+
   // About
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
@@ -39,7 +47,7 @@ contextBridge.exposeInMainWorld('pcc', {
   campusStatus: () => ipcRenderer.invoke('campus-status'),
   campusData: () => ipcRenderer.invoke('campus-data'),
   campusConnect: () => ipcRenderer.invoke('campus-connect'),
-  campusSync: () => ipcRenderer.invoke('campus-sync'),
+  campusSync: (options) => ipcRenderer.invoke('campus-sync', options),
   campusDisconnect: () => ipcRenderer.invoke('campus-disconnect'),
 
   // Console panel

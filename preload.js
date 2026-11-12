@@ -31,6 +31,17 @@ contextBridge.exposeInMainWorld('pcc', {
   setMailConfig: (config) => ipcRenderer.invoke('set-mail-config', config),
   scanEmail: () => ipcRenderer.invoke('scan-email'),
 
+  // About
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+
+  // Digiicampus timetable sync
+  campusStatus: () => ipcRenderer.invoke('campus-status'),
+  campusData: () => ipcRenderer.invoke('campus-data'),
+  campusConnect: () => ipcRenderer.invoke('campus-connect'),
+  campusSync: () => ipcRenderer.invoke('campus-sync'),
+  campusDisconnect: () => ipcRenderer.invoke('campus-disconnect'),
+
   // Console panel
   getLogHistory: () => ipcRenderer.invoke('get-log-history'),
   onLogEntry: (callback) => {

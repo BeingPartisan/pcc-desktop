@@ -4,2210 +4,649 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Command Center</title>
-<!-- Web fonts load without blocking first paint; offline, the system fallbacks in the font stacks are used. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-<style>
-
-  :root[data-theme="dark"]{
-    --bg:#0A0C12; --panel:#12151F; --panel-alt:#181C28; --ink:#E8EAF2; --ink-dim:#7A80A0;
-    --line:#242841; --accent:#7274F2; --accent-soft:#1C1E40; --cyan:#34D9DE; --cyan-soft:#102B2E;
-    --amber:#F0B429; --amber-soft:#2C2210; --red:#F2576E; --red-soft:#341A22;
-    --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px rgba(0,0,0,.35);
-    --radius: 12px;
-  }
-
-  *{box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
-
-  body{
-    margin:0; 
-    background-color: rgba(10, 12, 18, 0.6); 
-    background-image: 
-      radial-gradient(900px 480px at 100% -10%, rgba(28, 30, 64, 0.8), transparent 60%),
-      radial-gradient(700px 420px at -5% 10%, rgba(16, 43, 46, 0.8), transparent 55%);
-    color:var(--ink);
-    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;
-    
-    /* ADDED: Lock the body height and stop it from scrolling globally */
-    height: 100vh;
-    overflow: hidden; 
-    display: flex;
-    flex-direction: column;
-  }
-
-  .mono{font-family:'JetBrains Mono',ui-monospace,'SF Mono','Cascadia Code',Menlo,Consolas,monospace;}
-  a{color:inherit;}
-  button{font-family:inherit; cursor:pointer;}
-  input,textarea,select{
-    font-family:inherit; color:var(--ink); background:var(--panel-alt); 
-    border:1px solid var(--line); border-radius:7px; padding:8px 10px; font-size:13.5px;
-    transition: border-color 0.2s;
-  }
-  input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{
-    outline:none; border-color:var(--accent);
-  }
-  ::placeholder{color:var(--ink-dim); opacity:0.75;}
-
-  .blink{animation:blink 1.2s steps(2,start) infinite;}
-  @keyframes blink{ to{ visibility:hidden; } }
-
-  .btn{
-    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.03em;
-    border:1px solid var(--line); background:var(--panel-alt); color:var(--ink);
-    border-radius:7px; padding:8px 12px; transition:background .12s,color .12s,border-color .12s,transform .08s;
-  }
-  .btn:hover{border-color:var(--accent); color:var(--accent);}
-  .btn:active{transform:translateY(1px);}
-  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--cyan)); color:#fff; border-color:transparent;}
-  .btn-primary:hover{opacity:.88; color:#fff;}
-  .btn-icon{padding:8px 10px; font-size:14px; line-height:1;}
-  .btn-danger:hover{border-color:var(--red); color:var(--red);}
-  .btn-success{border-color:var(--cyan); color:var(--cyan);}
-  .btn-success:hover{background:var(--cyan-soft);}
-
-  /* Topbar */
-  #topbar{
-    /* Removed sticky positioning, it is now handled by flexbox */
-    z-index:40; 
-    background:rgba(10,12,18,.001); backdrop-filter:blur(10px); 
-    border-bottom:1px solid var(--line);
-    display:flex; align-items:center; justify-content: space-between; 
-    padding:16px 32px;
-    
-    /* ADDED: Extra right padding (approx 140px) to keep your icons away from OS window controls */
-    padding-right: 150px; 
-    flex-shrink: 0;
-    -webkit-app-region: drag; 
-  }
-
-  /* ADDED: The new scrollable area class */
-  .scroll-area {
-    flex: 1;
-    overflow-y: auto;
-    padding-bottom: 100px;
-  }
-
-  /* ADDED: A custom, sleek scrollbar to match your dark theme perfectly */
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--ink-dim); }
-
-  /* ADD THIS: Ensures your inputs and buttons don't become unclickable drag zones */
-  #search-wrap, 
-  .topbar-actions button {
-    -webkit-app-region: no-drag;
-  }
-
-  #logo{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:16px; letter-spacing:1px; display:flex; align-items:center; gap:2px;}
-  #logo span{background:linear-gradient(135deg,var(--accent),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-  #logo .tag{font-weight:400; color:var(--ink-dim); font-size:10px; letter-spacing:.08em; margin-left:6px; text-transform: uppercase;}
-  
-  #search-wrap{
-    flex: 0 1 400px; display:flex; align-items:center; gap:8px;
-    background:var(--panel-alt); border:1px solid var(--line); border-radius:8px; padding:0 12px;
-  }
-  #search-wrap:focus-within{border-color:var(--accent);}
-  #search-wrap .prompt{font-family:'JetBrains Mono',monospace; color:var(--accent); font-size:14px;}
-  #search-input{flex:1; border:none; background:transparent; padding:10px 4px; font-size:14px;}
-  #search-input:focus-visible{outline:none;}
-  .topbar-actions{display:flex; gap:12px; align-items:center;}
-  .cmd-hint { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-dim); border: 1px solid var(--line); padding: 2px 6px; border-radius: 4px; background: var(--bg); margin-left: auto; }
-
-  /* Hero */
-  #hero{ margin:32px; display:flex; flex-direction:column; gap:8px; }
-  #hero-greeting{font-size:28px; font-weight:600; letter-spacing:-0.5px;}
-  #hero-clockline{font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--ink-dim);}
-
-  /* Layout Sections */
-  .section-title {
-    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight: 600; 
-    color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.06em;
-    margin: 40px 32px 16px; border-bottom: 1px solid var(--line); padding-bottom: 8px;
-  }
-
-  /* Grid */
-  .grid-container {
-    display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
-    gap:24px; padding:0 32px;
-  }
-  .card{
-    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
-    padding:24px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:16px;
-  }
-  .card.span2{grid-column:span 2;}
-  @media (max-width:800px){ .card.span2{grid-column:span 1;} .grid-container{grid-template-columns:1fr;} }
-
-  .card-head{display:flex; align-items:center; justify-content:space-between; gap:10px;}
-  .card-title{
-    font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; 
-    color:var(--ink-dim); display:flex; align-items:center; gap:8px; text-transform:uppercase; letter-spacing:.06em;
-  }
-  .card-title .dot{width:6px; height:6px; border-radius:50%; background:var(--accent);}
-  .card-title.dot-cyan .dot{background:var(--cyan);}
-  .card-title.dot-amber .dot{background:var(--amber);}
-  .card-title.dot-red .dot{background:var(--red);}
-  .empty{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-dim); padding:10px 0; font-style:italic;}
-
-  .row-form{display:flex; gap:8px; flex-wrap:wrap;}
-  .row-form input, .row-form select{flex:1; min-width:100px;}
-
-  /* Components: Lists, Pills, Notes */
-  .list{display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto; padding-right:4px;}
-  .item-row{display:flex; align-items:center; justify-content: space-between; gap:12px; padding:10px 12px; border-radius:8px; background:var(--panel-alt); border:1px solid var(--line);}
-  .item-row.done{opacity:.55;}
-  .item-row .txt{flex:1; font-size:14px;}
-  .item-row.done .txt{text-decoration:line-through;}
-  .chk{width:18px; height:18px; accent-color:var(--accent); cursor:pointer;}
-  
-  .pill{font-family:'JetBrains Mono',monospace; font-size:10px; padding:4px 8px; border-radius:12px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;}
-  .pill.high{background:var(--red-soft); color:var(--red);}
-  .pill.med{background:var(--amber-soft); color:var(--amber);}
-  .pill.low{background:var(--accent-soft); color:var(--accent);}
-  .pill.interactive { cursor:pointer; user-select:none; transition:transform 0.1s, opacity 0.2s; }
-  .pill.interactive:hover { opacity: 0.8; }
-  .pill.interactive:active { transform:scale(0.95); }
-
-  /* Finance specific */
-  .finance-amt { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--cyan); }
-  .finance-amt.expense { color: var(--ink); }
-  .finance-summary { display: flex; flex-direction: column; background: var(--panel-alt); padding: 16px; border-radius: 8px; border: 1px dashed var(--line); margin-top: 8px; gap: 12px;}
-  .finance-summary .label { font-size: 12px; color: var(--ink-dim); }
-  .fin-budget-row { display: flex; justify-content: space-between; align-items: center; }
-  .fin-budget-input { width: 80px; text-align: right; font-family: 'JetBrains Mono', monospace; padding: 4px; font-size: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); }
-  .budget-bar-bg { height: 8px; border-radius: 4px; background: var(--bg); overflow: hidden; border: 1px solid var(--line); }
-  .budget-bar-fill { height: 100%; transition: width 0.4s ease, background 0.4s ease; }
-  .cmd-group-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 0 4px; background: transparent; position: sticky; top: 0; z-index: 2;}
-
-  /* Active Recall / Flashcards */
-  .fc-container { perspective: 1000px; width: 100%; height: 160px; cursor: pointer; margin-bottom: 8px; }
-  .fc-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; }
-  .fc-container.flipped .fc-inner { transform: rotateY(180deg); }
-  .fc-front, .fc-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; border-radius: 12px; box-shadow: var(--shadow); }
-  .fc-front { background: var(--panel-alt); border: 1px solid var(--line); }
-  .fc-back { transform: rotateY(180deg); background: linear-gradient(135deg, var(--accent-soft), var(--cyan-soft)); border: 1px solid var(--accent); }
-  .fc-term { font-weight: 600; font-size: 18px; color: var(--ink); }
-  .fc-def { font-size: 14px; line-height: 1.5; color: var(--ink); }
-  .fc-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-dim); margin-top: 12px; text-transform: uppercase; letter-spacing: 1px; }
-
-  /* Notes */
-  .note-card{border:1px solid var(--line); border-radius:9px; background:var(--panel-alt); padding:16px;}
-  .note-card input.note-title{width:100%; border:none; background:transparent; font-weight:600; font-size:14px; padding:0 0 8px 0; border-bottom: 1px dashed var(--line); border-radius:0; margin-bottom:12px;}
-  .note-card textarea.note-body{width:100%; border:none; background:transparent; resize:vertical; min-height:80px; font-size:13.5px; padding:0; line-height:1.6;}
-  
-  /* Links */
-  .link-tile{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; background:var(--panel-alt); border:1px solid var(--line); text-decoration:none; position:relative;}
-  .link-tile:hover{border-color:var(--cyan); transform: translateY(-1px); transition: all 0.2s;}
-  .link-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px;}
-
-  .muted{color:var(--ink-dim);}
-
-  /* System Vitals */
-  .vitals-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-bottom:12px;}
-  .vitals-metric{background:var(--panel-alt); border:1px solid var(--line); border-radius:10px; padding:10px 12px;}
-  .vitals-label{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-dim); display:flex; justify-content:space-between; margin-bottom:6px;}
-  .vitals-label span{color:var(--ink); font-weight:600;}
-  .vitals-metric svg{width:100%; height:44px; display:block;}
-  .vitals-disks{display:flex; flex-direction:column; gap:8px;}
-  .vitals-disk-row{display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-dim);}
-  .vitals-disk-row .vdname{width:36px; flex-shrink:0; color:var(--ink);}
-  .vitals-disk-row .budget-bar-bg{flex:1;}
-  .vitals-disk-row .vdpct{width:110px; text-align:right; flex-shrink:0;}
-
-  /* Games Library */
-  .games-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px;}
-  .game-tile{display:flex; flex-direction:column; border-radius:10px; background:var(--panel-alt); border:1px solid var(--line); overflow:hidden; transition: all 0.2s;}
-  .game-tile:hover{border-color:var(--cyan); transform: translateY(-2px);}
-  .game-tile-icon{height:90px; display:flex; align-items:center; justify-content:center; background:var(--panel); font-size:40px;}
-  .game-tile-icon img{width:56px; height:56px; object-fit:contain;}
-  .game-tile-body{padding:10px 12px 12px; display:flex; flex-direction:column; gap:4px;}
-  .game-tile-name{font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .game-tile-meta{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-dim); display:flex; justify-content:space-between;}
-  .game-tile-launch{margin-top:6px; width:100%;}
-
-  /* Pomodoro */
-  .pomo-display{font-family:'JetBrains Mono',monospace; font-size:48px; font-weight:700; text-align:center; color:var(--ink);}
-  .pomo-mode{text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-dim);}
-  .pomo-bar-bg{height:6px; background:var(--line); border-radius:3px; overflow:hidden;}
-  .pomo-bar-fill{height:100%; background:linear-gradient(90deg,var(--accent),var(--cyan)); transition:width 1s linear;}
-  
-  /* Habits/Goals integrated table */
-  .habit-table{width:100%; border-collapse:collapse; font-size:13px;}
-  .habit-table th{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-dim); font-weight:500; padding:8px 4px; text-align:center;}
-  .habit-table td{padding:6px 4px; text-align:center;}
-  .habit-name{text-align:left !important; font-size:13.5px; white-space:nowrap; padding-right: 16px !important;}
-  .hcell{width:26px; height:26px; border-radius:7px; border:1px solid var(--line); background:var(--panel-alt); cursor:pointer; display:inline-block; transition:all 0.1s;}
-  .hcell:hover{border-color:var(--accent);}
-  .hcell.on{background:linear-gradient(135deg,var(--accent),var(--cyan)); border-color:transparent;}
-
-  /* Floating Aesthetic Widget */
-  #aesthetic-widget { position: fixed; bottom: 24px; right: 24px; width: 320px; height: 180px; border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--line); z-index: 50; transition: transform 0.3s ease, box-shadow 0.3s ease; background: var(--panel); }
-  #aesthetic-widget:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
-  .widget-bg { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0.3; transition: opacity 0.3s; filter: grayscale(30%); }
-  #aesthetic-widget:hover .widget-bg { opacity: 0.5; filter: grayscale(0%); }
-  .widget-content { position: absolute; inset: 0; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; background: linear-gradient(to top, rgba(10,12,18,0.95), rgba(10,12,18,0.1)); }
-  .widget-quote { font-family:'JetBrains Mono',monospace; font-size: 11.5px; line-height: 1.6; color: var(--ink); text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-  .widget-controls { position: absolute; top: 12px; right: 12px; display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; }
-  #aesthetic-widget:hover .widget-controls { opacity: 1; }
-  .widget-controls button { background: rgba(10,12,18,0.8); border: 1px solid var(--line); color: var(--ink-dim); padding: 5px 10px; font-size: 10px; border-radius: 6px; font-family:'JetBrains Mono',monospace; backdrop-filter: blur(4px); transition: all 0.2s; }
-  .widget-controls button:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
-
-  /* Command Palette Modal */
-  #cmd-palette-overlay { position:fixed; inset:0; background:rgba(5,6,10,.7); backdrop-filter:blur(6px); display:none; align-items:flex-start; justify-content:center; padding-top:15vh; z-index:999; }
-  #cmd-palette-overlay.open { display:flex; }
-  #cmd-palette { background:var(--panel); width:100%; max-width:640px; border-radius:12px; border:1px solid var(--accent); box-shadow:0 0 40px rgba(114, 116, 242, 0.15); display:flex; flex-direction:column; overflow:hidden;}
-  #cmd-input-large { border:none; background:transparent; font-size:18px; padding:20px 24px 10px; color:var(--ink); width:100%; outline:none; font-family:'JetBrains Mono', monospace;}
-  .cmd-hint-text { font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--ink-dim); padding:0 24px 16px; opacity:0.6; border-bottom:1px solid var(--line); }
-  #cmd-results { max-height:360px; overflow-y:auto; display:flex; flex-direction:column; padding-bottom: 8px;}
-  .cmd-item { padding:10px 24px; cursor:pointer; font-size:14px; border-left:3px solid transparent; display:flex; justify-content:space-between; align-items:center; }
-  .cmd-item:hover, .cmd-item.selected { background:var(--panel-alt); border-left-color:var(--cyan); color:var(--cyan); }
-
-  /* Settings overlay */
-  #settings-overlay{position:fixed; inset:0; background:rgba(5,6,10,.6); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:100;}
-  #settings-overlay.open{display:flex;}
-  #settings-modal{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:32px; width:100%; max-width:400px; max-height:88vh; overflow-y:auto; display:flex; flex-direction:column; gap:20px; box-shadow:var(--shadow);}
-  #settings-modal > *{flex-shrink:0;}
-
-  /* Console overlay */
-  #console-overlay{position:fixed; inset:0; background:rgba(5,6,10,.6); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:100;}
-  #console-overlay.open{display:flex;}
-  #console-modal{background:#05060A; border:1px solid var(--line); border-radius:14px; width:100%; max-width:920px; height:76vh; display:flex; flex-direction:column; box-shadow:var(--shadow); overflow:hidden;}
-  .console-header{display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--panel); flex-shrink:0;}
-  .console-title{font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:8px; color:var(--ink);}
-  .console-title .dot-live{width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 6px var(--cyan); animation: console-pulse 1.6s infinite;}
-  @keyframes console-pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
-  .console-controls{display:flex; gap:6px; align-items:center;}
-  .console-filter-btn{font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:4px 10px; border-radius:6px; border:1px solid var(--line); background:transparent; color:var(--ink-dim); cursor:pointer;}
-  .console-filter-btn:hover{border-color:var(--cyan);}
-  .console-filter-btn.active{border-color:var(--cyan); color:var(--cyan); background:var(--cyan-soft);}
-  #console-body{flex:1; overflow-y:auto; padding:10px 16px; font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.65;}
-  .console-line{display:flex; gap:10px; padding:1px 0; white-space:pre-wrap; word-break:break-word;}
-  .console-line .ctime{color:var(--ink-dim); flex-shrink:0; opacity:.55;}
-  .console-line.level-info .cmsg{color:var(--ink);}
-  .console-line.level-warn .cmsg{color:var(--amber);}
-  .console-line.level-error .cmsg{color:var(--red);}
-  .console-line .cmeta{color:var(--ink-dim); opacity:.65; margin-left:6px;}
-  .console-empty{color:var(--ink-dim); font-style:italic; opacity:.5; font-family:'JetBrains Mono',monospace; font-size:12px;}
-
-  /* Timetable */
-  .tt-wrap{overflow-x:auto;}
-  .tt-table{width:100%; border-collapse:collapse; font-size:12.5px; min-width:640px;}
-  .tt-table th{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.05em; padding:8px 6px; text-align:left; border-bottom:1px solid var(--line);}
-  .tt-table td{padding:6px; vertical-align:top; border-bottom:1px solid var(--line);}
-  .tt-day-cell{font-weight:600; font-size:12.5px; white-space:nowrap; padding-right:10px !important;}
-  .tt-table tr.tt-today{background:var(--panel-alt);}
-  .tt-table tr.tt-today .tt-day-cell{color:var(--cyan);}
-  .tt-slot{border-radius:7px; padding:6px 8px; min-width:120px; border-left:3px solid var(--line); background:var(--panel-alt);}
-  .tt-slot .tt-subject{font-weight:600; font-size:12px; line-height:1.3;}
-  .tt-slot .tt-meta{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--ink-dim); margin-top:2px;}
-  .tt-empty{color:var(--ink-dim); font-size:11px; font-style:italic; opacity:.5;}
-  .tt-overrides{display:flex; flex-direction:column; gap:6px; margin-top:4px;}
-  .tt-override-chip{display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; background:var(--amber-soft); border:1px dashed var(--amber); font-size:12px;}
-  .tt-override-chip .txt{flex:1;}
-
-  /* Pending Updates */
-  .pending-row{display:flex; flex-direction:column; gap:6px; padding:12px; border-radius:8px; background:var(--panel-alt); border:1px solid var(--line);}
-  .pending-row .ptop{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
-  .pending-row .psubject{font-size:13.5px; font-weight:600;}
-  .pending-row .pmeta{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-dim);}
-  .pending-row .psnippet{font-size:12.5px; color:var(--ink-dim); line-height:1.5;}
-  .pending-row .pactions{display:flex; gap:8px; justify-content:flex-end;}
-  .pending-error{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--amber); background:var(--amber-soft); border:1px solid var(--amber); border-radius:8px; padding:10px 12px;}
-
-  /* Toast */
-  #toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--bg); font-family:'JetBrains Mono',monospace; font-size:12px; padding:10px 20px; border-radius:8px; z-index:200; opacity:0; transition:opacity .3s; font-weight:600;}
-  #toast.show{opacity:1; transform:translate(-50%, -10px);}
-</style>
+<!-- Fonts are bundled in renderer/fonts, so nothing is fetched from the internet -->
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
+<!-- Icon rail: one button per page, console and settings at the bottom -->
+<nav class="rail" aria-label="Pages">
+  <div class="rail-logo" aria-hidden="true">P</div>
+
+  <button class="rail-btn active" data-page="today" data-label="Today" aria-label="Today" onclick="navigate('today')">
+    <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+  </button>
+  <button class="rail-btn" data-page="focus" data-label="Focus" aria-label="Focus" onclick="navigate('focus')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+  </button>
+  <button class="rail-btn" data-page="study" data-label="Study" aria-label="Study" onclick="navigate('study')">
+    <svg viewBox="0 0 24 24"><path d="M5 4h13v15H6.5a1.5 1.5 0 0 0 0 3H18"/><path d="M5 4v16.5"/><path d="M9 8h5"/></svg>
+  </button>
+  <button class="rail-btn" data-page="money" data-label="Money" aria-label="Money" onclick="navigate('money')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M15 15h2"/></svg>
+  </button>
+  <button class="rail-btn" data-page="life" data-label="Life" aria-label="Life" onclick="navigate('life')">
+    <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+  </button>
+  <button class="rail-btn" data-page="launch" data-label="Launch" aria-label="Launch" onclick="navigate('launch')">
+    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg>
+  </button>
+  <button class="rail-btn" data-page="system" data-label="System" aria-label="System" onclick="navigate('system')">
+    <svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+  </button>
+
+  <div class="rail-spacer"></div>
+
+  <button class="rail-btn" data-label="Console" aria-label="Console" onclick="openConsole()">
+    <svg viewBox="0 0 24 24"><path d="M5 7l5 5-5 5"/><path d="M12 18h7"/></svg>
+  </button>
+  <button class="rail-btn" data-label="Settings" aria-label="Settings" onclick="openSettings()">
+    <svg viewBox="0 0 24 24"><path d="M4 6h9"/><path d="M19 6h1"/><circle cx="16" cy="6" r="2"/><path d="M4 12h3"/><path d="M13 12h7"/><circle cx="10" cy="12" r="2"/><path d="M4 18h10"/><path d="M20 18h0"/><circle cx="17" cy="18" r="2"/></svg>
+  </button>
+</nav>
+
+<div class="main">
+
 <div id="topbar">
-  <div id="logo">NEXUS<span>::</span>CMD<span class="tag">command center</span></div>
+  <div id="page-title">Today</div>
   <div id="search-wrap" onclick="togglePalette()">
-    <span class="prompt">&gt;</span>
-    <input id="search-input" type="text" placeholder="Search or jump to command..." readonly style="cursor:pointer;" />
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="search-input" type="text" placeholder="Search or run a command" readonly style="cursor:pointer;" />
     <span class="cmd-hint">Ctrl K</span>
-  </div>
-  <div class="topbar-actions">
-    <button class="btn btn-icon" onclick="openConsole()" aria-label="Console" title="System Console">&gt;_</button>
-    <button class="btn btn-icon" onclick="openSettings()" aria-label="Settings">&#9881;</button>
   </div>
 </div>
 
 <div class="scroll-area">
-  <div id="hero">
-    <div id="hero-greeting">Initializing...</div>
-    <div id="hero-clockline"><span id="hero-clock"></span> <span class="blink">_</span></div>
+
+  <!-- ===================== TODAY ===================== -->
+  <div class="page active" data-page="today">
+    <div id="hero">
+      <div id="hero-greeting"></div>
+      <div id="hero-clockline"><span id="hero-clock"></span></div>
+    </div>
+
+    <div class="status-row" id="today-status"></div>
+
+    <div class="two-col">
+      <section class="card" id="card-today-classes">
+        <div class="card-head">
+          <div class="card-title dot-cyan"><span class="dot"></span>Today's Classes <span id="today-day-label" class="sub"></span></div>
+          <button class="btn" onclick="navigate('study')">Full week</button>
+        </div>
+        <div class="list" id="today-classes" style="max-height:none;"></div>
+      </section>
+
+      <section class="card" id="card-today-timer">
+        <div class="card-head">
+          <div class="card-title dot-cyan"><span class="dot"></span>Focus timer</div>
+        </div>
+        <div class="pomo-mode" id="today-pomo-mode">focus</div>
+        <div class="pomo-display today-pomo" id="today-pomo-display">25:00</div>
+        <div class="pomo-bar-bg"><div class="pomo-bar-fill" id="today-pomo-bar" style="width:0%"></div></div>
+        <div class="row-form" style="justify-content:center;">
+          <button class="btn btn-primary" id="today-pomo-toggle" onclick="pomoToggle()">Start</button>
+          <button class="btn" onclick="pomoReset()">Reset</button>
+        </div>
+      </section>
+
+      <section class="card" id="card-today-tasks">
+        <div class="card-head">
+          <div class="card-title"><span class="dot"></span>Tasks <span id="today-task-count" class="pill" style="margin-left:2px;"></span></div>
+          <button class="btn" onclick="navigate('focus')">All tasks</button>
+        </div>
+        <div class="row-form">
+          <input id="today-task-input" type="text" placeholder="Add a task, then press enter" onkeydown="if(event.key==='Enter')addTodayTask()" />
+          <button class="btn btn-primary" onclick="addTodayTask()">Add</button>
+        </div>
+        <div class="list" id="today-tasks"></div>
+      </section>
+
+      <section class="card" id="card-today-deadlines">
+        <div class="card-head">
+          <div class="card-title dot-amber"><span class="dot"></span>Deadlines</div>
+          <button class="btn" onclick="navigate('focus')">All</button>
+        </div>
+        <div class="list" id="today-deadlines"></div>
+      </section>
+
+      <section class="card full" id="card-pending-updates" style="display:none;">
+        <div class="card-head">
+          <div class="card-title dot-amber"><span class="dot"></span>Mail updates <span id="pending-count" class="pill med" style="margin-left:6px;"></span></div>
+          <button class="btn btn-icon" onclick="scanMail(true)" aria-label="Rescan mail">&#8635;</button>
+        </div>
+        <div class="list" id="pending-list" style="max-height:400px;"></div>
+      </section>
+    </div>
   </div>
 
-  <div class="section-title">Today</div>
-  <main class="grid-container">
-
-    <section class="card span2" id="card-pending-updates" style="display:none;">
-      <div class="card-head">
-        <div class="card-title dot-amber"><span class="dot"></span>Pending Updates <span id="pending-count" class="pill med" style="margin-left:6px;"></span></div>
-        <button class="btn btn-icon" onclick="scanMail(true)" aria-label="Rescan mail">&#8635;</button>
-      </div>
-      <div class="list" id="pending-list" style="max-height:400px;"></div>
-    </section>
-
-    <section class="card span2" id="card-timetable">
-      <div class="card-head">
-        <div class="card-title"><span class="dot"></span>Timetable // Trimester I</div>
-        <button class="btn btn-icon" onclick="scanMail(true)" aria-label="Scan mail for changes">&#8635;</button>
-      </div>
-      <div class="tt-wrap"><table class="tt-table" id="tt-table"></table></div>
-    </section>
-
-  </main>
-
-  <div class="section-title">Workspace & Action</div>
-  <main class="grid-container">
-    
-    <section class="card span2" id="card-tasks">
-      <div class="card-head">
-        <div class="card-title"><span class="dot"></span>Task Protocol</div>
-      </div>
-      <div class="row-form">
-        <input id="task-input" type="text" placeholder="Add a task, then press enter" onkeydown="if(event.key==='Enter')addTask()" />
-        <select id="task-priority" style="flex: 0 1 120px;"><option value="low">Low</option><option value="med" selected>Med</option><option value="high">High</option></select>
-        <button class="btn btn-primary" onclick="addTask()">Deploy</button>
-      </div>
-      <div class="list" id="tasks-list"></div>
-    </section>
-
-    <section class="card" id="card-pomodoro">
-      <div class="card-head">
-        <div class="card-title dot-cyan"><span class="dot"></span>Deep Work Timer</div>
-      </div>
-      <div class="pomo-mode" id="pomo-mode">focus</div>
-      <div class="pomo-display" id="pomo-display">25:00</div>
-      <div class="pomo-bar-bg"><div class="pomo-bar-fill" id="pomo-bar" style="width:0%"></div></div>
-      <div class="row-form" style="justify-content: center;">
-        <button class="btn btn-primary" id="pomo-toggle" onclick="pomoToggle()">Initiate</button>
-        <button class="btn" onclick="pomoReset()">Abort</button>
-      </div>
-    </section>
-
-    <section class="card" id="card-agenda">
-      <div class="card-head">
-        <div class="card-title"><span class="dot"></span>Agenda / Deadlines</div>
-      </div>
-      <div class="row-form">
-        <input id="agenda-title" type="text" placeholder="Event / Deadline title" />
-        <input id="agenda-date" type="date" />
-      </div>
-      <button class="btn" onclick="addAgenda()">Log Deadline</button>
-      <div class="list" id="agenda-list"></div>
-    </section>
-  </main>
-
-  <div class="section-title">Academia & Code</div>
-  <main class="grid-container">
-    
-    <section class="card span2" id="card-flashcards" onmouseenter="fcHovered=true" onmouseleave="fcHovered=false">
-      <div class="card-head">
-        <div class="card-title dot-amber"><span class="dot"></span>Active Recall Engine</div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <select id="fc-deck-select" onchange="changeFcDeck(this.value)" style="padding:4px 8px; font-size:11px; height:auto;"></select>
-          <button class="btn btn-icon" onclick="toggleFcLibrary()" title="Manage Library">&#9776;</button>
+  <!-- ===================== FOCUS ===================== -->
+  <div class="page" data-page="focus">
+    <main class="two-col">
+      <section class="card" id="card-tasks">
+        <div class="card-head">
+          <div class="card-title"><span class="dot"></span>Tasks</div>
         </div>
+        <div class="row-form">
+          <input id="task-input" type="text" placeholder="Add a task, then press enter" onkeydown="if(event.key==='Enter')addTask()" />
+          <select id="task-priority" style="flex: 0 1 120px;"><option value="low">Low</option><option value="med" selected>Med</option><option value="high">High</option></select>
+          <button class="btn btn-primary" onclick="addTask()">Add</button>
+        </div>
+        <div class="list" id="tasks-list" style="max-height:520px;"></div>
+      </section>
+
+      <div class="stack">
+      <section class="card" id="card-pomodoro">
+        <div class="card-head">
+          <div class="card-title dot-cyan"><span class="dot"></span>Focus timer</div>
+        </div>
+        <div class="pomo-mode" id="pomo-mode">focus</div>
+        <div class="pomo-display" id="pomo-display">25:00</div>
+        <div class="pomo-bar-bg"><div class="pomo-bar-fill" id="pomo-bar" style="width:0%"></div></div>
+        <div class="row-form" style="justify-content: center;">
+          <button class="btn btn-primary" id="pomo-toggle" onclick="pomoToggle()">Start</button>
+          <button class="btn" onclick="pomoReset()">Reset</button>
+        </div>
+      </section>
+
+      <section class="card" id="card-agenda">
+        <div class="card-head">
+          <div class="card-title"><span class="dot"></span>Deadlines</div>
+        </div>
+        <div class="row-form">
+          <input id="agenda-title" type="text" placeholder="What is due?" />
+          <input id="agenda-date" type="date" />
+        </div>
+        <button class="btn" onclick="addAgenda()">Add deadline</button>
+        <div class="list" id="agenda-list"></div>
+      </section>
       </div>
-      
-      <div id="fc-study-view">
-        <div id="fc-render-zone">
-          <div class="fc-container" id="fc-active" onclick="this.classList.toggle('flipped')">
-            <div class="fc-inner">
-              <div class="fc-front">
-                <span class="fc-term" id="fc-term-display">Loading Engine...</span>
-                <span class="fc-meta" id="fc-meta-display">Click or press Space to flip</span>
-              </div>
-              <div class="fc-back">
-                <span class="fc-def" id="fc-def-display">...</span>
+    </main>
+  </div>
+
+  <!-- ===================== STUDY ===================== -->
+  <div class="page" data-page="study">
+    <main class="grid-container">
+      <section class="card full" id="card-timetable">
+        <div class="card-head">
+          <div class="card-title"><span class="dot"></span>Timetable <span id="tt-source" class="sub"></span></div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <!-- Shown when a timetable has been synced from Digiicampus -->
+            <div id="campus-week-nav" class="week-nav" style="display:none;">
+              <button class="btn btn-icon" onclick="shiftCampusWeek(-1)" aria-label="Previous week">&lsaquo;</button>
+              <span id="campus-week-label"></span>
+              <button class="btn btn-icon" onclick="shiftCampusWeek(1)" aria-label="Next week">&rsaquo;</button>
+            </div>
+            <button class="btn" id="campus-sync-btn" onclick="syncCampus(true)" style="display:none;">Sync</button>
+            <!-- Shown for the manual timetable -->
+            <button class="btn" id="tt-connect-btn" onclick="openSettingsAt('timetable')">Connect Digiicampus</button>
+            <button class="btn" id="tt-edit-btn" onclick="toggleTimetableEdit()">Edit</button>
+            <button class="btn btn-icon" id="tt-mail-btn" onclick="scanMail(true)" aria-label="Scan mail for changes" title="Scan mail for changes">&#8635;</button>
+          </div>
+        </div>
+        <div class="tt-wrap" id="tt-grid-wrap"><table class="tt-table" id="tt-table"></table></div>
+        <div id="campus-week" style="display:none;"></div>
+      </section>
+
+      <section class="card span2" id="card-flashcards" onmouseenter="fcHovered=true" onmouseleave="fcHovered=false">
+        <div class="card-head">
+          <div class="card-title dot-amber"><span class="dot"></span>Flashcards</div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <select id="fc-deck-select" onchange="changeFcDeck(this.value)" style="padding:4px 8px; font-size:11px; height:auto;"></select>
+            <button class="btn btn-icon" onclick="toggleFcLibrary()" title="All cards">&#9776;</button>
+          </div>
+        </div>
+
+        <div id="fc-study-view">
+          <div id="fc-render-zone">
+            <div class="fc-container" id="fc-active" onclick="this.classList.toggle('flipped')">
+              <div class="fc-inner">
+                <div class="fc-front">
+                  <span class="fc-term" id="fc-term-display"></span>
+                  <span class="fc-meta" id="fc-meta-display">Click or press Space to flip</span>
+                </div>
+                <div class="fc-back">
+                  <span class="fc-def" id="fc-def-display">...</span>
+                </div>
               </div>
             </div>
           </div>
+          <div class="row-form" style="justify-content: space-between;">
+            <button class="btn btn-danger" onclick="fcReview(false)" style="flex:1;">&larr; Again</button>
+            <button class="btn btn-success" onclick="fcReview(true)" style="flex:1;">Got it &rarr;</button>
+          </div>
         </div>
-        <div class="row-form" style="justify-content: space-between;">
-          <button class="btn btn-danger" onclick="fcReview(false)" style="flex:1;">Need Review (&larr;)</button>
-          <button class="btn btn-success" onclick="fcReview(true)" style="flex:1;">Got It (&rarr;)</button>
+
+        <div id="fc-library-view" class="list" style="display:none; max-height:220px;"></div>
+
+        <div class="row-form" style="margin-top: 16px; border-top: 1px solid var(--line); padding-top: 16px;">
+          <input id="fc-new-deck" type="text" placeholder="Deck" style="max-width:120px;" />
+          <input id="fc-new-term" type="text" placeholder="Term" style="flex:1;" />
+          <input id="fc-new-def" type="text" placeholder="Definition" style="flex:2;" />
+          <button class="btn btn-primary" onclick="addFlashcard()">Add card</button>
         </div>
-      </div>
+      </section>
 
-      <div id="fc-library-view" class="list" style="display:none; max-height:220px;"></div>
-
-      <div class="row-form" style="margin-top: 16px; border-top: 1px solid var(--line); padding-top: 16px;">
-        <input id="fc-new-deck" type="text" placeholder="Tag (e.g. LAW)" style="max-width:120px;" />
-        <input id="fc-new-term" type="text" placeholder="Term / Concept" style="flex:1;" />
-        <input id="fc-new-def" type="text" placeholder="Definition / Rule" style="flex:2;" />
-        <button class="btn btn-primary" onclick="addFlashcard()">Add to Deck</button>
-      </div>
-    </section>
-
-    <section class="card" id="card-notes">
-      <div class="card-head">
-        <div class="card-title dot-cyan"><span class="dot"></span>Research Scratchpad</div>
-        <button class="btn" onclick="addNote()">+ New Buffer</button>
-      </div>
-      <div class="list" id="notes-list" style="max-height:400px; display: flex; flex-direction: column; gap: 16px;"></div>
-    </section>
-
-    <section class="card" id="card-links">
-      <div class="card-head">
-        <div class="card-title"><span class="dot"></span>Quick Launcher</div>
-      </div>
-      <div class="row-form">
-        <input id="link-name" type="text" placeholder="Name" />
-        <select id="link-type" onchange="onLinkTypeChange()">
-          <option value="url">URL</option>
-          <option value="app">Local App</option>
-        </select>
-      </div>
-      <div class="row-form" style="margin-top:8px;">
-        <input id="link-target" type="text" placeholder="URL (e.g. https://...)" style="flex:1;" />
-        <button class="btn" id="link-browse-btn" onclick="browseForApp()" style="display:none;">Browse&hellip;</button>
-      </div>
-      <button class="btn btn-primary" onclick="addLink()" style="margin-top:8px;">Pin</button>
-      <div id="links-body" class="link-grid" style="margin-top: 12px;"></div>
-    </section>
-
-    <section class="card" id="card-games" style="grid-column: 1 / -1;">
-      <div class="card-head">
-        <div class="card-title"><span class="dot"></span>Games Library</div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn" onclick="chooseGamesFolder()">Set Folder</button>
-          <button class="btn" onclick="loadGames(true)">Refresh</button>
+      <section class="card" id="card-notes">
+        <div class="card-head">
+          <div class="card-title dot-cyan"><span class="dot"></span>Notes</div>
+          <button class="btn" onclick="addNote()">New note</button>
         </div>
-      </div>
-      <div id="games-folder-label" class="muted" style="font-family:'JetBrains Mono',monospace; font-size:11px; margin-bottom:10px;"></div>
-      <div id="games-body" class="games-grid"></div>
-    </section>
-  </main>
+        <div class="list" id="notes-list" style="max-height:480px; display: flex; flex-direction: column; gap: 16px;"></div>
+      </section>
+    </main>
+  </div>
 
-  <div class="section-title">Life & Environment</div>
-  <main class="grid-container">
-
-    <section class="card" id="card-habits">
-      <div class="card-head">
-        <div class="card-title"><span class="dot"></span>Habit Matrix</div>
-      </div>
-      <div class="row-form">
-        <input id="habit-input" type="text" placeholder="New habit to track" onkeydown="if(event.key==='Enter')addHabit()" />
-        <button class="btn" onclick="addHabit()">Track</button>
-      </div>
-      <div style="overflow-x:auto; margin-top: 8px;">
-        <table class="habit-table" id="habit-table"></table>
-      </div>
-    </section>
-
-    <section class="card span2" id="card-finances">
-      <div class="card-head">
-        <div class="card-title dot-red"><span class="dot" style="background:var(--red);"></span>Ledger & Subs</div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-icon" onclick="toggleFinanceHistory()" title="View History">⏳</button>
-          <button class="btn btn-icon" onclick="cycleMonth()" title="Cycle Month">&#8635;</button>
+  <!-- ===================== MONEY ===================== -->
+  <div class="page" data-page="money">
+    <main class="grid-container">
+      <section class="card full" id="card-finances">
+        <div class="card-head">
+          <div class="card-title dot-red"><span class="dot" style="background:var(--red);"></span>Spending</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" onclick="toggleFinanceHistory()">History</button>
+            <button class="btn" onclick="cycleMonth()" title="Archive this month and start a new one">New month</button>
+          </div>
         </div>
-      </div>
 
-      <div id="fin-main-view">
-        <div class="finance-summary">
-          <div class="fin-budget-row">
-            <span class="label">Monthly Runway Allocation</span>
-            <div>
-              <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-dim);">₹</span>
-              <input type="number" id="fin-budget-input" min="1" class="fin-budget-input" value="15000" onchange="updateBudget(this.value)" />
+        <div id="fin-main-view">
+          <div class="finance-summary">
+            <div class="fin-budget-row">
+              <span class="label">Monthly budget</span>
+              <div>
+                <span class="muted mono" style="font-size:13px;">₹</span>
+                <input type="number" id="fin-budget-input" min="1" class="fin-budget-input" value="15000" onchange="updateBudget(this.value)" />
+              </div>
+            </div>
+            <div class="budget-bar-bg"><div class="budget-bar-fill" id="fin-budget-bar" style="width:0%;"></div></div>
+            <div class="fin-budget-row" style="font-size:12.5px; color:var(--ink-dim);">
+              <span id="fin-spent-text">₹0 spent</span>
+              <span id="fin-rem-text" style="color:var(--ink); font-weight:500;">₹0 remaining</span>
             </div>
           </div>
-          <div class="budget-bar-bg"><div class="budget-bar-fill" id="fin-budget-bar" style="width:0%;"></div></div>
-          <div class="fin-budget-row" style="font-size:11px; color:var(--ink-dim);">
-            <span id="fin-spent-text">₹0 spent</span>
-            <span id="fin-rem-text" style="color:var(--ink); font-weight:600;">₹0 remaining</span>
+
+          <div class="row-form" style="margin-top: 16px;">
+            <input id="fin-name" type="text" placeholder="What was it?" style="flex:2;" />
+            <input id="fin-amt" type="number" min="1" placeholder="Amount in ₹" style="flex:1;" />
+            <select id="fin-type" style="flex:1;">
+              <option value="exp">One-off</option>
+              <option value="sub">Subscription</option>
+            </select>
+            <select id="fin-tag" style="flex:1;">
+              <option value="LIVING">Living</option>
+              <option value="ACADEMIC">Academic</option>
+              <option value="SOFTWARE">Software</option>
+              <option value="TRAVEL">Travel</option>
+              <option value="GAMING">Gaming</option>
+            </select>
+            <button class="btn btn-primary" onclick="addFinance()">Add expense</button>
+          </div>
+          <div class="list" id="fin-list" style="margin-top: 12px; max-height:none;"></div>
+        </div>
+
+        <div id="fin-history-view" style="display:none; flex-direction:column; gap:12px;">
+          <div class="cmd-group-label" style="padding:0;">Past months</div>
+          <div class="list" id="fin-history-list" style="max-height:none;"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===================== LIFE ===================== -->
+  <div class="page" data-page="life">
+    <main class="grid-container">
+      <section class="card span2" id="card-habits">
+        <div class="card-head">
+          <div class="card-title"><span class="dot"></span>Habits</div>
+        </div>
+        <div class="row-form">
+          <input id="habit-input" type="text" placeholder="Add a habit" onkeydown="if(event.key==='Enter')addHabit()" />
+          <button class="btn" onclick="addHabit()">Add</button>
+        </div>
+        <div style="overflow-x:auto; margin-top: 8px;">
+          <table class="habit-table" id="habit-table"></table>
+        </div>
+      </section>
+
+      <section class="card" id="card-weather">
+        <div class="card-head">
+          <div class="card-title dot-cyan"><span class="dot"></span>Weather</div>
+          <button class="btn btn-icon" onclick="loadWeather(true)" aria-label="Refresh">&#8635;</button>
+        </div>
+        <div id="weather-body"></div>
+      </section>
+
+      <div id="aesthetic-widget" class="full">
+        <div class="widget-bg" id="widget-img" style="background-image: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop');"></div>
+        <div class="widget-content">
+          <div class="widget-quote" id="widget-quote-text"></div>
+        </div>
+        <div class="widget-controls">
+          <button onclick="shuffleAesthetics()">Shuffle</button>
+          <button onclick="document.getElementById('img-upload').click()">Upload</button>
+          <input type="file" id="img-upload" accept="image/*" style="display:none;" onchange="handleImageUpload(this.files)" />
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ===================== LAUNCH ===================== -->
+  <div class="page" data-page="launch">
+    <main class="grid-container">
+      <section class="card full" id="card-links">
+        <div class="card-head">
+          <div class="card-title"><span class="dot"></span>Quick launch</div>
+        </div>
+        <div id="links-body" class="link-grid"></div>
+        <div class="row-form" style="border-top:1px solid var(--line); padding-top:16px;">
+          <input id="link-name" type="text" placeholder="Name" style="flex:1;" />
+          <select id="link-type" onchange="onLinkTypeChange()" style="flex:0 1 130px;">
+            <option value="url">URL</option>
+            <option value="app">Local App</option>
+          </select>
+          <input id="link-target" type="text" placeholder="URL (e.g. https://...)" style="flex:2;" />
+          <button class="btn" id="link-browse-btn" onclick="browseForApp()" style="display:none;">Browse&hellip;</button>
+          <button class="btn btn-primary" onclick="addLink()">Add</button>
+        </div>
+      </section>
+
+      <section class="card full" id="card-games">
+        <div class="card-head">
+          <div class="card-title"><span class="dot"></span>Games</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" onclick="chooseGamesFolder()">Choose folder</button>
+            <button class="btn" onclick="loadGames(true)">Refresh</button>
           </div>
         </div>
-
-        <div class="row-form" style="margin-top: 16px;">
-          <input id="fin-name" type="text" placeholder="Expense (e.g., Spotify)" style="flex:2;" />
-          <input id="fin-amt" type="number" min="1" placeholder="₹ Amount" style="flex:1;" />
-        </div>
-        <div class="row-form">
-          <select id="fin-type" style="flex:1;">
-            <option value="exp">One-off Expense</option>
-            <option value="sub">Recurring Sub</option>
-          </select>
-          <select id="fin-tag" style="flex:1;">
-            <option value="LIVING">Living</option>
-            <option value="ACADEMIC">Academic</option>
-            <option value="SOFTWARE">Software / Cloud</option>
-            <option value="TRAVEL">Travel</option>
-            <option value="GAMING">Gaming</option>
-          </select>
-          <button class="btn btn-primary" onclick="addFinance()">Log Expense</button>
-        </div>
-        <div class="list" id="fin-list" style="margin-top: 12px; max-height:260px;"></div>
-      </div>
-
-      <div id="fin-history-view" style="display:none; flex-direction:column; gap:12px;">
-        <div class="cmd-group-label" style="padding:0;">All-Time History Archive</div>
-        <div class="list" id="fin-history-list" style="max-height:340px;"></div>
-      </div>
-    </section>
-
-    <section class="card" id="card-weather">
-      <div class="card-head">
-        <div class="card-title dot-cyan"><span class="dot"></span>Local Environment</div>
-        <button class="btn btn-icon" onclick="loadWeather(true)" aria-label="Refresh">&#8635;</button>
-      </div>
-      <div id="weather-body" style="padding-top: 16px;"></div>
-    </section>
-  </main>
-
-  <div class="section-title">System</div>
-  <main class="grid-container">
-    <section class="card span2" id="card-vitals">
-      <div class="card-head">
-        <div class="card-title"><span class="dot"></span>System Vitals</div>
-      </div>
-      <div class="vitals-grid">
-        <div class="vitals-metric">
-          <div class="vitals-label">CPU <span id="vitals-cpu-pct">--%</span></div>
-          <svg id="vitals-cpu-spark" viewBox="0 0 300 50" preserveAspectRatio="none"></svg>
-        </div>
-        <div class="vitals-metric">
-          <div class="vitals-label">RAM <span id="vitals-ram-pct">--%</span></div>
-          <svg id="vitals-ram-spark" viewBox="0 0 300 50" preserveAspectRatio="none"></svg>
-        </div>
-      </div>
-      <div id="vitals-disks" class="vitals-disks"></div>
-    </section>
-  </main>
-
-
-  <div id="aesthetic-widget">
-    <div class="widget-bg" id="widget-img" style="background-image: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop');"></div>
-    <div class="widget-content">
-      <div class="widget-quote" id="widget-quote-text"></div>
-    </div>
-    <div class="widget-controls">
-      <button onclick="shuffleAesthetics()">Shuffle</button>
-      <button onclick="document.getElementById('img-upload').click()">Upload</button>
-      <input type="file" id="img-upload" accept="image/*" style="display:none;" onchange="handleImageUpload(this.files)" />
-    </div>
+        <div id="games-folder-label" class="muted mono" style="font-size:11.5px;"></div>
+        <div id="games-body" class="games-grid"></div>
+      </section>
+    </main>
   </div>
 
-  <div id="cmd-palette-overlay" onclick="if(event.target===this)togglePalette()">
-    <div id="cmd-palette">
-      <input id="cmd-input-large" type="text" placeholder="Type a command or search query..." oninput="filterPalette()" onkeydown="handlePaletteKeys(event)" autocomplete="off" />
-      <div class="cmd-hint-text">Prefixes: <b>/task [high|med|low]</b>, <b>/note</b>, <b>scc:</b>, <b>gh:</b>, <b>r:</b>, <b>yt:</b></div>
-      <div id="cmd-results">
+  <!-- ===================== SYSTEM ===================== -->
+  <div class="page" data-page="system">
+    <main class="grid-container">
+      <section class="card full" id="card-vitals">
+        <div class="card-head">
+          <div class="card-title"><span class="dot"></span>System</div>
         </div>
-    </div>
+        <div class="vitals-grid">
+          <div class="vitals-metric">
+            <div class="vitals-label">CPU <span id="vitals-cpu-pct">--%</span></div>
+            <svg id="vitals-cpu-spark" viewBox="0 0 300 50" preserveAspectRatio="none"></svg>
+          </div>
+          <div class="vitals-metric">
+            <div class="vitals-label">RAM <span id="vitals-ram-pct">--%</span></div>
+            <svg id="vitals-ram-spark" viewBox="0 0 300 50" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+        <div id="vitals-disks" class="vitals-disks"></div>
+      </section>
+    </main>
   </div>
 
-  <div id="settings-overlay" onclick="if(event.target===this)closeSettings()">
-    <div id="settings-modal">
-      <div class="card-title dot-cyan"><span class="dot"></span>Settings Configuration</div>
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <label class="mono" style="font-size:11px; color:var(--ink-dim);">USER DESIGNATION</label>
-        <input id="set-name" type="text" placeholder="Enter name" onchange="updateSettings('name',this.value)" />
-      </div>
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <label class="mono" style="font-size:11px; color:var(--ink-dim);">WEATHER LOCATION</label>
-        <input id="set-city" type="text" placeholder="City name" onchange="updateSettings('weatherCity',this.value)" />
-      </div>
-      <div style="border-top:1px solid var(--line); padding-top:14px; margin-top: 8px; display:flex; flex-direction:column; gap:10px;">
-        <label class="mono" style="font-size:11px; color:var(--ink-dim);">GLOBAL HOTKEY (show/hide PCC from anywhere)</label>
-        <input id="hotkey-display" type="text" readonly placeholder="Click and press keys..." style="cursor:pointer; text-align:center; font-family:'JetBrains Mono',monospace;" onclick="startHotkeyCapture()" />
-        <div id="hotkey-status" class="mono" style="font-size:10.5px; color:var(--ink-dim);"></div>
-      </div>
-      <div style="border-top:1px solid var(--line); padding-top:14px; margin-top: 8px; display:flex; flex-direction:column; gap:10px;">
-        <label class="mono" style="font-size:11px; color:var(--ink-dim);">MAIL SCAN CONFIGURATION</label>
-        <input id="mail-email" type="text" placeholder="Email address (e.g. you@gmail.com)" />
-        <input id="mail-password" type="password" placeholder="App password (leave blank to keep existing)" />
-        <div id="mail-password-status" class="mono" style="font-size:10.5px; color:var(--ink-dim);"></div>
-        <input id="mail-imap-host" type="text" placeholder="IMAP host (default: imap.gmail.com)" />
-        <input id="mail-allowed-senders" type="text" placeholder="Allowed senders, comma-separated" />
-        <input id="mail-days-back" type="number" min="1" max="30" placeholder="Days back (default: 7)" />
-        <button class="btn btn-primary" style="width:100%;" onclick="saveMailSettings()">Save Mail Settings</button>
-      </div>
-      <div style="border-top:1px solid var(--line); padding-top:14px; margin-top: 8px; display:flex; flex-direction:column; gap:10px;">
-        <label class="mono" style="font-size:11px; color:var(--ink-dim);">STARTUP</label>
-        <label style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer;">
-          <input id="autostart-toggle" type="checkbox" class="chk" onchange="toggleAutostart(this.checked)" />
-          <span>Start PCC when I sign in (in the tray)</span>
-        </label>
-        <div id="autostart-status" class="mono" style="font-size:10.5px; color:var(--ink-dim);"></div>
-      </div>
-      <div style="border-top:1px solid var(--line); padding-top:14px; margin-top: 8px; display:flex; flex-direction:column; gap:10px;">
-        <label class="mono" style="font-size:11px; color:var(--ink-dim);">DATA BACKUP</label>
-        <div class="row-form">
-          <button class="btn" onclick="exportData()">Export&hellip;</button>
-          <button class="btn" onclick="importData()">Import&hellip;</button>
-        </div>
-        <div class="mono" style="font-size:10.5px; color:var(--ink-dim); line-height:1.5;">
-          An automatic backup is also saved once a day.
-          <a href="#" onclick="window.pcc.openBackupsFolder(); return false;" style="color:var(--cyan);">Open backups folder</a>
-        </div>
-      </div>
-      <div style="border-top:1px solid var(--line); padding-top:16px; margin-top: 8px;">
-        <button class="btn btn-danger" style="width: 100%;" onclick="resetAllData()">Factory Reset All Data</button>
-      </div>
-    </div>
-  </div>
+</div><!-- /.scroll-area -->
+</div><!-- /.main -->
 
-  <div id="console-overlay" onclick="if(event.target===this)closeConsole()">
-    <div id="console-modal">
-      <div class="console-header">
-        <div class="console-title"><span class="dot-live"></span>System Console</div>
-        <div class="console-controls">
-          <button class="console-filter-btn active" data-level="all" onclick="setConsoleFilter('all')">All</button>
-          <button class="console-filter-btn" data-level="info" onclick="setConsoleFilter('info')">Info</button>
-          <button class="console-filter-btn" data-level="warn" onclick="setConsoleFilter('warn')">Warn</button>
-          <button class="console-filter-btn" data-level="error" onclick="setConsoleFilter('error')">Error</button>
-          <button class="btn btn-icon" onclick="clearConsole()" aria-label="Clear">&#128465;&#65039;</button>
-          <button class="btn btn-icon" onclick="closeConsole()" aria-label="Close">&times;</button>
-        </div>
-      </div>
-      <div id="console-body"></div>
-    </div>
-  </div>
+<!-- ===================== OVERLAYS ===================== -->
 
-  <div id="toast">Action completed</div>
+<div id="cmd-palette-overlay" onclick="if(event.target===this)togglePalette()">
+  <div id="cmd-palette">
+    <input id="cmd-input-large" type="text" placeholder="Type a command or search" oninput="filterPalette()" onkeydown="handlePaletteKeys(event)" autocomplete="off" />
+    <div class="cmd-hint-text">Shortcuts: <b>/task [high|med|low]</b>, <b>/note</b>, <b>scc:</b>, <b>gh:</b>, <b>r:</b>, <b>yt:</b></div>
+    <div id="cmd-results">
+      </div>
+  </div>
 </div>
 
+<!-- Settings: a tab list on the left, one pane at a time on the right -->
+<div id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div id="settings-modal" role="dialog" aria-label="Settings">
+    <aside class="settings-nav">
+      <div class="settings-title">Settings</div>
+      <button class="settings-tab active" data-tab="general" onclick="showSettingsTab('general')">General</button>
+      <button class="settings-tab" data-tab="timetable" onclick="showSettingsTab('timetable')">Timetable</button>
+      <button class="settings-tab" data-tab="mail" onclick="showSettingsTab('mail')">Mail</button>
+      <button class="settings-tab" data-tab="data" onclick="showSettingsTab('data')">Data</button>
+      <button class="settings-tab" data-tab="about" onclick="showSettingsTab('about')">About</button>
+      <div class="settings-nav-foot" id="about-version-short"></div>
+    </aside>
 
-<script>
-/* ---------- Storage & Helpers ---------- */
-function uid(){ return 'id' + Math.random().toString(36).slice(2,10); }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-// Local calendar date as YYYY-MM-DD. (toISOString() would give the UTC date,
-// which is still "yesterday" until 5:30 AM in IST.)
-function todayStr(d){
-  d = d || new Date();
-  const p = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
-}
-// Parse a stored YYYY-MM-DD as local midnight rather than UTC midnight.
-function parseLocalDate(s){ return new Date(s + 'T00:00'); }
+    <div class="settings-body">
+      <button class="settings-close" onclick="closeSettings()" aria-label="Close settings">&times;</button>
 
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
-}
+      <!-- General -->
+      <section class="settings-pane active" data-tab="general">
+        <h2 class="pane-title">General</h2>
+        <p class="pane-intro">How the app greets you and how you get to it.</p>
 
-const Store = {
-  get: (key, fallback) => {
-    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } 
-    catch { return fallback; }
-  },
-  set: (key, value) => {
-    try { localStorage.setItem(key, JSON.stringify(value)); return true; } 
-    catch { return false; }
-  }
-};
-
-/* ---------- Seed Data ---------- */
-const SEED_TASKS = [
-  {id:uid(), text:'Draft Law Student CV for applications', done:false, priority:'high'},
-  {id:uid(), text:'Submit internship applications to Vidhi & CPR', done:false, priority:'high'},
-  {id:uid(), text:'Review rules for PKL walkover scenarios', done:false, priority:'low'}
-];
-
-const SEED_NOTES = [
-  { id:uid(), title:'Khoday Project Params', body:'Ensure I DO NOT use sec 9(1)(b) and 18(1) in the analysis. Focus heavily on Administrative Law concepts.', updatedAt:Date.now() },
-];
-
-const SEED_LINKS = [
-  {id:uid(), name:'GitHub', url:'https://github.com'},
-  {id:uid(), name:'Steam', url:'https://store.steampowered.com'},
-  {id:uid(), name:'SCC Online', url:'https://www.scconline.com'}
-];
-
-const SEED_FLASHCARDS = [
-  {id:uid(), deck:'LAW', term:'Jus Cogens', def:'Peremptory norms of general international law from which no derogation is permitted.'},
-  {id:uid(), deck:'LAW', term:'Ebner Unitary Test', def:'Superior test because its second step mandates that reasoning be applied through a defined causal chain that is open to review.'},
-  {id:uid(), deck:'DEV', term:'Event Delegation', def:'Attaching a single event listener to a parent element to manage events for all of its children.'}
-];
-
-const SEED_FINANCES = [
-  {id:uid(), name:'ChatGPT Plus / Go', amount: 1950, type:'sub', tag:'SOFTWARE'},
-  {id:uid(), name:'Google One', amount: 130, type:'sub', tag:'SOFTWARE'},
-  {id:uid(), name:'Uber (BLR-DEL)', amount: 850, type:'exp', tag:'TRAVEL'},
-  {id:uid(), name:'EBC Webstore (Books)', amount: 1200, type:'exp', tag:'ACADEMIC'}
-];
-
-// Base timetable — III Year BA LLB Section D, July 2026 Trimester-I, NLSIU Bengaluru
-const SEED_TIMETABLE = {
-  slots: ["9:00-10:50 AM", "11:30 AM-1:20 PM", "2:00-3:50 PM", "4:00-5:00 PM", "5:10-7:00 PM"],
-  days: {
-    Monday: [
-      {subject:"Law of Evidence", prof:"Rashmi Venkatesan", room:"OAB-201"},
-      {subject:"Corporate Law I", prof:"Garima Gupta", room:"OAB-301"},
-      null,
-      {subject:"Office Hour", prof:"", room:""},
-      {subject:"Data, Evidence & Decision Making (R)", prof:"Ayush Patel", room:"OAB-104"}
-    ],
-    Tuesday: [
-      {subject:"CPC-II", prof:"Isha Ahlawat", room:"NAB-202"},
-      null,
-      null,
-      {subject:"Office Hour", prof:"", room:""},
-      null
-    ],
-    Wednesday: [
-      {subject:"Law of Evidence", prof:"Rashmi Venkatesan", room:"NAB-203"},
-      {subject:"CPC-II", prof:"Isha Ahlawat", room:"OAB-307"},
-      null,
-      null,
-      null
-    ],
-    Thursday: [
-      {subject:"Corporate Law I", prof:"Garima Gupta", room:"OAB-307"},
-      {subject:"CPC-II", prof:"Isha Ahlawat", room:"OAB-307"},
-      null,
-      {subject:"Office Hour", prof:"", room:""},
-      null
-    ],
-    Friday: [
-      {subject:"Law of Evidence", prof:"Rashmi Venkatesan", room:"OAB-307"},
-      {subject:"Corporate Law I", prof:"Garima Gupta", room:"ALLEN & OVERY"},
-      null,
-      {subject:"Office Hour", prof:"", room:""},
-      {subject:"Data, Evidence & Decision Making (R)", prof:"Ayush Patel", room:"OAB-103"}
-    ]
-  }
-};
-
-const SUBJECT_COLORS = [
-  ["Law of Evidence", "var(--accent)"],
-  ["Corporate Law I", "var(--cyan)"],
-  ["CPC-II", "var(--amber)"],
-  ["Data, Evidence", "var(--red)"],
-  ["Office Hour", "var(--ink-dim)"]
-];
-function colorForSubject(subject){
-  if(!subject) return "var(--line)";
-  for(const [key, color] of SUBJECT_COLORS) if(subject.includes(key)) return color;
-  return "var(--accent)";
-}
-
-const QUOTES = [
-  "The life of the law has not been logic; it has been experience.",
-  "Code is law. Law is code.",
-  "Discipline is remembering what you want most, not what you want now.",
-  "Consistency beats intensity, almost every time.",
-  "Fall seven times, stand up eight.",
-  "A calm mind finds the shortest path."
-];
-
-/* ---------- State ---------- */
-let state = {
-  tasks: [], agenda: [], habits: {list:[], log:{}}, notes: [], links: [], images: [],
-  flashcards: [], finances: [], financeHistory: [],
-  timetable: SEED_TIMETABLE, timetableOverrides: [], pendingUpdates: [], dismissedUpdateIds: [],
-  settings: { name: 'Ansh', weatherCity: 'Bhiwani', budget: 15000 }
-};
-
-let currentWidgetQuote = QUOTES[0];
-let currentImageIdx = 0;
-let currentFcIdx = 0;
-let finViewMode = 'main';
-
-/* ---------- Init ---------- */
-function init(){
-  state.tasks = Store.get('tasks', SEED_TASKS);
-  state.agenda = Store.get('agenda', []);
-  state.habits = Store.get('habits', {list:[{id:uid(), name:'Code / Build'}, {id:uid(), name:'Read Case Law'}], log:{}});
-  state.notes = Store.get('notes', SEED_NOTES);
-  state.links = Store.get('links', SEED_LINKS);
-  state.images = Store.get('images', []);
-  state.flashcards = Store.get('flashcards', SEED_FLASHCARDS);
-  state.finances = Store.get('finances', SEED_FINANCES);
-  state.financeHistory = Store.get('financeHistory', []);
-  state.timetable = Store.get('timetable', SEED_TIMETABLE);
-  state.timetableOverrides = Store.get('timetableOverrides', []);
-  state.pendingUpdates = Store.get('pendingUpdates', []);
-  state.dismissedUpdateIds = Store.get('dismissedUpdateIds', []);
-  state.settings = Store.get('settings', { name: 'Ansh', weatherCity: 'Bhiwani', budget: 15000 });
-
-  if(!state.settings.budget) state.settings.budget = 15000;
-
-  if(!localStorage.getItem('tasks')) Store.set('tasks', state.tasks);
-  if(!localStorage.getItem('notes')) Store.set('notes', state.notes);
-  if(!localStorage.getItem('flashcards')) Store.set('flashcards', state.flashcards);
-  if(!localStorage.getItem('finances')) Store.set('finances', state.finances);
-
-  document.getElementById('set-name').value = state.settings.name;
-  document.getElementById('set-city').value = state.settings.weatherCity;
-
-  startClock();
-  initFlashcards();
-  renderAll();
-}
-
-function renderAll() {
-  renderGreeting(); renderTasks(); renderAgenda(); 
-  renderHabits(); renderNotes(); renderLinks();
-  loadGamesFolderLabel(); loadGames();
-  renderFinances();
-  loadWeather(false); updateAestheticWidget();
-  renderTimetable(); renderPending();
-  scanMail(false); // silent scan on every load, per the "semi-automatic" plan
-}
-
-/* ---------- Clock & Greeting ---------- */
-function startClock(){ updateClock(); setInterval(updateClock, 1000); }
-function updateClock(){
-  const now = new Date();
-  document.getElementById('hero-clock').textContent = now.toLocaleDateString(undefined,{weekday:'short',year:'numeric',month:'short',day:'numeric'}) + ' // ' + now.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-}
-function renderGreeting(){
-  const h = new Date().getHours();
-  const g = h<5 ? 'Late Night Protocol' : h<12 ? 'Morning Protocol' : h<17 ? 'Afternoon Protocol' : h<21 ? 'Evening Protocol' : 'Night Protocol';
-  document.getElementById('hero-greeting').textContent = g + (state.settings.name ? ', ' + state.settings.name : '');
-}
-
-/* ---------- Command Palette (Ctrl+K) ---------- */
-let isPaletteOpen = false;
-let paletteSelectionIdx = 0;
-let filteredCommands = [];
-
-const PALETTE_COMMANDS = [
-  { id: 'focus', title: 'Start Focus Timer', cat: 'Navigation', action: () => { window.location.hash = 'card-pomodoro'; document.getElementById('pomo-toggle').click(); } },
-  { id: 'tasks', title: 'Jump to Workspace', cat: 'Navigation', action: () => { window.location.hash = 'card-tasks'; document.getElementById('task-input').focus(); } },
-  { id: 'notes', title: 'Create Research Note', cat: 'Navigation', action: () => { window.location.hash = 'card-notes'; addNote(); } },
-  { id: 'flashcard', title: 'Add Flashcard', cat: 'Navigation', action: () => { window.location.hash = 'card-flashcards'; document.getElementById('fc-new-term').focus(); } },
-  { id: 'finance', title: 'Log Expense', cat: 'Navigation', action: () => { window.location.hash = 'card-finances'; document.getElementById('fin-name').focus(); } },
-  { id: 'settings', title: 'Open Settings', cat: 'Action', action: () => openSettings() }
-];
-
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-    e.preventDefault(); togglePalette();
-  }
-  if (isPaletteOpen && e.key === 'Escape') togglePalette();
-});
-
-function togglePalette() {
-  isPaletteOpen = !isPaletteOpen;
-  const overlay = document.getElementById('cmd-palette-overlay');
-  const input = document.getElementById('cmd-input-large');
-  if (isPaletteOpen) {
-    overlay.classList.add('open');
-    input.value = '';
-    filterPalette();
-    input.focus();
-  } else {
-    overlay.classList.remove('open');
-  }
-}
-
-function filterPalette() {
-  const query = document.getElementById('cmd-input-large').value.trim();
-  const lowerQuery = query.toLowerCase();
-  filteredCommands = [];
-
-  if (lowerQuery.startsWith('/task ')) {
-    let priority = 'med';
-    let text = query.substring(6).trim();
-    let lText = text.toLowerCase();
-    
-    if (lText.startsWith('high ')) { priority = 'high'; text = text.substring(5); }
-    else if (lText.startsWith('med ')) { priority = 'med'; text = text.substring(4); }
-    else if (lText.startsWith('low ')) { priority = 'low'; text = text.substring(4); }
-    
-    filteredCommands = [{ 
-      id: 'quick-task', title: `Add ${priority.toUpperCase()} Task: "${text}"`, cat: 'Silent Action', action: () => silentAddTask(text, priority) 
-    }];
-  } else if (lowerQuery.startsWith('/note ')) {
-    filteredCommands = [{ id: 'quick-note', title: `Create Note: "${query.substring(6)}"`, cat: 'Silent Action', action: () => silentAddNote(query.substring(6)) }];
-  } else if (lowerQuery.startsWith('scc:')) {
-    filteredCommands = [{ id: 'scc', title: `Search SCC Online for "${query.substring(4).trim()}"`, cat: 'Web Action', action: () => window.open(`https://www.scconline.com/Members/SearchResult.aspx?q=${encodeURIComponent(query.substring(4).trim())}`, '_blank') }];
-  } else if (lowerQuery.startsWith('gh:')) {
-    filteredCommands = [{ id: 'gh', title: `Search GitHub for "${query.substring(3).trim()}"`, cat: 'Web Action', action: () => window.open(`https://github.com/search?q=${encodeURIComponent(query.substring(3).trim())}`, '_blank') }];
-  } else if (lowerQuery.startsWith('r:')) {
-    filteredCommands = [{ id: 'scholar', title: `Search Google Scholar for "${query.substring(2).trim()}"`, cat: 'Web Action', action: () => window.open(`https://scholar.google.com/scholar?q=${encodeURIComponent(query.substring(2).trim())}`, '_blank') }];
-  } else if (lowerQuery.startsWith('yt:')) {
-    filteredCommands = [{ id: 'yt', title: `Search YouTube for "${query.substring(3).trim()}"`, cat: 'Web Action', action: () => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query.substring(3).trim())}`, '_blank') }];
-  } else {
-    filteredCommands = PALETTE_COMMANDS.filter(c => c.title.toLowerCase().includes(lowerQuery) || c.cat.toLowerCase().includes(lowerQuery));
-    if (query.length > 0) {
-      filteredCommands.push({ id: 'search', title: `Search the web for "${query}"`, cat: 'Web Action', action: () => window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank') });
-    }
-  }
-  
-  paletteSelectionIdx = 0;
-  renderPalette();
-}
-
-function renderPalette() {
-  const container = document.getElementById('cmd-results');
-  if (filteredCommands.length === 0) {
-    container.innerHTML = '<div class="empty" style="padding: 20px 24px;">No commands found. Press Enter to search Google.</div>';
-    return;
-  }
-  
-  const groups = {};
-  filteredCommands.forEach((c, idx) => {
-    if(!groups[c.cat]) groups[c.cat] = [];
-    groups[c.cat].push({ ...c, globalIdx: idx });
-  });
-
-  let html = '';
-  for (const [cat, items] of Object.entries(groups)) {
-    html += `<div class="cmd-group-label">${esc(cat)}</div>`;
-    items.forEach(c => {
-      html += `
-        <div class="cmd-item ${c.globalIdx === paletteSelectionIdx ? 'selected' : ''}" onclick="executePaletteCommand(${c.globalIdx})">
-          <span>${esc(c.title)}</span>
-        </div>
-      `;
-    });
-  }
-  container.innerHTML = html;
-}
-
-function handlePaletteKeys(e) {
-  if (e.key === 'ArrowDown') { e.preventDefault(); paletteSelectionIdx = (paletteSelectionIdx + 1) % filteredCommands.length; renderPalette(); } 
-  else if (e.key === 'ArrowUp') { e.preventDefault(); paletteSelectionIdx = (paletteSelectionIdx - 1 + filteredCommands.length) % filteredCommands.length; renderPalette(); } 
-  else if (e.key === 'Enter') { e.preventDefault(); executePaletteCommand(paletteSelectionIdx); }
-}
-
-function executePaletteCommand(idx) {
-  if (filteredCommands[idx]) { togglePalette(); filteredCommands[idx].action(); } 
-  else {
-    const val = document.getElementById('cmd-input-large').value.trim();
-    if(val) { togglePalette(); window.open(`https://www.google.com/search?q=${encodeURIComponent(val)}`, '_blank'); }
-  }
-}
-
-function silentAddTask(text, priority = 'med') {
-  if(!text) return;
-  state.tasks.unshift({id:uid(), text:text, done:false, priority:priority});
-  Store.set('tasks', state.tasks);
-  renderTasks(); showToast('Task added silently');
-}
-
-function silentAddNote(text) {
-  if(!text) return;
-  state.notes.unshift({id:uid(), title:'Quick Capture', body:text, updatedAt:Date.now()});
-  Store.set('notes', state.notes);
-  renderNotes(); showToast('Note captured silently');
-}
-
-/* ---------- Active Recall (Flashcards) ---------- */
-let fcSession = [];
-let fcHovered = false;
-let fcIsLibrary = false;
-let currentDeck = 'All';
-
-function initFlashcards() {
-  changeFcDeck('All');
-}
-
-function changeFcDeck(deck) {
-  currentDeck = deck;
-  fcSession = currentDeck === 'All'
-    ? [...state.flashcards]
-    : state.flashcards.filter(c => (c.deck || 'GEN').toUpperCase() === currentDeck);
-  
-  fcSession.sort(() => Math.random() - 0.5);
-  currentFcIdx = 0;
-  populateDeckDropdown();
-  renderFlashcards();
-}
-
-function populateDeckDropdown() {
-  const select = document.getElementById('fc-deck-select');
-  const decks = [...new Set(state.flashcards.map(c => (c.deck || 'GEN').toUpperCase()))];
-  let html = `<option value="All">All Decks</option>`;
-  decks.forEach(d => { html += `<option value="${d}" ${currentDeck === d ? 'selected' : ''}>${esc(d)}</option>`; });
-  select.innerHTML = html;
-}
-
-function renderFlashcards() {
-  const termDisplay = document.getElementById('fc-term-display');
-  const defDisplay = document.getElementById('fc-def-display');
-  const metaDisplay = document.getElementById('fc-meta-display');
-  const container = document.getElementById('fc-active');
-  
-  container.classList.remove('flipped');
-  
-  if (state.flashcards.length === 0) {
-    termDisplay.textContent = "Deck Empty";
-    defDisplay.textContent = "Add your first concept below.";
-    metaDisplay.textContent = "";
-    return;
-  }
-  
-  if (fcSession.length === 0) {
-    termDisplay.textContent = "Session Complete!";
-    defDisplay.textContent = "You've mastered this deck. Change deck or click to review again.";
-    metaDisplay.textContent = "Click to reset";
-    container.onclick = () => { changeFcDeck(currentDeck); container.onclick = () => container.classList.toggle('flipped'); };
-    return;
-  }
-
-  container.onclick = () => container.classList.toggle('flipped');
-  if (currentFcIdx >= fcSession.length) currentFcIdx = 0;
-  
-  const card = fcSession[currentFcIdx];
-  termDisplay.textContent = card.term;
-  defDisplay.textContent = card.def;
-  metaDisplay.textContent = `[${(card.deck||'GEN').toUpperCase()}] • ${fcSession.length} left • Space to flip`;
-}
-
-function fcReview(gotIt) {
-  if (fcSession.length === 0) return;
-  const container = document.getElementById('fc-active');
-  container.classList.remove('flipped');
-  
-  setTimeout(() => {
-    if (gotIt) {
-      fcSession.splice(currentFcIdx, 1);
-      if (currentFcIdx >= fcSession.length) currentFcIdx = 0;
-    } else {
-      currentFcIdx = (currentFcIdx + 1) % fcSession.length;
-    }
-    renderFlashcards();
-  }, 150);
-}
-
-function addFlashcard() {
-  const deck = (document.getElementById('fc-new-deck').value.trim() || 'GEN').toUpperCase();
-  const term = document.getElementById('fc-new-term').value.trim();
-  const def = document.getElementById('fc-new-def').value.trim();
-  if(!term || !def) return showToast('Need both Term and Definition');
-  
-  const newCard = { id: uid(), deck, term, def };
-  state.flashcards.push(newCard);
-  Store.set('flashcards', state.flashcards);
-  
-  document.getElementById('fc-new-term').value = '';
-  document.getElementById('fc-new-def').value = '';
-  
-  populateDeckDropdown();
-  if(currentDeck === 'All' || currentDeck === deck) fcSession.push(newCard);
-  
-  renderFlashcards();
-  if(fcIsLibrary) renderFcLibrary();
-  showToast('Added to Deck');
-}
-
-function toggleFcLibrary() {
-  fcIsLibrary = !fcIsLibrary;
-  document.getElementById('fc-study-view').style.display = fcIsLibrary ? 'none' : 'block';
-  document.getElementById('fc-library-view').style.display = fcIsLibrary ? 'flex' : 'none';
-  if(fcIsLibrary) renderFcLibrary();
-}
-
-function renderFcLibrary() {
-  const view = document.getElementById('fc-library-view');
-  if(state.flashcards.length === 0) {
-    view.innerHTML = '<div class="empty">No cards in library.</div>'; return;
-  }
-  view.innerHTML = state.flashcards.map(c => `
-    <div class="item-row" style="align-items:flex-start;">
-      <div style="flex:1;">
-        <div style="font-weight:600; font-size:13px;"><span style="color:var(--cyan);">[${esc(c.deck||'GEN')}]</span> ${esc(c.term)}</div>
-        <div style="font-size:12px; color:var(--ink-dim); margin-top:4px;">${esc(c.def)}</div>
-      </div>
-      <button class="btn btn-icon btn-danger" style="border:none; padding:4px;" onclick="deleteFlashcard('${c.id}')">&times;</button>
-    </div>
-  `).join('');
-}
-
-function deleteFlashcard(id) {
-  state.flashcards = state.flashcards.filter(c => c.id !== id);
-  Store.set('flashcards', state.flashcards);
-  fcSession = fcSession.filter(c => c.id !== id);
-  populateDeckDropdown();
-  renderFlashcards();
-  if(fcIsLibrary) renderFcLibrary();
-}
-
-document.addEventListener('keydown', e => {
-  if (fcHovered && !fcIsLibrary && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName) && !isPaletteOpen) {
-    if (e.code === 'Space') {
-      e.preventDefault();
-      const container = document.getElementById('fc-active');
-      if(fcSession.length > 0) container.classList.toggle('flipped');
-      else container.click(); 
-    } else if (e.code === 'ArrowRight') {
-      e.preventDefault(); fcReview(true);
-    } else if (e.code === 'ArrowLeft') {
-      e.preventDefault(); fcReview(false);
-    }
-  }
-});
-
-/* ---------- Finance Tracker (Bug Fixed) ---------- */
-function updateBudget(val) {
-  // Ensure we don't accidentally set a 0 or negative budget
-  let b = parseInt(val);
-  state.settings.budget = (isNaN(b) || b <= 0) ? 1 : b; 
-  Store.set('settings', state.settings);
-  renderFinances();
-}
-
-function addFinance() {
-  const name = document.getElementById('fin-name').value.trim();
-  const amount = parseInt(document.getElementById('fin-amt').value);
-  const type = document.getElementById('fin-type').value;
-  const tag = document.getElementById('fin-tag').value;
-  
-  // Bug fix: strictly prevent zero or negative expenses
-  if(!name || isNaN(amount) || amount <= 0) return showToast('Valid Name and positive Amount required');
-  
-  state.finances.push({ id: uid(), name, amount, type, tag });
-  Store.set('finances', state.finances);
-  
-  document.getElementById('fin-name').value = '';
-  document.getElementById('fin-amt').value = '';
-  renderFinances();
-}
-
-function deleteFinance(id) {
-  state.finances = state.finances.filter(f => f.id !== id);
-  Store.set('finances', state.finances);
-  renderFinances();
-}
-
-function renderFinances() {
-  document.getElementById('fin-budget-input').value = state.settings.budget;
-
-  let totalBurn = 0;
-  state.finances.forEach(f => totalBurn += f.amount);
-
-  let budget = state.settings.budget || 1; 
-  
-  // Bug fix: Mathematically clamp the percentage so it never goes below 0 or above 100
-  let pct = Math.max(0, Math.min(100, (totalBurn / budget) * 100));
-  
-  let bar = document.getElementById('fin-budget-bar');
-  bar.style.width = pct + '%';
-  
-  if (pct <= 50) bar.style.background = 'var(--cyan)';
-  else if (pct <= 85) bar.style.background = 'var(--amber)';
-  else bar.style.background = 'var(--red)';
-
-  document.getElementById('fin-spent-text').textContent = `₹${totalBurn} spent`;
-  
-  // Visual fix: Show red "over budget" text if you go negative
-  let rem = budget - totalBurn;
-  let remEl = document.getElementById('fin-rem-text');
-  
-  if(rem >= 0) {
-    remEl.textContent = `₹${rem} remaining`;
-    remEl.style.color = 'var(--ink)';
-  } else {
-    remEl.textContent = `₹${Math.abs(rem)} over budget`;
-    remEl.style.color = 'var(--red)';
-  }
-
-  const list = document.getElementById('fin-list');
-  if (state.finances.length === 0) {
-    list.innerHTML = '<div class="empty">No expenses logged.</div>';
-    return;
-  }
-
-  let groups = {};
-  state.finances.forEach(f => {
-    let t = f.tag || 'OTHER';
-    if(!groups[t]) groups[t] = [];
-    groups[t].push(f);
-  });
-
-  let html = '';
-  for(let tag in groups) {
-    html += `<div class="cmd-group-label">${esc(tag)}</div>`;
-    groups[tag].forEach(f => {
-      const typeLabel = f.type === 'sub' ? '<span class="pill med" style="margin-left:8px;">Sub</span>' : '';
-      const amountClass = f.type === 'sub' ? 'finance-amt' : 'finance-amt expense';
-      html += `
-        <div class="item-row" style="padding: 6px 12px; margin-bottom: 4px;">
-          <div style="flex:1; display:flex; align-items:center;">
-            <span class="txt" style="font-weight:500; font-size:13px;">${esc(f.name)}</span>
-            ${typeLabel}
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="set-name">Your name</label>
+            <div class="setting-desc">Shown in the greeting on Today.</div>
           </div>
-          <span class="${amountClass}">₹${f.amount}</span>
-          <button class="btn btn-icon btn-danger" style="border:none; padding:4px; margin-left:8px;" onclick="deleteFinance('${f.id}')">&times;</button>
+          <div class="setting-control"><input id="set-name" type="text" placeholder="Name" onchange="updateSettings('name',this.value)" /></div>
         </div>
-      `;
-    });
-  }
-  list.innerHTML = html;
-}
 
-function toggleFinanceHistory() {
-  finViewMode = finViewMode === 'main' ? 'history' : 'main';
-  document.getElementById('fin-main-view').style.display = finViewMode === 'main' ? 'block' : 'none';
-  document.getElementById('fin-history-view').style.display = finViewMode === 'history' ? 'flex' : 'none';
-  if(finViewMode === 'history') renderFinanceHistory();
-}
-
-function renderFinanceHistory() {
-  let el = document.getElementById('fin-history-list');
-  if(state.financeHistory.length === 0) {
-    el.innerHTML = '<div class="empty">No past cycles recorded.</div>';
-    return;
-  }
-  
-  let grandTotal = 0;
-  let html = '';
-  
-  state.financeHistory.forEach(h => {
-    grandTotal += h.total;
-    let d = new Date(h.date);
-    let monthStr = d.toLocaleDateString(undefined, {month:'long', year:'numeric'});
-    html += `
-      <div class="item-row" style="flex-direction:column; align-items:flex-start; gap:4px; margin-bottom:6px;">
-        <div style="display:flex; justify-content:space-between; width:100%;">
-          <span style="font-weight:600; color:var(--cyan);">${monthStr}</span>
-          <span class="finance-amt">₹${h.total}</span>
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="set-city">Weather city</label>
+            <div class="setting-desc">Used for the weather card on Life.</div>
+          </div>
+          <div class="setting-control"><input id="set-city" type="text" placeholder="City" onchange="updateSettings('weatherCity',this.value)" /></div>
         </div>
-        <div style="font-size:11px; color:var(--ink-dim);">${h.items.length} items archived</div>
-      </div>
-    `;
-  });
-  
-  html = `<div style="margin-bottom:12px; font-size:13px; border-bottom: 1px solid var(--line); padding-bottom: 8px;">
-            <span style="color:var(--ink-dim);">All-Time Historical Spend:</span> 
-            <span class="finance-amt" style="color:var(--red); font-size: 16px; float: right;">₹${grandTotal}</span>
-          </div>` + html;
-          
-  el.innerHTML = html;
-}
 
-function cycleMonth() {
-  if(!confirm("Archive current expenses and clear one-offs? (Recurring subs will be kept for the new cycle.)")) return;
-  
-  let totalBurn = 0;
-  state.finances.forEach(f => totalBurn += f.amount);
-
-  state.financeHistory.unshift({
-    id: uid(),
-    date: new Date().toISOString(),
-    total: totalBurn,
-    items: [...state.finances]
-  });
-
-  // Wipe one-offs, keep subs
-  state.finances = state.finances.filter(f => f.type === 'sub');
-  
-  Store.set('finances', state.finances);
-  Store.set('financeHistory', state.financeHistory);
-  
-  renderFinances();
-  if(finViewMode === 'history') renderFinanceHistory();
-  showToast('Cycle archived. One-offs cleared.');
-}
-
-/* ---------- Workspace (Tasks & Agenda) ---------- */
-function addTask(){
-  const input = document.getElementById('task-input');
-  const text = input.value.trim();
-  if(!text) return;
-  state.tasks.unshift({id:uid(), text:text, done:false, priority:document.getElementById('task-priority').value});
-  input.value = ''; Store.set('tasks', state.tasks); renderTasks();
-}
-function toggleTask(id){
-  const t = state.tasks.find(x => x.id===id);
-  if(t){ t.done = !t.done; Store.set('tasks', state.tasks); renderTasks(); }
-}
-function deleteTask(id){
-  state.tasks = state.tasks.filter(x => x.id!==id);
-  Store.set('tasks', state.tasks); renderTasks();
-}
-function cycleTaskPriority(id){
-  const t = state.tasks.find(x => x.id===id);
-  if(t){
-    const cycle = { low: 'med', med: 'high', high: 'low' };
-    t.priority = cycle[t.priority] || 'med';
-    Store.set('tasks', state.tasks);
-    renderTasks();
-  }
-}
-function renderTasks(){
-  const el = document.getElementById('tasks-list');
-  const list = [...state.tasks].sort((a,b) => a.done - b.done);
-  if(!list.length) { el.innerHTML = '<div class="empty">Task queue empty.</div>'; return; }
-  
-  el.innerHTML = list.map(t => `
-    <div class="item-row ${t.done?'done':''}">
-      <input class="chk" type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')" />
-      <span class="txt">${esc(t.text)}</span>
-      <span class="pill ${t.priority} interactive" onclick="cycleTaskPriority('${t.id}')" title="Click to change priority">${t.priority}</span>
-      <button class="btn btn-icon btn-danger" onclick="deleteTask('${t.id}')">&times;</button>
-    </div>
-  `).join('');
-}
-
-function addAgenda(){
-  const title = document.getElementById('agenda-title').value.trim();
-  const date = document.getElementById('agenda-date').value;
-  if(!title || !date) return showToast('Title and date required');
-  state.agenda.push({id:uid(), title:title, date:date});
-  document.getElementById('agenda-title').value=''; document.getElementById('agenda-date').value='';
-  Store.set('agenda', state.agenda); renderAgenda();
-}
-function renderAgenda(){
-  const el = document.getElementById('agenda-list');
-  const items = [...state.agenda].sort((a,b) => a.date.localeCompare(b.date));
-  if(!items.length) { el.innerHTML = '<div class="empty">No deadlines found.</div>'; return; }
-  el.innerHTML = items.map(a => `
-    <div class="item-row">
-      <span class="pill mono" style="background:var(--accent-soft); color:var(--accent);">${parseLocalDate(a.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
-      <span class="txt">${esc(a.title)}</span>
-      <button class="btn btn-icon btn-danger" onclick="state.agenda=state.agenda.filter(x=>x.id!=='${a.id}'); Store.set('agenda', state.agenda); renderAgenda();">&times;</button>
-    </div>
-  `).join('');
-}
-
-/* ---------- Pomodoro ---------- */
-// The timer is driven by a wall-clock end time (endsAt), not by counting
-// ticks, so it stays accurate when the window is hidden in the tray and
-// its timers get throttled.
-const POMO_MINUTES = { focus: 25, break: 5 };
-let pomo = {mode:'focus', remaining: 25*60, total: 25*60, running:false, timer:null, endsAt:0};
-function pomoToggle(){
-  pomo.running = !pomo.running;
-  document.getElementById('pomo-toggle').textContent = pomo.running ? 'Pause' : 'Initiate';
-  clearInterval(pomo.timer);
-  if(pomo.running){
-    pomo.endsAt = Date.now() + pomo.remaining * 1000;
-    pomo.timer = setInterval(pomoTick, 1000);
-  } else {
-    pomo.remaining = Math.max(1, Math.ceil((pomo.endsAt - Date.now()) / 1000));
-    renderPomo();
-  }
-}
-function pomoReset(){
-  pomo.running = false; clearInterval(pomo.timer);
-  pomo.mode = 'focus'; pomo.total = POMO_MINUTES.focus*60; pomo.remaining = pomo.total;
-  document.getElementById('pomo-toggle').textContent = 'Initiate';
-  renderPomo();
-}
-function pomoTick(){
-  let switched = false;
-  // Loop in case more than one phase elapsed while timers were throttled.
-  while(Date.now() >= pomo.endsAt){
-    pomo.mode = pomo.mode==='focus' ? 'break' : 'focus';
-    pomo.total = POMO_MINUTES[pomo.mode] * 60;
-    pomo.endsAt += pomo.total * 1000;
-    switched = true;
-  }
-  pomo.remaining = Math.ceil((pomo.endsAt - Date.now()) / 1000);
-  if(switched){
-    const msg = pomo.mode === 'break'
-      ? `Focus session done. Take a ${POMO_MINUTES.break}-minute break.`
-      : `Break over. Back to a ${POMO_MINUTES.focus}-minute focus session.`;
-    showToast(`Timer switched to ${pomo.mode}`);
-    // Native notification so it's noticed even when PCC is in the tray.
-    if(window.pcc && window.pcc.showNotification) window.pcc.showNotification('Deep Work Timer', msg);
-  }
-  renderPomo();
-}
-function renderPomo(){
-  const m = Math.floor(pomo.remaining/60), s = pomo.remaining%60;
-  document.getElementById('pomo-display').textContent = `${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
-  document.getElementById('pomo-mode').textContent = pomo.mode;
-  document.getElementById('pomo-bar').style.width = Math.round(((pomo.total-pomo.remaining)/pomo.total)*100)+'%';
-}
-
-/* ---------- Academia & Code (Notes & Links) ---------- */
-function addNote(){
-  state.notes.unshift({id:uid(), title:'Untitled Buffer', body:'', updatedAt:Date.now()});
-  Store.set('notes', state.notes); renderNotes();
-}
-function updateNote(id, field, value){
-  const n = state.notes.find(x => x.id===id);
-  if(n){ n[field]=value; n.updatedAt=Date.now(); Store.set('notes', state.notes); }
-}
-function renderNotes(){
-  const el = document.getElementById('notes-list');
-  if(!state.notes.length){ el.innerHTML = '<div class="empty">No active research buffers.</div>'; return; }
-  el.innerHTML = state.notes.map(n => `
-    <div class="note-card">
-      <div style="display:flex; justify-content:space-between; align-items:start;">
-        <input class="note-title" value="${esc(n.title)}" onchange="updateNote('${n.id}','title',this.value)" />
-        <button class="btn btn-icon" style="border:none; padding:0 4px; color:var(--ink-dim);" onclick="state.notes=state.notes.filter(x=>x.id!=='${n.id}'); Store.set('notes', state.notes); renderNotes();">&times;</button>
-      </div>
-      <textarea class="note-body" onchange="updateNote('${n.id}','body',this.value)">${esc(n.body)}</textarea>
-    </div>
-  `).join('');
-}
-
-function onLinkTypeChange(){
-  const type = document.getElementById('link-type').value;
-  const targetInput = document.getElementById('link-target');
-  const browseBtn = document.getElementById('link-browse-btn');
-  if(type === 'app'){
-    targetInput.placeholder = 'App path — use Browse';
-    targetInput.readOnly = true;
-    browseBtn.style.display = 'inline-block';
-  } else {
-    targetInput.placeholder = 'URL (e.g. https://...)';
-    targetInput.readOnly = false;
-    targetInput.value = '';
-    browseBtn.style.display = 'none';
-  }
-}
-
-async function browseForApp(){
-  const filePath = await window.pcc.pickAppFile();
-  if(filePath){
-    document.getElementById('link-target').value = filePath;
-  }
-}
-
-function addLink(){
-  const name = document.getElementById('link-name').value.trim();
-  const type = document.getElementById('link-type').value;
-  let target = document.getElementById('link-target').value.trim();
-  if(!name || !target) return;
-  if(type === 'url' && !/^https?:\/\//i.test(target)) target = 'https://' + target;
-  state.links.push({id:uid(), name:name, type:type, target:target});
-  document.getElementById('link-name').value='';
-  document.getElementById('link-target').value='';
-  Store.set('links', state.links); renderLinks();
-}
-function renderLinks(){
-  const body = document.getElementById('links-body');
-  if(!state.links.length){ body.innerHTML = '<div class="empty">No links pinned.</div>'; return; }
-  // Backward-compat: old entries only have {name, url}; treat those as type 'url'
-  body.innerHTML = state.links.map(l => {
-    const type = l.type || 'url';
-    const target = l.target || l.url || '';
-    const icon = type === 'app' ? '&#128421;&#65039;' : '&#128279;';
-    return `
-    <div class="link-tile" data-type="${esc(type)}" data-target="${esc(target)}" style="cursor:pointer;">
-      <span style="margin-right:6px;">${icon}</span>
-      <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; font-weight:500;">${esc(l.name)}</span>
-      <button class="btn-icon link-remove" data-id="${l.id}" style="background:transparent; border:none; padding:2px; color:var(--line);">&times;</button>
-    </div>
-  `;
-  }).join('');
-
-  body.querySelectorAll('.link-tile').forEach(tile => {
-    tile.addEventListener('click', async () => {
-      const result = await window.pcc.launchItem(tile.dataset.type, tile.dataset.target);
-      if(result && !result.ok) showToast('Could not open: ' + (result.error || 'unknown error'));
-    });
-  });
-  body.querySelectorAll('.link-remove').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.id;
-      state.links = state.links.filter(x => x.id !== id);
-      Store.set('links', state.links);
-      renderLinks();
-    });
-  });
-}
-
-// --- Games Library ---
-
-let gamesCache = [];
-
-function formatBytes(bytes){
-  if(!bytes) return '0 GB';
-  const gb = bytes / (1024**3);
-  return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes/(1024**2)).toFixed(0)} MB`;
-}
-
-function formatPlaytime(seconds){
-  if(!seconds) return '0 hrs';
-  const hrs = seconds / 3600;
-  return hrs >= 1 ? `${hrs.toFixed(1)} hrs` : `${Math.round(seconds/60)} min`;
-}
-
-async function chooseGamesFolder(){
-  const folder = await window.pcc.pickGamesFolder();
-  if(folder){
-    document.getElementById('games-folder-label').textContent = folder;
-    loadGames();
-  }
-}
-
-async function loadGamesFolderLabel(){
-  const cfg = await window.pcc.getGamesConfig();
-  document.getElementById('games-folder-label').textContent = cfg.gamesDir || 'No folder set — click "Set Folder" to choose one.';
-}
-
-// force=true (the Refresh button) recomputes folder sizes instead of using
-// the cached ones.
-async function loadGames(force){
-  const body = document.getElementById('games-body');
-  body.innerHTML = '<div class="empty">Scanning library&hellip;</div>';
-  try{
-    gamesCache = await window.pcc.scanGames(!!force);
-  } catch(e){
-    gamesCache = [];
-    console.error('Games scan failed', e);
-  }
-  renderGames();
-}
-
-function renderGames(){
-  const body = document.getElementById('games-body');
-  if(!gamesCache.length){
-    body.innerHTML = '<div class="empty">No games found. Set your Games folder to scan for titles.</div>';
-    return;
-  }
-  body.innerHTML = gamesCache.map(g => `
-    <div class="game-tile">
-      <div class="game-tile-icon">${g.icon ? `<img src="${g.icon}" />` : '&#127918;'}</div>
-      <div class="game-tile-body">
-        <div class="game-tile-name" title="${esc(g.name)}">${esc(g.name)}</div>
-        <div class="game-tile-meta"><span>${formatBytes(g.sizeBytes)}</span><span>${formatPlaytime(g.playtimeSeconds)}</span></div>
-        <button class="btn btn-primary game-tile-launch" data-exe="${esc(g.exePath)}">Play</button>
-      </div>
-    </div>
-  `).join('');
-
-  body.querySelectorAll('.game-tile-launch').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const result = await window.pcc.launchGame(btn.dataset.exe);
-      if(result && !result.ok) showToast('Could not launch game: ' + (result.error || 'unknown error'));
-    });
-  });
-}
-
-if(window.pcc && window.pcc.onGameSessionEnded){
-  window.pcc.onGameSessionEnded(({ exePath, totalSeconds }) => {
-    const game = gamesCache.find(g => g.exePath === exePath);
-    if(game){
-      game.playtimeSeconds = totalSeconds;
-      renderGames();
-    }
-  });
-}
-
-/* ---------- Today: Timetable & Mail Sync ---------- */
-function todayDayName(){
-  return new Date().toLocaleDateString(undefined, {weekday:'long'});
-}
-
-function renderTimetable(){
-  const tt = state.timetable;
-  const today = todayDayName();
-  const dayNames = Object.keys(tt.days);
-
-  let head = '<tr><th>Day</th>' + tt.slots.map(s => `<th>${esc(s)}</th>`).join('') + '</tr>';
-
-  let rows = dayNames.map(day => {
-    const slots = tt.days[day];
-    const cells = slots.map(slot => {
-      if(!slot) return '<td><span class="tt-empty">&mdash;</span></td>';
-      return `<td>
-        <div class="tt-slot" style="border-left-color:${colorForSubject(slot.subject)}">
-          <div class="tt-subject">${esc(slot.subject)}</div>
-          ${slot.prof ? `<div class="tt-meta">${esc(slot.prof)}</div>` : ''}
-          ${slot.room ? `<div class="tt-meta">${esc(slot.room)}</div>` : ''}
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="hotkey-display">Global shortcut</label>
+            <div class="setting-desc">Shows or hides PCC from anywhere. Click the box, then press the keys.</div>
+            <div id="hotkey-status" class="setting-desc"></div>
+          </div>
+          <div class="setting-control"><input id="hotkey-display" type="text" readonly placeholder="Click to set" class="mono" style="cursor:pointer; text-align:center;" onclick="startHotkeyCapture()" /></div>
         </div>
-      </td>`;
-    }).join('');
-    const rowOverrides = state.timetableOverrides.filter(o => o.day === day);
-    const overrideRow = rowOverrides.length ? `<tr class="${day===today?'tt-today':''}"><td></td><td colspan="${tt.slots.length}">
-      <div class="tt-overrides">${rowOverrides.map(o => `
-        <div class="tt-override-chip">
-          <span class="txt">${esc(o.text)}</span>
-          <button class="btn btn-icon" style="padding:2px 6px;" onclick="clearOverride('${o.id}')">&times;</button>
-        </div>`).join('')}
-      </div>
-    </td></tr>` : '';
-    return `<tr class="${day===today?'tt-today':''}"><td class="tt-day-cell">${esc(day)}</td>${cells}</tr>${overrideRow}`;
-  }).join('');
 
-  document.getElementById('tt-table').innerHTML = head + rows;
-}
-
-function clearOverride(id){
-  state.timetableOverrides = state.timetableOverrides.filter(o => o.id !== id);
-  Store.set('timetableOverrides', state.timetableOverrides);
-  renderTimetable();
-}
-
-async function scanMail(manual){
-  try{
-    const data = await window.pcc.scanEmail();
-
-    if(data.error){
-      if(manual) showToast('Mail scan: ' + data.error);
-      renderPending(data.error);
-      return;
-    }
-
-    const existingIds = new Set(state.pendingUpdates.map(p => p.id));
-    const dismissed = new Set(state.dismissedUpdateIds);
-    let added = 0;
-
-    (data.results || []).forEach(item => {
-      if(existingIds.has(item.id) || dismissed.has(item.id)) return;
-      state.pendingUpdates.unshift(item);
-      added++;
-    });
-
-    if(added > 0){
-      Store.set('pendingUpdates', state.pendingUpdates);
-      if(manual) showToast(`Found ${added} new update(s)`);
-    } else if(manual){
-      showToast('No new updates found');
-    }
-
-    renderPending();
-  } catch(e){
-    if(manual) showToast('Mail scan failed — check your mail settings');
-    renderPending('Mail scan failed: ' + esc(e.message || e));
-  }
-}
-
-function renderPending(errorMsg){
-  const card = document.getElementById('card-pending-updates');
-  const list = document.getElementById('pending-list');
-  const count = document.getElementById('pending-count');
-
-  if(errorMsg){
-    card.style.display = 'flex';
-    count.textContent = '';
-    list.innerHTML = `<div class="pending-error">${esc(errorMsg)}</div>`;
-    return;
-  }
-
-  if(!state.pendingUpdates.length){
-    card.style.display = 'none';
-    return;
-  }
-
-  card.style.display = 'flex';
-  count.textContent = state.pendingUpdates.length;
-
-  list.innerHTML = state.pendingUpdates.map(p => `
-    <div class="pending-row">
-      <div class="ptop">
-        <div>
-          <div class="psubject">${esc(p.subject || '(no subject)')}</div>
-          <div class="pmeta">${p.category === 'schedule_change' ? 'SCHEDULE CHANGE' : 'DEADLINE'} // ${esc(p.sender || '')}</div>
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="autostart-toggle">Start when I sign in</label>
+            <div class="setting-desc">Opens quietly in the tray when Windows starts.</div>
+            <div id="autostart-status" class="setting-desc"></div>
+          </div>
+          <div class="setting-control"><input id="autostart-toggle" type="checkbox" class="switch" onchange="toggleAutostart(this.checked)" /></div>
         </div>
-        <span class="pill ${p.category === 'schedule_change' ? 'high' : 'med'}">${p.category === 'schedule_change' ? 'Schedule' : 'Deadline'}</span>
-      </div>
-      <div class="psnippet">${esc(p.snippet || '')}</div>
-      <div class="pactions">
-        <button class="btn" onclick="dismissUpdate('${p.id}')">Dismiss</button>
-        <button class="btn btn-success" onclick="approveUpdate('${p.id}')">Approve</button>
+      </section>
+
+      <!-- Timetable -->
+      <section class="settings-pane" data-tab="timetable">
+        <h2 class="pane-title">Timetable</h2>
+        <p class="pane-intro">Connect Digiicampus to show your real classes, rooms, cancellations and holidays instead of the manual timetable.</p>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Digiicampus</div>
+            <div id="campus-status" class="setting-desc"></div>
+          </div>
+          <div class="setting-control">
+            <button class="btn btn-primary" id="campus-connect-btn" onclick="connectCampus()">Connect</button>
+            <button class="btn" id="campus-sync-settings-btn" onclick="syncCampus(true)">Sync now</button>
+            <button class="btn btn-danger" id="campus-disconnect-btn" onclick="disconnectCampus()">Disconnect</button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">How sign-in works</div>
+            <div class="setting-desc">Connect opens the university's own sign-in page in a separate window. You sign in there; PCC never sees your password and keeps only the session the site gives you, which lasts about a week.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mail -->
+      <section class="settings-pane" data-tab="mail">
+        <h2 class="pane-title">Mail</h2>
+        <p class="pane-intro">PCC scans your inbox for schedule changes and deadlines and lists them on Today for you to approve.</p>
+
+        <div class="form-grid">
+          <div class="field">
+            <label class="field-label" for="mail-email">Email address</label>
+            <input id="mail-email" type="text" placeholder="you@example.com" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="mail-password">App password</label>
+            <input id="mail-password" type="password" placeholder="Leave blank to keep the saved one" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="mail-imap-host">IMAP server</label>
+            <input id="mail-imap-host" type="text" placeholder="imap.gmail.com" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="mail-days-back">Days to look back</label>
+            <input id="mail-days-back" type="number" min="1" max="30" placeholder="7" />
+          </div>
+          <div class="field wide">
+            <label class="field-label" for="mail-allowed-senders">Only scan mail from</label>
+            <input id="mail-allowed-senders" type="text" placeholder="Senders, separated by commas. Leave empty to scan everyone." />
+          </div>
+        </div>
+        <div class="pane-actions">
+          <div id="mail-password-status" class="field-note"></div>
+          <button class="btn btn-primary" onclick="saveMailSettings()">Save</button>
+        </div>
+      </section>
+
+      <!-- Data -->
+      <section class="settings-pane" data-tab="data">
+        <h2 class="pane-title">Data</h2>
+        <p class="pane-intro">Everything you enter stays on this computer. A backup is saved automatically once a day.</p>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Export</div>
+            <div class="setting-desc">Save all your data to one file. The mail password is never included.</div>
+          </div>
+          <div class="setting-control"><button class="btn" onclick="exportData()">Export&hellip;</button></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Import</div>
+            <div class="setting-desc">Replace everything with a backup file. Your current data is backed up first.</div>
+          </div>
+          <div class="setting-control"><button class="btn" onclick="importData()">Import&hellip;</button></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Automatic backups</div>
+            <div class="setting-desc">The ten most recent daily backups are kept.</div>
+          </div>
+          <div class="setting-control"><button class="btn" onclick="window.pcc.openBackupsFolder()">Open folder</button></div>
+        </div>
+
+        <div class="setting-row danger">
+          <div class="setting-text">
+            <div class="setting-name">Reset all data</div>
+            <div class="setting-desc">Erases tasks, notes, spending, habits and the rest. A backup is saved first.</div>
+          </div>
+          <div class="setting-control"><button class="btn btn-danger" onclick="resetAllData()">Reset&hellip;</button></div>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section class="settings-pane" data-tab="about">
+        <h2 class="pane-title">About</h2>
+        <p class="pane-intro">Personal Command Center</p>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name" id="about-version">Version</div>
+            <div class="setting-desc">Updates are checked each time the app starts.</div>
+          </div>
+          <div class="setting-control"><button class="btn" onclick="checkForUpdatesNow()">Check for updates</button></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Console</div>
+            <div class="setting-desc">A live log of what the app is doing, useful when something misbehaves.</div>
+          </div>
+          <div class="setting-control"><button class="btn" onclick="closeSettings(); openConsole();">Open console</button></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Keyboard</div>
+            <div class="setting-desc"><span class="cmd-hint" style="margin:0;">Ctrl K</span> command palette &nbsp; <span class="cmd-hint" style="margin:0;">Ctrl 1</span> to <span class="cmd-hint" style="margin:0;">Ctrl 7</span> switch pages</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div id="slot-overlay" onclick="if(event.target===this)closeSlotEditor()">
+  <div id="slot-modal">
+    <div>
+      <div class="settings-title">Edit class</div>
+      <div class="field-note" id="slot-editor-title"></div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="slot-subject">Subject</label>
+      <input id="slot-subject" type="text" placeholder="Law of Evidence" onkeydown="if(event.key==='Enter')saveSlot()" />
+    </div>
+    <div class="field">
+      <label class="field-label" for="slot-prof">Teacher</label>
+      <input id="slot-prof" type="text" placeholder="Optional" onkeydown="if(event.key==='Enter')saveSlot()" />
+    </div>
+    <div class="field">
+      <label class="field-label" for="slot-room">Room</label>
+      <input id="slot-room" type="text" placeholder="Optional" onkeydown="if(event.key==='Enter')saveSlot()" />
+    </div>
+    <div class="row-form" style="justify-content:space-between;">
+      <button class="btn btn-danger" id="slot-clear-btn" onclick="clearSlot()">Clear</button>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn" onclick="closeSlotEditor()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSlot()">Save</button>
       </div>
     </div>
-  `).join('');
-}
+  </div>
+</div>
 
-function dismissUpdate(id){
-  state.pendingUpdates = state.pendingUpdates.filter(p => p.id !== id);
-  state.dismissedUpdateIds.push(id);
-  Store.set('pendingUpdates', state.pendingUpdates);
-  Store.set('dismissedUpdateIds', state.dismissedUpdateIds);
-  renderPending();
-}
-
-function approveUpdate(id){
-  const item = state.pendingUpdates.find(p => p.id === id);
-  if(!item) return;
-
-  if(item.category === 'deadline'){
-    // Push straight into the existing Agenda / Deadlines card.
-    const dateGuess = item.guessed_date ? parseGuessedDate(item.guessed_date) : todayStr();
-    state.agenda.push({id:uid(), title:item.subject || 'Untitled deadline', date:dateGuess});
-    Store.set('agenda', state.agenda);
-    renderAgenda();
-    showToast('Added to Agenda / Deadlines — check the date');
-  } else {
-    // Schedule changes are flagged as an override patch rather than
-    // auto-editing a specific grid cell, since regex can't reliably
-    // pinpoint which exact slot to overwrite. You confirm which day it hits.
-    const day = guessDayFromText(item.subject + ' ' + item.snippet) || todayDayName();
-    state.timetableOverrides.push({id:uid(), day:day, text:`${item.subject} — ${item.snippet.slice(0,120)}`});
-    Store.set('timetableOverrides', state.timetableOverrides);
-    renderTimetable();
-    showToast(`Flagged on ${day} — drag to correct day if needed`);
-  }
-
-  state.pendingUpdates = state.pendingUpdates.filter(p => p.id !== id);
-  state.dismissedUpdateIds.push(id);
-  Store.set('pendingUpdates', state.pendingUpdates);
-  Store.set('dismissedUpdateIds', state.dismissedUpdateIds);
-  renderPending();
-}
-
-function guessDayFromText(text){
-  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const lower = text.toLowerCase();
-  for(const d of days) if(lower.includes(d.toLowerCase())) return d;
-  return null;
-}
-
-// Turns a date fragment pulled out of an email ("12/07/2026", "15 Jul",
-// "3 August 26") into YYYY-MM-DD. Numeric dates are read day-first (Indian
-// convention). Falls back to today if it can't make sense of the text.
-function parseGuessedDate(raw){
-  const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-  const now = new Date();
-  const text = String(raw || '').trim();
-  let day, month, year;
-
-  let m = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-  if(m){
-    day = +m[1]; month = +m[2] - 1; year = +m[3];
-  } else if((m = text.match(/^(\d{1,2})\s+([A-Za-z]{3})[A-Za-z]*\s*(\d{2,4})?$/))){
-    day = +m[1]; month = MONTHS.indexOf(m[2].toLowerCase()); year = m[3] ? +m[3] : null;
-  } else {
-    return todayStr();
-  }
-
-  if(year !== null && year < 100) year += 2000;
-  if(year === null){
-    // No year in the email: assume the nearest upcoming occurrence, allowing
-    // for a deadline that passed within the last month.
-    year = now.getFullYear();
-    const candidate = new Date(year, month, day);
-    if(now - candidate > 30 * 24 * 60 * 60 * 1000) year++;
-  }
-
-  const result = new Date(year, month, day);
-  // Reject impossible dates (month 13, 31 Feb, ...) instead of rolling over.
-  if(month < 0 || result.getMonth() !== month || result.getDate() !== day) return todayStr();
-  return todayStr(result);
-}
-
-/* ---------- Life (Habits & Weather) ---------- */
-function addHabit(){
-  const name = document.getElementById('habit-input').value.trim();
-  if(!name) return;
-  state.habits.list.push({id:uid(), name:name});
-  document.getElementById('habit-input').value=''; Store.set('habits', state.habits); renderHabits();
-}
-function renderHabits(){
-  const table = document.getElementById('habit-table');
-  if(!state.habits.list.length){ table.innerHTML = '<tr><td class="empty">No habits registered.</td></tr>'; return; }
-  
-  const days = Array.from({length:7}, (_,i) => { let d=new Date(); d.setDate(d.getDate()-(6-i)); return d; });
-  const head = '<tr><th></th>' + days.map(d => `<th>${d.toLocaleDateString(undefined,{weekday:'narrow'})}</th>`).join('') + '</tr>';
-  
-  const rows = state.habits.list.map(h => {
-    const cells = days.map(d => {
-      const ds = todayStr(d);
-      const on = state.habits.log[ds] && state.habits.log[ds][h.id];
-      return `<td><span class="hcell ${on?'on':''}" onclick="if(!state.habits.log['${ds}'])state.habits.log['${ds}']={}; state.habits.log['${ds}']['${h.id}']=!state.habits.log['${ds}']['${h.id}']; Store.set('habits', state.habits); renderHabits();"></span></td>`;
-    }).join('');
-    return `<tr>
-      <td class="habit-name">${esc(h.name)} <button class="btn-icon" style="background:transparent; border:none; color:var(--line); padding:0 4px;" onclick="state.habits.list=state.habits.list.filter(x=>x.id!=='${h.id}'); Store.set('habits', state.habits); renderHabits();">&times;</button></td>
-      ${cells}
-    </tr>`;
-  }).join('');
-  table.innerHTML = head + rows;
-}
-
-function loadWeather(force){
-  const city = state.settings.weatherCity;
-  const wb = document.getElementById('weather-body');
-  if(!city){ wb.innerHTML = '<div class="empty">Set location in settings.</div>'; return; }
-  if(force) wb.innerHTML = '<div class="empty">Scanning atmospherics<span class="blink">_</span></div>';
-  
-  fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`)
-    .then(r => r.json())
-    .then(d => {
-      if(!d.results) throw new Error('City not found');
-      return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${d.results[0].latitude}&longitude=${d.results[0].longitude}&current_weather=true`);
-    })
-    .then(r => r.json())
-    .then(d => {
-      const cw = d.current_weather;
-      wb.innerHTML = `
-        <div style="font-size:36px; font-weight:700; color:var(--cyan);">${Math.round(cw.temperature)}&deg;C</div>
-        <div style="font-family:'JetBrains Mono'; font-size:11px; color:var(--ink-dim); text-transform:uppercase; margin-top:8px; letter-spacing:0.06em;">
-          ${esc(city)} // Wind: ${Math.round(cw.windspeed)} km/h
-        </div>`;
-    }).catch(() => wb.innerHTML = '<div class="empty">Atmospheric data unavailable.</div>');
-}
-
-/* ---------- Aesthetic Widget ---------- */
-function handleImageUpload(files){
-  if(!files.length) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    state.images.push(e.target.result);
-    Store.set('images', state.images);
-    currentImageIdx = state.images.length - 1;
-    updateAestheticWidget();
-  };
-  reader.readAsDataURL(files[0]);
-}
-function shuffleAesthetics(){
-  currentWidgetQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
-  if(state.images.length > 0) currentImageIdx = (currentImageIdx + 1) % state.images.length;
-  updateAestheticWidget();
-}
-function updateAestheticWidget(){
-  document.getElementById('widget-quote-text').textContent = `> ${currentWidgetQuote}`;
-  if(state.images.length > 0) {
-    document.getElementById('widget-img').style.backgroundImage = `url('${state.images[currentImageIdx]}')`;
-  }
-}
-
-/* ---------- Settings & Search ---------- */
-function openSettings(){ document.getElementById('settings-overlay').classList.add('open'); loadMailSettingsUI(); loadHotkeyUI(); loadAutostartUI(); }
-
-// --- Autostart ---
-
-function showAutostartState(state){
-  const toggle = document.getElementById('autostart-toggle');
-  const status = document.getElementById('autostart-status');
-  toggle.checked = !!state.enabled;
-  toggle.disabled = !state.supported;
-  status.textContent = state.supported ? '' : 'Only available in the installed app, not in a development run.';
-}
-async function loadAutostartUI(){
-  showAutostartState(await window.pcc.getAutostartStatus());
-}
-async function toggleAutostart(enable){
-  const state = await window.pcc.setAutostart(enable);
-  showAutostartState(state);
-  if(state.supported) showToast(state.enabled ? 'PCC will start when you sign in' : 'Autostart turned off');
-}
-
-// --- Data backup: export / import / automatic daily backup ---
-// Everything the app stores lives in localStorage. Keys starting with "__"
-// are internal bookkeeping and are left out of backups.
-
-const LAST_BACKUP_KEY = '__lastAutoBackup';
-const AUTO_BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
-
-function collectData(){
-  const data = {};
-  for(let i = 0; i < localStorage.length; i++){
-    const key = localStorage.key(i);
-    if(key.startsWith('__')) continue;
-    const raw = localStorage.getItem(key);
-    try { data[key] = JSON.parse(raw); } catch { data[key] = raw; }
-  }
-  return data;
-}
-
-async function exportData(){
-  const result = await window.pcc.exportData(collectData());
-  if(result.ok) showToast('Data exported');
-  else if(!result.canceled) showToast('Export failed: ' + (result.error || 'unknown error'));
-}
-
-async function importData(){
-  const picked = await window.pcc.pickImportFile();
-  if(!picked.ok){
-    if(!picked.canceled) showToast(picked.error || 'Import failed');
-    return;
-  }
-  const when = picked.exportedAt ? new Date(picked.exportedAt).toLocaleString() : 'an unknown date';
-  const sure = confirm(
-    `Replace ALL current data with "${picked.fileName}" (saved ${when})?\n\n` +
-    'Your current data is backed up automatically first, so this can be undone from the backups folder.'
-  );
-  if(!sure) return;
-
-  // Safety copy of what's about to be replaced. Don't go ahead without it.
-  const backup = await window.pcc.backupData(collectData(), 'before import');
-  if(!backup.ok){ showToast('Import cancelled: could not back up current data'); return; }
-
-  const applied = await window.pcc.applyImport();
-  if(!applied.ok){ showToast('Import failed: ' + (applied.error || 'unknown error')); return; }
-
-  Object.keys(collectData()).forEach(key => localStorage.removeItem(key));
-  for(const [key, value] of Object.entries(picked.data)){
-    if(key.startsWith('__')) continue;
-    try { localStorage.setItem(key, JSON.stringify(value)); }
-    catch(e){ console.error('Could not restore "' + key + '"', e); }
-  }
-  location.reload();
-}
-
-async function autoBackupIfDue(){
-  if(!window.pcc || !window.pcc.backupData) return;
-  const last = Number(localStorage.getItem(LAST_BACKUP_KEY)) || 0;
-  if(Date.now() - last < AUTO_BACKUP_INTERVAL_MS) return;
-  const result = await window.pcc.backupData(collectData(), 'daily');
-  if(result.ok) localStorage.setItem(LAST_BACKUP_KEY, String(Date.now()));
-}
-function closeSettings(){ document.getElementById('settings-overlay').classList.remove('open'); }
-
-async function loadMailSettingsUI(){
-  const cfg = await window.pcc.getMailConfig();
-  document.getElementById('mail-email').value = cfg.email || '';
-  document.getElementById('mail-imap-host').value = cfg.imapHost || '';
-  document.getElementById('mail-allowed-senders').value = (cfg.allowedSenders || []).join(', ');
-  document.getElementById('mail-days-back').value = cfg.daysBack || 7;
-  document.getElementById('mail-password-status').textContent = cfg.hasPassword
-    ? 'An app password is already saved (encrypted). Leave blank to keep it.'
-    : 'No app password saved yet.';
-}
-
-async function saveMailSettings(){
-  const email = document.getElementById('mail-email').value.trim();
-  const appPassword = document.getElementById('mail-password').value;
-  const imapHost = document.getElementById('mail-imap-host').value.trim() || 'imap.gmail.com';
-  const allowedSenders = document.getElementById('mail-allowed-senders').value
-    .split(',').map(s => s.trim()).filter(Boolean);
-  const daysBack = parseInt(document.getElementById('mail-days-back').value, 10) || 7;
-
-  await window.pcc.setMailConfig({ email, imapHost, allowedSenders, daysBack, appPassword });
-  document.getElementById('mail-password').value = '';
-  showToast('Mail settings saved');
-  loadMailSettingsUI();
-}
-
-// --- System Vitals ---
-
-const VITALS_HISTORY_MAX = 60; // 5 min at 5s interval
-let cpuHistory = [];
-let ramHistory = [];
-
-function buildSparklinePoints(history){
-  const w = 300, h = 50;
-  if(history.length < 2) return '';
-  const step = w / (VITALS_HISTORY_MAX - 1);
-  const offset = VITALS_HISTORY_MAX - history.length;
-  return history.map((v, i) => {
-    const x = (offset + i) * step;
-    const y = h - Math.max(0, Math.min(100, v)) / 100 * h;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
-}
-
-function renderSparkline(svgId, history, colorVar){
-  const svgEl = document.getElementById(svgId);
-  if(!svgEl) return;
-  const points = buildSparklinePoints(history);
-  svgEl.innerHTML = points
-    ? `<polyline points="${points}" fill="none" stroke="${colorVar}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round" />`
-    : '';
-}
-
-async function loadSystemVitals(){
-  if(!window.pcc || !window.pcc.getSystemInfo) return;
-  if(document.hidden) return; // don't poll while PCC is hidden in the tray
-  try{
-    const info = await window.pcc.getSystemInfo();
-    const cpuPct = parseFloat(info.load.currentLoadPercent) || 0;
-    const ramTotal = parseFloat(info.memory.totalGB) || 0;
-    const ramUsed = parseFloat(info.memory.usedGB) || 0;
-    const ramPct = ramTotal ? (ramUsed / ramTotal * 100) : 0;
-
-    cpuHistory.push(cpuPct); if(cpuHistory.length > VITALS_HISTORY_MAX) cpuHistory.shift();
-    ramHistory.push(ramPct); if(ramHistory.length > VITALS_HISTORY_MAX) ramHistory.shift();
-
-    const cpuLabel = document.getElementById('vitals-cpu-pct');
-    const ramLabel = document.getElementById('vitals-ram-pct');
-    if(cpuLabel) cpuLabel.textContent = cpuPct.toFixed(0) + '%';
-    if(ramLabel) ramLabel.textContent = ramPct.toFixed(0) + '%';
-
-    renderSparkline('vitals-cpu-spark', cpuHistory, 'var(--cyan)');
-    renderSparkline('vitals-ram-spark', ramHistory, 'var(--accent)');
-
-    const disksBody = document.getElementById('vitals-disks');
-    if(disksBody && info.disks){
-      disksBody.innerHTML = info.disks.map(d => `
-        <div class="vitals-disk-row">
-          <span class="vdname">${esc(d.mount)}</span>
-          <div class="budget-bar-bg"><div class="budget-bar-fill" style="width:${d.usePercent}%; background:${d.usePercent > 85 ? 'var(--red)' : 'var(--cyan)'};"></div></div>
-          <span class="vdpct">${d.usedGB} / ${d.sizeGB} GB</span>
-        </div>
-      `).join('');
-    }
-  } catch(e){
-    console.error('Failed to load system vitals', e);
-  }
-}
-
-loadSystemVitals();
-setInterval(loadSystemVitals, 5000);
-// Refresh straight away when the window comes back from the tray.
-document.addEventListener('visibilitychange', () => { if(!document.hidden) loadSystemVitals(); });
-
-// --- Global Hotkey ---
-
-async function loadHotkeyUI(){
-  const hotkey = await window.pcc.getHotkey();
-  document.getElementById('hotkey-display').value = hotkey;
-  document.getElementById('hotkey-status').textContent = '';
-}
-
-let hotkeyCaptureStop = null; // set while a capture is in progress
-
-function startHotkeyCapture(){
-  const input = document.getElementById('hotkey-display');
-  const status = document.getElementById('hotkey-status');
-  if(hotkeyCaptureStop) return; // already capturing
-  input.value = 'Press keys... (Esc to cancel)';
-  status.textContent = '';
-  input.focus();
-
-  function stop(){
-    input.removeEventListener('keydown', handler);
-    input.removeEventListener('blur', cancel);
-    hotkeyCaptureStop = null;
-  }
-  function cancel(){
-    stop();
-    loadHotkeyUI(); // put the current hotkey back
-  }
-  hotkeyCaptureStop = stop;
-
-  function handler(e){
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Ignore standalone modifier presses — wait for a real key
-    if(['Control','Alt','Shift','Meta'].includes(e.key)) return;
-
-    const hasModifier = e.ctrlKey || e.altKey || e.metaKey;
-    if(e.key === 'Escape' && !hasModifier && !e.shiftKey){ cancel(); return; }
-
-    const parts = [];
-    if(e.ctrlKey) parts.push('CommandOrControl');
-    if(e.altKey) parts.push('Alt');
-    if(e.shiftKey) parts.push('Shift');
-    if(e.metaKey) parts.push('Super'); // Windows key
-
-    let key = e.key;
-    if(key === ' ') key = 'Space';
-    else if(key === 'Escape') key = 'Esc';
-    else if(/^Arrow/.test(key)) key = key.replace('Arrow', '');
-    else if(key.length === 1) key = key.toUpperCase();
-
-    // A global shortcut takes its key away from every other app, so it
-    // needs Ctrl/Alt/Win — unless it's a function key. Keep listening.
-    if(!hasModifier && !/^F\d{1,2}$/.test(key)){
-      status.textContent = 'Add Ctrl, Alt or the Windows key to the combination.';
-      status.style.color = 'var(--amber)';
-      return;
-    }
-
-    parts.push(key);
-    const accelerator = parts.join('+');
-
-    stop();
-    input.value = accelerator;
-
-    window.pcc.setHotkey(accelerator).then(result => {
-      if(result.ok){
-        status.textContent = 'Hotkey updated.';
-        status.style.color = 'var(--cyan)';
-      } else {
-        status.textContent = result.error || 'Failed to set hotkey.';
-        status.style.color = 'var(--red)';
-        loadHotkeyUI(); // revert display back to the last working hotkey
-      }
-    });
-  }
-
-  input.addEventListener('keydown', handler);
-  input.addEventListener('blur', cancel);
-}
-
-// --- System Console ---
-
-let consoleLogs = [];
-let consoleFilter = 'all';
-let consoleAutoScroll = true;
-let consoleHistoryLoaded = false;
-
-function openConsole(){
-  document.getElementById('console-overlay').classList.add('open');
-  loadConsoleHistory();
-}
-function closeConsole(){
-  document.getElementById('console-overlay').classList.remove('open');
-}
-
-async function loadConsoleHistory(){
-  if(!consoleHistoryLoaded && window.pcc && window.pcc.getLogHistory){
-    consoleLogs = await window.pcc.getLogHistory();
-    consoleHistoryLoaded = true;
-  }
-  renderConsole();
-}
-
-function setConsoleFilter(level){
-  consoleFilter = level;
-  document.querySelectorAll('.console-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.level === level));
-  renderConsole();
-}
-
-function clearConsole(){
-  consoleLogs = [];
-  renderConsole();
-}
-
-function formatLogTime(ts){
-  const d = new Date(ts);
-  return d.toLocaleTimeString('en-GB', { hour12:false });
-}
-
-function renderConsole(){
-  const body = document.getElementById('console-body');
-  if(!body) return;
-  const filtered = consoleFilter === 'all' ? consoleLogs : consoleLogs.filter(l => l.level === consoleFilter);
-  if(!filtered.length){
-    body.innerHTML = '<div class="console-empty">No log entries yet.</div>';
-    return;
-  }
-  body.innerHTML = filtered.map(l => {
-    const metaStr = l.meta ? (typeof l.meta === 'string' ? l.meta : JSON.stringify(l.meta)) : '';
-    return `
-    <div class="console-line level-${esc(l.level)}">
-      <span class="ctime">${formatLogTime(l.timestamp)}</span>
-      <span class="cmsg">${esc(l.message)}${metaStr ? `<span class="cmeta">${esc(metaStr)}</span>` : ''}</span>
+<div id="console-overlay" onclick="if(event.target===this)closeConsole()">
+  <div id="console-modal">
+    <div class="console-header">
+      <div class="console-title"><span class="dot-live"></span>Console</div>
+      <div class="console-controls">
+        <button class="console-filter-btn active" data-level="all" onclick="setConsoleFilter('all')">All</button>
+        <button class="console-filter-btn" data-level="info" onclick="setConsoleFilter('info')">Info</button>
+        <button class="console-filter-btn" data-level="warn" onclick="setConsoleFilter('warn')">Warn</button>
+        <button class="console-filter-btn" data-level="error" onclick="setConsoleFilter('error')">Error</button>
+        <button class="btn" onclick="clearConsole()">Clear</button>
+        <button class="btn btn-icon" onclick="closeConsole()" aria-label="Close">&times;</button>
+      </div>
     </div>
-  `;
-  }).join('');
-  if(consoleAutoScroll){
-    body.scrollTop = body.scrollHeight;
-  }
-}
+    <div id="console-body"></div>
+  </div>
+</div>
 
-const consoleBodyEl = document.getElementById('console-body');
-if(consoleBodyEl){
-  consoleBodyEl.addEventListener('scroll', function(){
-    consoleAutoScroll = (this.scrollHeight - this.scrollTop - this.clientHeight) < 40;
-  });
-}
+<div id="toast" role="status"></div>
 
-if(window.pcc && window.pcc.onLogEntry){
-  window.pcc.onLogEntry((entry) => {
-    consoleLogs.push(entry);
-    if(consoleLogs.length > 500) consoleLogs.shift();
-    if(document.getElementById('console-overlay').classList.contains('open')){
-      renderConsole();
-    }
-  });
-}
-
-function updateSettings(key, val){
-  state.settings[key] = val; Store.set('settings', state.settings);
-  if(key==='name') renderGreeting();
-  if(key==='weatherCity') loadWeather(true);
-}
-async function resetAllData(){
-  if(!confirm('DANGER: Erase all database records?\n\nA backup of the current data is saved to the backups folder first.')) return;
-  const backup = await window.pcc.backupData(collectData(), 'before factory reset');
-  if(!backup.ok && !confirm('The safety backup failed. Erase everything anyway?')) return;
-  localStorage.clear(); location.reload();
-}
-
-init();
-autoBackupIfDue();
-// Also check hourly, for when PCC is left running for days.
-setInterval(autoBackupIfDue, 60 * 60 * 1000);
-</script>
+<!-- Plain scripts sharing one global scope; the order matters. app.js starts the app. -->
+<script src="js/core.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/palette.js"></script>
+<script src="js/flashcards.js"></script>
+<script src="js/finance.js"></script>
+<script src="js/workspace.js"></script>
+<script src="js/notes-links.js"></script>
+<script src="js/games.js"></script>
+<script src="js/timetable-mail.js"></script>
+<script src="js/life.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/vitals.js"></script>
+<script src="js/console.js"></script>
+<script src="js/campus.js"></script>
+<script src="js/today.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

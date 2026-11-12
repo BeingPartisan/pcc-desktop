@@ -1,6 +1,6 @@
 {
   "name": "personal-command-center",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Partisan's Personal Command Center — desktop shell",
   "main": "main.js",
   "author": "Ansh (Partisan)",
@@ -25,6 +25,7 @@
     "productName": "Personal Command Center",
     "files": [
       "main.js",
+      "campus.js",
       "preload.js",
       "renderer/**/*",
       "assets/**/*",

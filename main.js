@@ -35,6 +35,9 @@ function logEvent(level, message, meta) {
 
 ipcMain.handle('get-log-history', () => logBuffer);
 
+// Digiicampus timetable sync lives in its own module (campus.js)
+require('./campus')({ logEvent, getMainWindow: () => mainWindow });
+
 process.on('uncaughtException', (err) => {
   logEvent('error', 'Uncaught exception in main process', String((err && err.stack) || err));
 });
@@ -1048,6 +1051,26 @@ autoUpdater.on('update-downloaded', (info) => {
 
 autoUpdater.on('update-not-available', () => {
   logEvent('info', 'No update available — running latest version');
+  // Only say so out loud when the user asked; the startup check stays silent.
+  if (lastUpdateCheckWasManual) {
+    lastUpdateCheckWasManual = false;
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'No updates',
+      message: `You're on the latest version (v${app.getVersion()}).`,
+    });
+  }
+});
+
+let lastUpdateCheckWasManual = false;
+
+ipcMain.handle('get-app-version', () => app.getVersion());
+
+ipcMain.handle('check-for-updates', () => {
+  // electron-updater only works in the installed (packaged) app.
+  if (!app.isPackaged) return { ok: false, reason: 'not-packaged' };
+  checkForUpdates(true);
+  return { ok: true };
 });
 
 autoUpdater.on('error', (err) => {
@@ -1055,6 +1078,7 @@ autoUpdater.on('error', (err) => {
 });
 
 function checkForUpdates(manual) {
+  lastUpdateCheckWasManual = !!manual;
   logEvent('info', manual ? 'Checking for updates (manual)...' : 'Checking for updates (startup)...');
   autoUpdater.checkForUpdates().catch((err) => {
     logEvent('error', 'checkForUpdates failed', String(err));

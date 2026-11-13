@@ -277,6 +277,13 @@
         </div>
         <div id="results-body" class="results-body"></div>
       </section>
+
+      <section class="card full" id="card-evaluation">
+        <div class="card-head">
+          <div class="card-title dot-amber"><span class="dot"></span>Evaluation <span class="sub">this trimester</span></div>
+        </div>
+        <div id="evaluation-body" class="eval-list"></div>
+      </section>
     </main>
   </div>
 
@@ -778,6 +785,24 @@
   </div>
 </div>
 
+<div id="eval-overlay" onclick="if(event.target===this)closeEvalPaste()">
+  <div id="eval-modal">
+    <div>
+      <div class="settings-title">Paste evaluation pattern</div>
+      <div class="field-note" id="eval-paste-course"></div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="eval-paste-text">Copy the evaluation section from the course page and paste it here</label>
+      <textarea id="eval-paste-text" rows="9" placeholder="1. Class participation: 5&#10;2. In-class assignment: 20&#10;3. End term examination: 60"></textarea>
+    </div>
+    <div class="field-note">Each line with a name and a number of marks becomes a component. You can fix anything afterwards.</div>
+    <div class="row-form" style="justify-content:flex-end;">
+      <button class="btn" onclick="closeEvalPaste()">Cancel</button>
+      <button class="btn btn-primary" onclick="applyEvalPaste()">Read pattern</button>
+    </div>
+  </div>
+</div>
+
 <div id="slot-overlay" onclick="if(event.target===this)closeSlotEditor()">
   <div id="slot-modal">
     <div>
@@ -843,6 +868,7 @@
 <script src="js/campus.js"></script>
 <script src="js/academics.js"></script>
 <script src="js/inbox.js"></script>
+<script src="js/evaluation.js"></script>
 <script src="js/today.js"></script>
 <script src="js/app.js"></script>
 </body>

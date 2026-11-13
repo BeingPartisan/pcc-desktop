@@ -115,7 +115,7 @@ function describeDaysAway(dateStr){
 
 function renderTodayDeadlines(){
   const el = document.getElementById('today-deadlines');
-  const items = [...state.agenda].sort((a, b) => a.date.localeCompare(b.date));
+  const items = [...state.agenda, ...evaluationDeadlines()].sort((a, b) => a.date.localeCompare(b.date));
   if(!items.length){
     el.innerHTML = '<div class="empty">No deadlines yet.</div>';
     return;

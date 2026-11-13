@@ -555,12 +555,45 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.7);}
 .mail-actions-right{display:flex; gap:8px; margin-left:auto;}
 #card-inbox .item-row select{flex:0 0 150px; padding:6px 10px; font-size:13px;}
 
+/* ---------- Evaluation tracker ---------- */
+.eval-list{display:grid; grid-template-columns:repeat(auto-fit, minmax(440px, 1fr)); gap:14px;}
+.eval-course{display:flex; flex-direction:column; gap:10px; padding:16px; border-radius:var(--radius-sm); background:var(--panel-alt); min-width:0;}
+.eval-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px;}
+.eval-total{font-size:12.5px; color:var(--ink-dim); white-space:nowrap;}
+.eval-total b{font-size:20px; font-weight:500; color:var(--ink); letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
+/* Scored (accent), lost (red), and the rest still to come (empty) */
+.eval-bar{display:flex; height:6px; border-radius:3px; background:rgba(var(--tint),.07); overflow:hidden;}
+.eval-bar .got{background:var(--accent);}
+.eval-bar .lost{background:color-mix(in srgb, var(--red) 55%, transparent);}
+.eval-table{width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed;} /* fixed: the name column takes whatever the others leave */
+.eval-table th{font-size:11.5px; font-weight:400; color:var(--ink-dim); text-align:left; padding:2px 6px 4px 0;}
+.eval-table td{padding:3px 6px 3px 0;}
+.eval-table .num{width:66px;}
+.eval-table th:nth-child(4){width:142px;}
+.eval-table td:last-child, .eval-table th:last-child{width:34px; padding-right:0;}
+.eval-table input{width:100%; padding:6px 8px; font-size:13px; background:transparent; border-color:transparent;}
+.eval-table input:hover{border-color:var(--line);}
+.eval-table input:focus-visible{border-color:var(--accent); background:rgba(var(--tint),.05);}
+.eval-table input[type="number"]{text-align:right; font-family:var(--mono); font-size:12.5px;}
+.eval-table input[type="date"]{color:var(--ink-dim);}
+.eval-table .btn-icon{background:transparent; border-color:transparent; padding:4px 7px;}
+.eval-actions{display:flex; gap:8px;}
+.eval-actions .btn{padding:6px 12px; font-size:12.5px;}
+.eval-outlook{display:flex; flex-direction:column; gap:8px; padding-top:10px; border-top:1px solid var(--line);}
+.eval-grades{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--ink-dim);}
+.eval-grade{display:inline-flex; align-items:center; gap:6px; font-variant-numeric:tabular-nums;}
+.eval-grade .pill{min-width:0; font-size:10.5px; padding:2px 7px;}
+.eval-grade.secured{color:var(--accent-text);}
+.eval-grade.out{opacity:.4;}
+#eval-modal{background:var(--panel); border:1px solid var(--line-strong); border-radius:var(--radius); box-shadow:var(--shadow); padding:26px; width:100%; max-width:520px; display:flex; flex-direction:column; gap:14px;}
+#eval-modal textarea{width:100%; resize:vertical; line-height:1.5;}
+
 /* ---------- Overlays: shared ---------- */
-#cmd-palette-overlay, #settings-overlay, #console-overlay, #slot-overlay{
+#cmd-palette-overlay, #settings-overlay, #console-overlay, #slot-overlay, #eval-overlay{
   position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter:blur(8px);
   display:none; justify-content:center; z-index:100;
 }
-#cmd-palette-overlay.open, #settings-overlay.open, #console-overlay.open, #slot-overlay.open{display:flex; animation:overlay-in .15s ease;}
+#cmd-palette-overlay.open, #settings-overlay.open, #console-overlay.open, #slot-overlay.open, #eval-overlay.open{display:flex; animation:overlay-in .15s ease;}
 @keyframes overlay-in{from{opacity:0;} to{opacity:1;}}
 
 /* ---------- Command palette ---------- */
@@ -578,7 +611,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.7);}
 
 /* ---------- Settings ---------- */
 /* A fixed-size dialog: tab list on the left, one pane at a time on the right. */
-#settings-overlay, #slot-overlay{align-items:center;}
+#settings-overlay, #slot-overlay, #eval-overlay{align-items:center;}
 #settings-modal{
   background:var(--panel); border:1px solid var(--line-strong); border-radius:20px; box-shadow:var(--shadow);
   width:min(840px, calc(100vw - 48px)); height:min(580px, calc(100vh - 48px));
@@ -705,7 +738,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.7);}
 :root[data-theme="light"] .rail{background:rgba(0,0,0,.035);}
 :root[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator{filter:none;}
 :root[data-theme="light"] .game-tile-icon{background:rgba(0,0,0,.05);}
-:root[data-theme="light"] #cmd-palette-overlay, :root[data-theme="light"] #settings-overlay, :root[data-theme="light"] #console-overlay, :root[data-theme="light"] #slot-overlay{background:rgba(0,0,0,.3);}
+:root[data-theme="light"] #cmd-palette-overlay, :root[data-theme="light"] #settings-overlay, :root[data-theme="light"] #console-overlay, :root[data-theme="light"] #slot-overlay, :root[data-theme="light"] #eval-overlay{background:rgba(0,0,0,.3);}
 /* These stay dark in both themes: a terminal-style log, and text over a photo */
 #console-modal{--tint:255,255,255; --ink:#F3F2EE; --ink-dim:#8F8E97; --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.18); --panel-alt:rgba(255,255,255,.045); --amber:#F4B860; --red:#FF7A85; --accent-text:var(--accent); color:var(--ink);}
 .widget-content{color:#F3F2EE;}

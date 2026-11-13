@@ -206,4 +206,5 @@ function renderResults(){
 function renderAcademics(){
   renderAttendance();
   renderResults();
+  renderEvaluation();
 }

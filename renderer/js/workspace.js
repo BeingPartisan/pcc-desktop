@@ -48,13 +48,15 @@ function addAgenda(){
 }
 function renderAgenda(){
   const el = document.getElementById('agenda-list');
-  const items = [...state.agenda].sort((a,b) => a.date.localeCompare(b.date));
+  const items = [...state.agenda, ...evaluationDeadlines()].sort((a,b) => a.date.localeCompare(b.date));
   if(!items.length) { el.innerHTML = '<div class="empty">No deadlines yet.</div>'; return; }
   el.innerHTML = items.map(a => `
     <div class="item-row">
       <span class="pill" style="background:var(--accent-soft); color:var(--accent-text);">${parseLocalDate(a.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
       <span class="txt">${esc(a.title)}</span>
-      <button class="btn btn-icon btn-danger" onclick="state.agenda=state.agenda.filter(x=>x.id!=='${a.id}'); Store.set('agenda', state.agenda); renderAgenda();">&times;</button>
+      ${a.fromEvaluation
+        ? `<button class="btn" style="padding:4px 10px; font-size:12px;" onclick="navigate('academics')" title="Set on the Academics page">Evaluation</button>`
+        : `<button class="btn btn-icon btn-danger" onclick="state.agenda=state.agenda.filter(x=>x.id!=='${a.id}'); Store.set('agenda', state.agenda); renderAgenda();">&times;</button>`}
     </div>
   `).join('');
 }

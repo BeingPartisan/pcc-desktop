@@ -114,7 +114,7 @@ async function loadMailSettingsUI(){
   document.getElementById('mail-email').value = cfg.email || '';
   document.getElementById('mail-imap-host').value = cfg.imapHost || '';
   document.getElementById('mail-allowed-senders').value = (cfg.allowedSenders || []).join(', ');
-  document.getElementById('mail-days-back').value = cfg.daysBack || 7;
+  document.getElementById('mail-days-back').value = cfg.daysBack || 14;
   document.getElementById('mail-password-status').textContent = cfg.hasPassword
     ? 'An app password is already saved (encrypted). Leave blank to keep it.'
     : 'No app password saved yet.';
@@ -126,11 +126,13 @@ async function saveMailSettings(){
   const imapHost = document.getElementById('mail-imap-host').value.trim() || 'imap.gmail.com';
   const allowedSenders = document.getElementById('mail-allowed-senders').value
     .split(',').map(s => s.trim()).filter(Boolean);
-  const daysBack = parseInt(document.getElementById('mail-days-back').value, 10) || 7;
+  const daysBack = parseInt(document.getElementById('mail-days-back').value, 10) || 14;
 
   await window.pcc.setMailConfig({ email, imapHost, allowedSenders, daysBack, appPassword });
   document.getElementById('mail-password').value = '';
   showToast('Mail settings saved');
+  inboxAccount = { email, gmail: /gmail|google/i.test(imapHost) };
+  scanMail(true); // pick up mail with the new settings straight away
   loadMailSettingsUI();
 }
 

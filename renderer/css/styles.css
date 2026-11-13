@@ -485,7 +485,25 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.7);}
 .results-table .num{text-align:right; padding-right:0; padding-left:12px; font-variant-numeric:tabular-nums; white-space:nowrap;}
 .results-course{font-weight:500;}
 .results-code{font-family:var(--mono); font-size:10.5px; color:var(--ink-dim); margin-top:1px;}
-.pill.grade{background:var(--accent-soft); color:var(--accent-text); font-weight:600;}
+/* Grades: each sets --g, its colour. The pill is a soft tint of it with
+   text mixed towards the ink colour, so it reads in both themes. From best
+   to worst: your accent, mint, sky, violet, neutral, amber, orange, then red
+   for a fail and a red outline for an absence. */
+.pill.grade{--g:var(--ink-dim); min-width:34px; text-align:center; font-weight:600; text-transform:none;
+  background:color-mix(in srgb, var(--g) 18%, transparent); color:color-mix(in srgb, var(--g) 62%, var(--ink));}
+.grade-note{font-size:11.5px; font-weight:400; color:var(--ink-dim); margin-top:1px;}
+.pill.grade-o{background:var(--accent); color:var(--accent-ink);}
+.pill.grade-ap{--g:#3FCFA6;}
+.pill.grade-a{--g:#4FA8FF;}
+.pill.grade-bp{--g:#A08BFF;}
+.pill.grade-b{--g:var(--ink-dim);}
+.pill.grade-cp{--g:#F4B860;}
+.pill.grade-c{--g:#FF8F4F;}
+.pill.grade-f{background:var(--red); color:#FFFFFF;}
+.pill.grade-ab{background:transparent; color:var(--red); outline:1px dashed var(--red); outline-offset:-1px;}
+.grade-legend{display:flex; flex-wrap:wrap; gap:6px 14px; padding-top:12px; border-top:1px solid var(--line); font-size:11.5px; color:var(--ink-dim);}
+.grade-legend > span{display:inline-flex; align-items:center; gap:6px;}
+.grade-legend .pill{min-width:0; font-size:10.5px; padding:2px 7px;}
 
 /* ---------- Charts: spending and habit streaks ---------- */
 .bar-list{display:flex; flex-direction:column; gap:14px;}
@@ -503,6 +521,39 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.7);}
 .habit-streak b{font-size:15px; font-weight:500; color:var(--ink); font-variant-numeric:tabular-nums;}
 .habit-streak.hot b{color:var(--accent-text);}
 .habit-streak span{display:block; font-size:11px;}
+
+/* ---------- Inbox ---------- */
+.inbox-tabs{display:flex; flex-wrap:wrap; gap:4px; padding-bottom:12px; border-bottom:1px solid var(--line);}
+.inbox-tab{display:inline-flex; align-items:center; gap:7px; border:none; background:transparent; color:var(--ink-dim); font-size:13px; font-weight:500; padding:7px 12px; border-radius:var(--radius-sm); transition:background .15s, color .15s;}
+.inbox-tab:hover{background:rgba(var(--tint),.05); color:var(--ink);}
+.inbox-tab.active{background:var(--accent-soft); color:var(--accent-text);}
+.inbox-tab span{font-size:11px; font-weight:500; padding:1px 7px; border-radius:999px; background:rgba(var(--tint),.09); color:var(--ink);}
+.inbox-tab.active span{background:var(--accent); color:var(--accent-ink);}
+.inbox-list{display:flex; flex-direction:column; gap:8px;}
+
+.mail-row{display:flex; gap:12px; padding:13px 16px; border-radius:var(--radius-sm); background:var(--panel-alt); border-left:3px solid transparent;}
+.mail-row.unread{border-left-color:var(--accent);}
+.mail-row.done{opacity:.5;}
+.mail-row.compact{padding:10px 12px; cursor:pointer; transition:background .15s;}
+.mail-row.compact:hover{background:rgba(var(--tint),.08);}
+.mail-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;}
+.mail-top{display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:12.5px; color:var(--ink-dim);}
+.mail-from{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.mail-when{flex-shrink:0; font-variant-numeric:tabular-nums;}
+.mail-subject{font-size:14px; font-weight:500; overflow-wrap:anywhere;}
+.mail-row.unread .mail-subject{font-weight:600;}
+.mail-row.compact .mail-subject{font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.mail-snippet{font-size:13px; color:var(--ink-dim); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.mail-tags{display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding-top:2px;}
+.mail-note{font-size:12px; color:var(--ink-dim);}
+.mail-hint{font-size:12.5px; color:var(--ink-dim); padding:2px 2px 4px;}
+.mail-sorter{display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding-top:6px; font-size:12.5px; color:var(--ink-dim);}
+.mail-sorter .btn{padding:5px 11px; font-size:12.5px;}
+.mail-actions{display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding-top:8px;}
+.mail-actions input[type="date"]{padding:5px 8px; font-size:12.5px;}
+.mail-actions .btn{padding:6px 12px; font-size:12.5px;}
+.mail-actions-right{display:flex; gap:8px; margin-left:auto;}
+#card-inbox .item-row select{flex:0 0 150px; padding:6px 10px; font-size:13px;}
 
 /* ---------- Overlays: shared ---------- */
 #cmd-palette-overlay, #settings-overlay, #console-overlay, #slot-overlay{

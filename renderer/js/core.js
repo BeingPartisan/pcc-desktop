@@ -97,7 +97,7 @@ const QUOTES = [
 let state = {
   tasks: [], agenda: [], habits: {list:[], log:{}}, notes: [], links: [], images: [],
   flashcards: [], finances: [], financeHistory: [],
-  timetable: SEED_TIMETABLE, timetableOverrides: [], pendingUpdates: [], dismissedUpdateIds: [],
+  timetable: SEED_TIMETABLE, timetableOverrides: [],
   settings: { name: '', weatherCity: '', budget: 15000 }
 };
 
@@ -119,8 +119,6 @@ function init(){
   state.financeHistory = Store.get('financeHistory', []);
   state.timetable = Store.get('timetable', SEED_TIMETABLE);
   state.timetableOverrides = Store.get('timetableOverrides', []);
-  state.pendingUpdates = Store.get('pendingUpdates', []);
-  state.dismissedUpdateIds = Store.get('dismissedUpdateIds', []);
   state.settings = Store.get('settings', { name: '', weatherCity: '', budget: 15000 });
 
   if(!state.settings.budget) state.settings.budget = 15000;
@@ -146,8 +144,7 @@ function renderAll() {
   loadGamesFolderLabel(); // the games scan itself runs when the Launch page is first opened
   renderFinances();
   loadWeather(false); updateAestheticWidget();
-  renderTimetable(); renderPending();
-  scanMail(false); // silent scan on every load, per the "semi-automatic" plan
+  renderTimetable();
 }
 
 /* ---------- Clock & Greeting ---------- */

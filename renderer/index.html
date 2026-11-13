@@ -17,6 +17,9 @@
   <button class="rail-btn active" data-page="today" data-label="Today" aria-label="Today" onclick="navigate('today')">
     <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
   </button>
+  <button class="rail-btn" data-page="inbox" data-label="Inbox" aria-label="Inbox" onclick="navigate('inbox')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>
+  </button>
   <button class="rail-btn" data-page="focus" data-label="Focus" aria-label="Focus" onclick="navigate('focus')">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
   </button>
@@ -113,14 +116,29 @@
         <div class="list" id="today-deadlines"></div>
       </section>
 
-      <section class="card full" id="card-pending-updates" style="display:none;">
+      <section class="card" id="card-today-mail">
         <div class="card-head">
-          <div class="card-title dot-amber"><span class="dot"></span>Mail updates <span id="pending-count" class="pill med" style="margin-left:6px;"></span></div>
-          <button class="btn btn-icon" onclick="scanMail(true)" aria-label="Rescan mail">&#8635;</button>
+          <div class="card-title dot-amber"><span class="dot"></span>Mail <span id="today-mail-count" class="pill" style="margin-left:2px;"></span></div>
+          <button class="btn" onclick="navigate('inbox')">Inbox</button>
         </div>
-        <div class="list" id="pending-list" style="max-height:400px;"></div>
+        <div class="list" id="today-mail" style="max-height:none;"></div>
       </section>
     </div>
+  </div>
+
+  <!-- ===================== INBOX ===================== -->
+  <div class="page" data-page="inbox">
+    <section class="card" id="card-inbox">
+      <div class="card-head">
+        <div class="card-title dot-amber"><span class="dot"></span>Inbox <span id="inbox-status" class="sub"></span></div>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <label class="inline-field" id="inbox-done-toggle"><input id="inbox-show-done" type="checkbox" class="chk" onchange="toggleInboxDone(this.checked)" /> Show done</label>
+          <button class="btn" id="inbox-refresh-btn" onclick="scanMail(true)">Check now</button>
+        </div>
+      </div>
+      <div class="inbox-tabs" id="inbox-tabs"></div>
+      <div class="inbox-list" id="inbox-body"></div>
+    </section>
   </div>
 
   <!-- ===================== FOCUS ===================== -->
@@ -184,7 +202,6 @@
             <!-- Shown for the manual timetable -->
             <button class="btn" id="tt-connect-btn" onclick="openSettingsAt('timetable')">Connect Digiicampus</button>
             <button class="btn" id="tt-edit-btn" onclick="toggleTimetableEdit()">Edit</button>
-            <button class="btn btn-icon" id="tt-mail-btn" onclick="scanMail(true)" aria-label="Scan mail for changes" title="Scan mail for changes">&#8635;</button>
           </div>
         </div>
         <div class="tt-wrap" id="tt-grid-wrap"><table class="tt-table" id="tt-table"></table></div>
@@ -622,7 +639,7 @@
 
         <div class="setting-block">
           <div class="setting-name">Today's cards</div>
-          <div class="setting-desc">Mail updates always appear last, when there are any.</div>
+          <div class="setting-desc">Shown in this order, left to right and top to bottom.</div>
           <div class="order-list" id="today-cards-order"></div>
         </div>
 
@@ -661,7 +678,7 @@
       <!-- Mail -->
       <section class="settings-pane" data-tab="mail">
         <h2 class="pane-title">Mail</h2>
-        <p class="pane-intro">PCC scans your inbox for schedule changes and deadlines and lists them on Today for you to approve.</p>
+        <p class="pane-intro">PCC reads recent mail from your inbox and sorts it by sender on the Inbox page. Everything stays on this computer.</p>
 
         <div class="form-grid">
           <div class="field">
@@ -678,11 +695,11 @@
           </div>
           <div class="field">
             <label class="field-label" for="mail-days-back">Days to look back</label>
-            <input id="mail-days-back" type="number" min="1" max="30" placeholder="7" />
+            <input id="mail-days-back" type="number" min="1" max="30" placeholder="14" />
           </div>
           <div class="field wide">
-            <label class="field-label" for="mail-allowed-senders">Only scan mail from</label>
-            <input id="mail-allowed-senders" type="text" placeholder="Senders, separated by commas. Leave empty to scan everyone." />
+            <label class="field-label" for="mail-allowed-senders">Scan mail from</label>
+            <input id="mail-allowed-senders" type="text" placeholder="@university.ac.in, or addresses separated by commas. Empty scans everyone." />
           </div>
         </div>
         <div class="pane-actions">
@@ -753,7 +770,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Keyboard</div>
-            <div class="setting-desc"><span class="cmd-hint" style="margin:0;">Ctrl K</span> command palette &nbsp; <span class="cmd-hint" style="margin:0;">Ctrl 1</span> to <span class="cmd-hint" style="margin:0;">Ctrl 8</span> switch pages</div>
+            <div class="setting-desc"><span class="cmd-hint" style="margin:0;">Ctrl K</span> command palette &nbsp; <span class="cmd-hint" style="margin:0;">Ctrl 1</span> to <span class="cmd-hint" style="margin:0;">Ctrl 9</span> switch pages</div>
           </div>
         </div>
       </section>
@@ -825,6 +842,7 @@
 <script src="js/console.js"></script>
 <script src="js/campus.js"></script>
 <script src="js/academics.js"></script>
+<script src="js/inbox.js"></script>
 <script src="js/today.js"></script>
 <script src="js/app.js"></script>
 </body>

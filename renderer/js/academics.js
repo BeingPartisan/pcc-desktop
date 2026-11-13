@@ -7,6 +7,40 @@
 //                 terms: [{ examId, name, sgpa, courses: [{ name, code, credits, marks, grade, gradePoint }] }] }
 // Nothing here is editable: it mirrors what the university has recorded.
 
+// The university's grading scale: seven passing grades five marks apart,
+// from C at 40 up to O at 70 and above. Below 40 is F (fail); AB means the
+// exam was missed, so the course is repeated and its result is pending.
+// `cls` picks the colour (see .pill.grade-* in the stylesheet).
+const GRADE_SCALE = [
+  { grade: 'O',  points: 7, min: 70, cls: 'o' },
+  { grade: 'A+', points: 6, min: 65, cls: 'ap' },
+  { grade: 'A',  points: 5, min: 60, cls: 'a' },
+  { grade: 'B+', points: 4, min: 55, cls: 'bp' },
+  { grade: 'B',  points: 3, min: 50, cls: 'b' },
+  { grade: 'C+', points: 2, min: 45, cls: 'cp' },
+  { grade: 'C',  points: 1, min: 40, cls: 'c' },
+];
+const MAX_GRADE_POINTS = 7;
+
+function gradeClass(grade){
+  const g = String(grade || '').toUpperCase();
+  if(g === 'F') return 'f';
+  if(g === 'AB') return 'ab';
+  const row = GRADE_SCALE.find(r => r.grade === g);
+  return row ? row.cls : 'none';
+}
+
+// A short note under the marks: how far the next grade is, or what a fail
+// or an absence means.
+function gradeNote(course){
+  const g = String(course.grade || '').toUpperCase();
+  if(g === 'AB') return 'Absent · repeat, result pending';
+  if(g === 'F' || course.failed) return course.marks === null ? 'Fail' : `Fail · ${+(40 - course.marks).toFixed(2)} short of a pass`;
+  if(course.marks === null) return '';
+  const next = [...GRADE_SCALE].reverse().find(r => r.min > course.marks);
+  return next ? `${+(next.min - course.marks).toFixed(2)} more for ${next.grade}` : '';
+}
+
 const DEFAULT_ATTENDANCE_TARGET = 75; // percent; adjustable on the Attendance card
 let academicsTermExamId = null;       // which term the results table is showing
 
@@ -120,7 +154,7 @@ function renderResults(){
   const term = terms.find(t => t.examId === academicsTermExamId);
 
   const sgpas = terms.map(t => t.sgpa).filter(v => typeof v === 'number');
-  const scaleMax = Math.max(1, ...sgpas) * 1.1;
+  const scaleMax = MAX_GRADE_POINTS;
   const chart = terms.map(t => {
     const has = typeof t.sgpa === 'number';
     return `
@@ -139,11 +173,16 @@ function renderResults(){
         <tr>
           <td><div class="results-course">${esc(c.name)}</div>${c.code ? `<div class="results-code">${esc(c.code)}</div>` : ''}</td>
           <td class="num">${c.credits || '–'}</td>
-          <td class="num">${c.marks === null ? '–' : c.marks}</td>
-          <td class="num"><span class="pill ${c.failed ? 'high' : 'grade'}">${esc(c.grade || '–')}</span></td>
+          <td class="num">${c.marks === null ? '–' : c.marks}${gradeNote(c) ? `<div class="grade-note">${esc(gradeNote(c))}</div>` : ''}</td>
+          <td class="num"><span class="pill grade grade-${gradeClass(c.grade)}">${esc(c.grade || '–')}</span></td>
           <td class="num">${c.gradePoint === null ? '–' : c.gradePoint}</td>
         </tr>`).join('')}
-    </table>`;
+    </table>
+    <div class="grade-legend">
+      ${GRADE_SCALE.map(r => `<span><span class="pill grade grade-${r.cls}">${r.grade}</span>${r.min}${r.points === MAX_GRADE_POINTS ? '+' : ''}</span>`).join('')}
+      <span><span class="pill grade grade-f">F</span>below 40</span>
+      <span><span class="pill grade grade-ab">AB</span>absent</span>
+    </div>`;
 
   el.innerHTML = `
     <div class="gpa-head">

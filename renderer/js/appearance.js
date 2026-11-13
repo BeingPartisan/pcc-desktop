@@ -28,6 +28,7 @@ const TODAY_CARDS = {
   timer:     { label: 'Focus timer',     el: 'card-today-timer' },
   tasks:     { label: 'Tasks',           el: 'card-today-tasks' },
   deadlines: { label: 'Deadlines',       el: 'card-today-deadlines' },
+  mail:      { label: 'Mail',            el: 'card-today-mail' },
 };
 
 const PREF_DEFAULTS = {
@@ -137,7 +138,6 @@ function applyTodayLayout(){
     el.style.order = i;
     el.style.display = item.visible ? '' : 'none';
   });
-  document.getElementById('card-pending-updates').style.order = 99; // mail updates stay last
   document.getElementById('today-status').style.display = p.showStatusChips ? '' : 'none';
 }
 

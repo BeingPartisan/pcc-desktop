@@ -2,7 +2,6 @@ const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, nativeImage, dial
 const { pathToFileURL } = require('url');
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
 const { spawn } = require('child_process');
 const si = require('systeminformation');
 const { autoUpdater } = require('electron-updater');
@@ -169,7 +168,7 @@ function getMailConfig() {
       email: '',
       imapHost: 'imap.gmail.com',
       allowedSenders: [],
-      daysBack: 7,
+      daysBack: 14,
     }
   );
 }
@@ -178,40 +177,6 @@ function setMailConfig(patch) {
   const mail = { ...getMailConfig(), ...patch };
   setConfig({ mail });
   return mail;
-}
-
-// --- Email classification logic (ported 1:1 from the old Python keyword banks) ---
-
-const SCHEDULE_KEYWORDS = [
-  'cancel', 'cancelled', 'canceled', 'postpone', 'postponed', 'reschedul',
-  'makeup class', 'make-up class', 'make up class', 'venue chang', 'room chang',
-  'shifted to', 'moved to', 'no class', 'will not be held', 'extra class',
-  'substitut', 'swapped with',
-];
-const DEADLINE_KEYWORDS = [
-  'due', 'submission', 'submit by', 'submit the', 'deadline', 'last date',
-  'to be submitted', 'submit your', 'kindly submit', 'please submit',
-];
-
-function classifyEmailText(subject, body) {
-  const text = `${subject}\n${body}`.toLowerCase();
-  const scheduleHits = SCHEDULE_KEYWORDS.filter((k) => text.includes(k));
-  if (scheduleHits.length) return { category: 'schedule_change', hits: scheduleHits };
-  const deadlineHits = DEADLINE_KEYWORDS.filter((k) => text.includes(k));
-  if (deadlineHits.length) return { category: 'deadline', hits: deadlineHits };
-  return { category: null, hits: [] };
-}
-
-function guessDateFromText(text) {
-  const patterns = [
-    /\b(\d{1,2})[/\-](\d{1,2})[/\-](\d{2,4})\b/,
-    /\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{2,4})?\b/i,
-  ];
-  for (const pat of patterns) {
-    const m = text.match(pat);
-    if (m) return m[0];
-  }
-  return null;
 }
 
 function isHttpUrl(value) {
@@ -712,16 +677,46 @@ ipcMain.handle('set-hotkey', (event, accelerator) => {
   return { ok: false, error: 'Could not register that shortcut — it may already be in use.' };
 });
 
-// --- Mail scan (schedule/deadline detection) ---
+// --- Mail scan (feeds the Inbox page) ---
+// The main process only fetches: it signs in over IMAP, lists recent mail
+// and downloads the start of anything the app hasn't seen yet. Sorting by
+// sender, course tags and date detection all happen in the renderer
+// (renderer/js/inbox.js), on this computer. Nothing is sent anywhere.
+
+const MAIL_DEFAULT_DAYS_BACK = 14;
+const MAIL_MAX_NEW_PER_SCAN = 250;      // newest first; the rest are picked up by later scans
+const MAIL_FETCH_MAX_BYTES = 48 * 1024; // headers plus the opening of the body, never attachments
+const MAIL_TEXT_CHARS = 2500;           // how much body text is passed on for date / course detection
+
+// One-time move from the old keyword scan's settings to the Inbox: widen the
+// look-back, and replace the short list of named senders with the whole
+// domain of the user's own address. The old senders are handed to the
+// renderer once so it can label them Important.
+function migrateMailConfigForInbox() {
+  const cfg = getConfig();
+  if (!cfg.mail || cfg.mail.inboxMigrated) return;
+  const mail = { ...cfg.mail, inboxMigrated: true };
+  mail.daysBack = Math.max(Number(mail.daysBack) || 0, MAIL_DEFAULT_DAYS_BACK);
+  const domain = String(mail.email || '').split('@')[1];
+  const old = (mail.allowedSenders || []).filter(Boolean);
+  if (domain && old.length && old.every((s) => s.includes('@') && !s.startsWith('@'))) {
+    mail.legacyImportantSenders = old;
+    mail.allowedSenders = ['@' + domain];
+  }
+  setConfig({ mail });
+  logEvent('info', 'Mail settings updated for the Inbox', { daysBack: mail.daysBack, scanFrom: mail.allowedSenders });
+}
 
 ipcMain.handle('get-mail-config', async () => {
+  migrateMailConfigForInbox();
   const mail = getMailConfig();
   return {
     email: mail.email || '',
     imapHost: mail.imapHost || 'imap.gmail.com',
     allowedSenders: mail.allowedSenders || [],
-    daysBack: mail.daysBack || 7,
+    daysBack: mail.daysBack || MAIL_DEFAULT_DAYS_BACK,
     hasPassword: !!(await loadMailPassword()),
+    legacyImportantSenders: mail.legacyImportantSenders || [],
   };
 });
 
@@ -736,36 +731,43 @@ ipcMain.handle('set-mail-config', async (event, { email, imapHost, allowedSender
   return { ok: true };
 });
 
-// Enough to cover the headers and text body of any normal email, without
-// pulling down attachments.
-const MAIL_FETCH_MAX_BYTES = 256 * 1024;
+// The renderer has now labelled the old named senders; don't offer them again.
+ipcMain.handle('clear-legacy-mail-senders', () => {
+  const mail = getMailConfig();
+  if (mail.legacyImportantSenders) {
+    delete mail.legacyImportantSenders;
+    setConfig({ mail });
+  }
+  return { ok: true };
+});
 
 // Only one scan at a time: a second request while one is running just
 // waits for the same result instead of opening another IMAP connection.
 let mailScanInFlight = null;
 
-ipcMain.handle('scan-email', () => {
+ipcMain.handle('scan-email', (event, knownKeys) => {
   if (!mailScanInFlight) {
-    mailScanInFlight = runMailScan().finally(() => {
+    mailScanInFlight = runMailScan(Array.isArray(knownKeys) ? knownKeys : []).finally(() => {
       mailScanInFlight = null;
     });
   }
   return mailScanInFlight;
 });
 
-async function runMailScan() {
+// knownKeys: the messages the app already holds, so they aren't downloaded again.
+// Returns { messages: [new ones], present: [keys of every message in the window] }.
+async function runMailScan(knownKeys) {
+  migrateMailConfigForInbox();
   const mail = getMailConfig();
   const password = await loadMailPassword();
 
   if (!mail.email || !password) {
     logEvent('warn', 'Mail scan skipped: not configured');
-    return {
-      error: 'Mail not configured. Open Settings and enter your email + app password.',
-      results: [],
-    };
+    return { error: 'Mail is not set up. Add your email and app password in Settings.', notConfigured: true, messages: [] };
   }
 
-  logEvent('info', `Mail scan started for ${mail.email}`, { daysBack: mail.daysBack });
+  const daysBack = Number(mail.daysBack) || MAIL_DEFAULT_DAYS_BACK;
+  logEvent('info', `Mail scan started for ${mail.email}`, { daysBack });
 
   const { ImapFlow } = require('imapflow');
   const { simpleParser } = require('mailparser');
@@ -781,79 +783,77 @@ async function runMailScan() {
   try {
     await client.connect();
     const lock = await client.getMailboxLock('INBOX');
-    const results = [];
+    const messages = [];
+    const present = [];
 
     try {
-      const sinceDate = new Date(Date.now() - (mail.daysBack || 7) * 24 * 60 * 60 * 1000);
-      const uids = await client.search({ since: sinceDate }, { uid: true });
-      const capped = (uids || []).slice(-40).reverse(); // most recent first, same cap as before
+      // A message is identified by the mailbox's UIDVALIDITY plus its UID,
+      // which stays the same for as long as it sits in the inbox.
+      const validity = String(client.mailbox.uidValidity);
+      const keyOf = (uid) => `${validity}:${uid}`;
+      const known = new Set(knownKeys);
 
-      const allowed = (mail.allowedSenders || []).map((a) => a.toLowerCase());
+      const since = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+      const uids = (await client.search({ since }, { uid: true })) || [];
+      const allowed = (mail.allowedSenders || []).map((a) => a.toLowerCase()).filter(Boolean);
 
-      // Check senders from the lightweight envelopes first (one round trip),
-      // so only mail from allowed senders is actually downloaded.
-      let wanted = capped;
-      if (allowed.length && capped.length) {
-        const matching = new Set();
-        for await (const m of client.fetch(capped, { envelope: true }, { uid: true })) {
-          const from = ((m.envelope && m.envelope.from) || [])
-            .map((f) => `${f.name || ''} <${f.address || ''}>`)
-            .join(', ')
-            .toLowerCase();
-          if (allowed.some((a) => from.includes(a))) matching.add(m.uid);
+      // Pass 1: envelopes for everything in the window (one round trip).
+      const wanted = [];
+      if (uids.length) {
+        for await (const m of client.fetch(uids, { envelope: true }, { uid: true })) {
+          const from = ((m.envelope && m.envelope.from) || [])[0] || {};
+          const fromText = `${from.name || ''} <${from.address || ''}>`.toLowerCase();
+          if (allowed.length && !allowed.some((a) => fromText.includes(a))) continue;
+          present.push(keyOf(m.uid));
+          if (!known.has(keyOf(m.uid))) wanted.push(m.uid);
         }
-        wanted = capped.filter((uid) => matching.has(uid));
       }
 
-      for (const uid of wanted) {
-        const msg = await client.fetchOne(
-          uid,
-          { source: { start: 0, maxLength: MAIL_FETCH_MAX_BYTES } },
-          { uid: true }
-        );
-        if (!msg || !msg.source) continue;
+      // Pass 2: the start of each new message (again one round trip).
+      const batch = wanted.sort((a, b) => b - a).slice(0, MAIL_MAX_NEW_PER_SCAN);
+      const raw = [];
+      if (batch.length) {
+        const query = { envelope: true, flags: true, source: { start: 0, maxLength: MAIL_FETCH_MAX_BYTES } };
+        for await (const m of client.fetch(batch, query, { uid: true })) {
+          raw.push({ uid: m.uid, envelope: m.envelope || {}, flags: m.flags, source: m.source });
+        }
+      }
 
-        const parsed = await simpleParser(msg.source);
-        const sender = parsed.from ? parsed.from.text : '';
-
-        const subject = parsed.subject || '';
-        const body = parsed.text || '';
-        const { category, hits } = classifyEmailText(subject, body);
-        if (!category) continue;
-
-        const snippet = body.replace(/\s+/g, ' ').trim().slice(0, 280);
-        const guessedDate = category === 'deadline' ? guessDateFromText(`${subject} ${body}`) : null;
-        const dateStr = parsed.date ? parsed.date.toString() : '';
-        const idHash = crypto
-          .createHash('md5')
-          .update(`${sender}|${subject}|${dateStr}`)
-          .digest('hex')
-          .slice(0, 12);
-
-        results.push({
-          id: idHash,
-          category,
-          sender,
-          subject,
-          date: dateStr,
-          snippet,
-          matched_keywords: hits,
-          guessed_date: guessedDate,
+      for (const m of raw) {
+        let text = '';
+        try {
+          const parsed = await simpleParser(m.source);
+          text = parsed.text || '';
+        } catch (e) {
+          // A message cut off mid-way can fail to parse; its subject is still useful.
+        }
+        const from = (m.envelope.from || [])[0] || {};
+        const body = text.replace(/\s+/g, ' ').trim();
+        messages.push({
+          key: keyOf(m.uid),
+          messageId: m.envelope.messageId || '',
+          fromName: from.name || '',
+          fromAddress: (from.address || '').toLowerCase(),
+          subject: m.envelope.subject || '(no subject)',
+          date: m.envelope.date ? new Date(m.envelope.date).toISOString() : new Date().toISOString(),
+          text: body.slice(0, MAIL_TEXT_CHARS),
+          seen: !!(m.flags && m.flags.has('\\Seen')),
         });
       }
+
+      logEvent('info', `Mail scan complete: ${messages.length} new of ${present.length} in the last ${daysBack} days` +
+        (wanted.length > batch.length ? ` (${wanted.length - batch.length} more next time)` : ''));
+      return { messages, present, more: wanted.length > batch.length };
     } finally {
       lock.release();
+      await client.logout().catch(() => {});
     }
-
-    await client.logout();
-    logEvent('info', `Mail scan complete: ${results.length} matching email(s) found`);
-    return { results };
   } catch (e) {
     try {
       await client.logout();
     } catch (_) {}
     logEvent('error', 'Mail scan failed', String(e.message || e));
-    return { error: `IMAP error: ${String(e.message || e)}`, results: [] };
+    return { error: `Could not read mail: ${String(e.message || e)}`, messages: [] };
   }
 }
 

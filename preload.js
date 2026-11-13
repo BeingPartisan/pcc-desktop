@@ -29,7 +29,8 @@ contextBridge.exposeInMainWorld('pcc', {
   // Mail scan
   getMailConfig: () => ipcRenderer.invoke('get-mail-config'),
   setMailConfig: (config) => ipcRenderer.invoke('set-mail-config', config),
-  scanEmail: () => ipcRenderer.invoke('scan-email'),
+  scanEmail: (knownKeys) => ipcRenderer.invoke('scan-email', knownKeys),
+  clearLegacyMailSenders: () => ipcRenderer.invoke('clear-legacy-mail-senders'),
 
   // Appearance
   getSystemAccent: () => ipcRenderer.invoke('get-system-accent'),

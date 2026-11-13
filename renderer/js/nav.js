@@ -4,6 +4,7 @@
 
 const PAGES = {
   today: 'Today',
+  inbox: 'Inbox',
   focus: 'Focus',
   study: 'Study',
   academics: 'Academics',
@@ -40,7 +41,7 @@ function navigate(page){
   if(page === 'system') loadSystemVitals();
 }
 
-// Ctrl+1 … Ctrl+8 jump straight to a page.
+// Ctrl+1 … Ctrl+9 jump straight to a page.
 document.addEventListener('keydown', e => {
   if(!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
   const n = Number(e.key);

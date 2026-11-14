@@ -1,0 +1,61 @@
+/* The floating island. Its window is larger than the island and fully
+   transparent; only the island itself is drawn. It is always dark, like
+   the notch it imitates, and picks up the app's accent colour (--accent,
+   --accent-ink are set from island.js). */
+
+:root{
+  --accent:#C9F26C; --accent-ink:#151A07;
+  --ink:#F3F2EE; --ink-dim:#9A99A2; --line:rgba(255,255,255,.1);
+  --sans:'Geist','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
+  --mono:'Geist Mono','Cascadia Code',Consolas,monospace;
+  --serif:'Instrument Serif',Georgia,serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0; height:100%; background:transparent; overflow:hidden; user-select:none;}
+body{display:flex; justify-content:center; align-items:flex-start; font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialiased;}
+body[data-position="left"]{justify-content:flex-start;}
+body[data-position="right"]{justify-content:flex-end;}
+
+.island{
+  width:max-content; min-width:150px; max-width:300px; max-height:36px;
+  background:#0B0B0D; border:1px solid var(--line); border-radius:19px; overflow:hidden;
+  box-shadow:0 6px 22px rgba(0,0,0,.4);
+  transition:max-width .28s cubic-bezier(.3,.9,.3,1), max-height .28s cubic-bezier(.3,.9,.3,1), border-radius .28s, min-width .28s;
+}
+.island.open{min-width:400px; max-width:400px; max-height:310px; border-radius:22px;}
+
+/* Compact line */
+.pill{height:34px; display:flex; align-items:center; gap:9px; padding:0 14px; font-size:12.5px; font-weight:500; white-space:nowrap;}
+.pill-dot{width:7px; height:7px; border-radius:50%; background:var(--accent); flex-shrink:0;}
+.pill-dot.pulse{animation:pulse 1.6s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1; transform:scale(1);} 50%{opacity:.35; transform:scale(.8);}}
+.pill-text{overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0;}
+.pill-side{font-family:var(--mono); font-size:12px; color:var(--ink-dim); flex-shrink:0; font-variant-numeric:tabular-nums;}
+.pill-side:empty{display:none;}
+
+/* Expanded panel */
+.panel{display:flex; flex-direction:column; padding:2px 8px 8px; opacity:0; transition:opacity .2s;}
+.island.open .panel{opacity:1;}
+/* While closed the panel is taken out of the layout, so the pill is only as wide as its own text. */
+.island:not(.open) .panel{position:absolute; visibility:hidden; width:384px;}
+.row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 8px; border-top:1px solid var(--line);}
+.row[hidden]{display:none;}
+.row-main{min-width:0; flex:1;}
+.row-label{font-size:11px; color:var(--ink-dim);}
+.row-title{font-size:13.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.row-sub{font-size:12px; color:var(--ink-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.row-sub:empty{display:none;}
+.row-big{font-size:26px; font-weight:500; letter-spacing:-.03em; line-height:1.1; font-variant-numeric:tabular-nums;}
+.row-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+.quote-text{font-family:var(--serif); font-style:italic; font-size:17px; line-height:1.25; color:var(--ink);}
+
+button{font-family:inherit; cursor:pointer;}
+.btn{font-size:12px; font-weight:500; color:var(--ink); background:rgba(255,255,255,.07); border:1px solid transparent; border-radius:9px; padding:6px 11px; transition:background .15s;}
+.btn:hover{background:rgba(255,255,255,.13);}
+.btn.accent{background:var(--accent); color:var(--accent-ink); font-weight:600;}
+.btn.accent:hover{filter:brightness(1.08);}
+.icon{width:30px; height:30px; display:grid; place-items:center; border:none; border-radius:50%; background:transparent; color:var(--ink); transition:background .15s;}
+.icon:hover{background:rgba(255,255,255,.1);}
+.icon.big{width:36px; height:36px; background:var(--accent); color:var(--accent-ink);}
+.icon.big:hover{background:var(--accent); filter:brightness(1.08);}
+.icon svg{width:15px; height:15px; fill:currentColor; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}

@@ -38,6 +38,18 @@ ipcMain.handle('get-log-history', () => logBuffer);
 // Digiicampus timetable sync lives in its own module (campus.js)
 require('./campus')({ logEvent, getMainWindow: () => mainWindow });
 
+// The floating island (its own always-on-top window) lives in island.js
+const island = require('./island')({
+  logEvent,
+  getMainWindow: () => mainWindow,
+  showMainWindow: () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  },
+});
+
 process.on('uncaughtException', (err) => {
   logEvent('error', 'Uncaught exception in main process', String((err && err.stack) || err));
 });
@@ -285,9 +297,12 @@ async function getCachedFolderSize(folderPath, cache, force) {
   return sizeBytes;
 }
 
-// Fixes Windows showing "electron.app.Electron" as the notification sender
-// instead of "Personal Command Center" during development.
-if (process.platform === 'win32') {
+// The app ID ties the installed app to its Start menu shortcut, which is
+// where Windows takes the taskbar icon and the notification name from.
+// A development run (npm start) has no such shortcut: with the ID set,
+// Windows falls back to the Electron icon in the taskbar, so there the ID
+// is left alone and the window's own icon is used instead.
+if (process.platform === 'win32' && app.isPackaged) {
   app.setAppUserModelId('com.partisan.pcc');
 }
 
@@ -1188,6 +1203,7 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   isQuitting = true;
+  island.stop(); // close the island and its helper process with the app
 });
 
 app.on('will-quit', () => {

@@ -40,6 +40,11 @@ contextBridge.exposeInMainWorld('pcc', {
   pickCustomImage: (kind) => ipcRenderer.invoke('pick-custom-image', kind),
   removeCustomImage: (kind) => ipcRenderer.invoke('remove-custom-image', kind),
 
+  // Floating island
+  islandConfigure: (config) => ipcRenderer.invoke('island-configure', config),
+  islandState: (state) => ipcRenderer.send('island-state', state),
+  onIslandAction: (callback) => ipcRenderer.on('island-action', (event, action) => callback(action)),
+
   // About
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),

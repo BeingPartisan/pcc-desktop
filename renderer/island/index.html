@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Island</title>
+<link rel="stylesheet" href="../css/fonts.css">
+<link rel="stylesheet" href="island.css">
+</head>
+<body>
+
+<!-- The island: a one-line pill that grows into a panel while the pointer is over it -->
+<div class="island" id="island">
+  <div class="pill" id="pill">
+    <span class="pill-dot" id="pill-dot"></span>
+    <span class="pill-text" id="pill-text"></span>
+    <span class="pill-side" id="pill-side"></span>
+  </div>
+
+  <div class="panel">
+    <section class="row" id="row-timer">
+      <div class="row-main">
+        <div class="row-label" id="timer-label">Focus timer</div>
+        <div class="row-big" id="timer-time">25:00</div>
+      </div>
+      <div class="row-actions">
+        <button class="btn accent" id="timer-toggle" data-action="pomo-toggle">Start</button>
+        <button class="btn" data-action="pomo-reset">Reset</button>
+      </div>
+    </section>
+
+    <section class="row" id="row-class">
+      <div class="row-main">
+        <div class="row-label" id="class-label"></div>
+        <div class="row-title" id="class-title"></div>
+        <div class="row-sub" id="class-sub"></div>
+      </div>
+      <div class="row-actions"><button class="btn" data-action="open" data-page="study">Timetable</button></div>
+    </section>
+
+    <section class="row" id="row-media">
+      <div class="row-main">
+        <div class="row-label" id="media-label">Playing</div>
+        <div class="row-title" id="media-title"></div>
+        <div class="row-sub" id="media-artist"></div>
+      </div>
+      <div class="row-actions">
+        <button class="icon" data-media="prev" aria-label="Previous track"><svg viewBox="0 0 24 24"><path d="M7 5v14"/><path d="M19 5l-9 7 9 7z"/></svg></button>
+        <button class="icon big" data-media="toggle" id="media-toggle" aria-label="Play or pause"></button>
+        <button class="icon" data-media="next" aria-label="Next track"><svg viewBox="0 0 24 24"><path d="M17 5v14"/><path d="M5 5l9 7-9 7z"/></svg></button>
+      </div>
+    </section>
+
+    <section class="row" id="row-mail">
+      <div class="row-main">
+        <div class="row-label" id="mail-label"></div>
+        <div class="row-title" id="mail-title"></div>
+        <div class="row-sub" id="mail-from"></div>
+      </div>
+      <div class="row-actions"><button class="btn" data-action="open" data-page="inbox">Inbox</button></div>
+    </section>
+
+    <section class="row quote" id="row-quote">
+      <div class="row-main"><div class="quote-text" id="quote-text"></div></div>
+      <div class="row-actions"><button class="btn" data-action="open" data-page="today">Open</button></div>
+    </section>
+  </div>
+</div>
+
+<script src="island.js"></script>
+</body>
+</html>

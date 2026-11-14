@@ -474,6 +474,7 @@
       <button class="settings-tab active" data-tab="general" onclick="showSettingsTab('general')">General</button>
       <button class="settings-tab" data-tab="appearance" onclick="showSettingsTab('appearance')">Appearance</button>
       <button class="settings-tab" data-tab="layout" onclick="showSettingsTab('layout')">Layout</button>
+      <button class="settings-tab" data-tab="island" onclick="showSettingsTab('island')">Island</button>
       <button class="settings-tab" data-tab="timetable" onclick="showSettingsTab('timetable')">Timetable</button>
       <button class="settings-tab" data-tab="mail" onclick="showSettingsTab('mail')">Mail</button>
       <button class="settings-tab" data-tab="data" onclick="showSettingsTab('data')">Data</button>
@@ -654,6 +655,44 @@
           <div class="setting-name">Pages</div>
           <div class="setting-desc">Hidden pages leave the rail and the Ctrl+number shortcuts. Today is always shown.</div>
           <div class="order-list" id="pages-order"></div>
+        </div>
+      </section>
+
+      <!-- Island -->
+      <section class="settings-pane" data-tab="island">
+        <h2 class="pane-title">Island</h2>
+        <p class="pane-intro">A small bar that floats at the top of your screen, above other windows. It shows a running timer, your current or next class, what's playing and new important mail. Move the pointer over it for controls.</p>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="pref-island-enabled">Show the island</label>
+            <div class="setting-desc">Stays on screen while PCC is running, even when its window is hidden.</div>
+          </div>
+          <div class="setting-control"><input id="pref-island-enabled" type="checkbox" class="switch" data-pref="islandEnabled" onchange="setPref('islandEnabled', this.checked)" /></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Position</div>
+            <div class="setting-desc">Where along the top edge it sits.</div>
+          </div>
+          <div class="setting-control"><div class="segmented" data-pref="islandPosition"><button data-value="left" onclick="setPref('islandPosition', 'left')">Left</button><button data-value="center" onclick="setPref('islandPosition', 'center')">Centre</button><button data-value="right" onclick="setPref('islandPosition', 'right')">Right</button></div></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="pref-island-media">Show what's playing</label>
+            <div class="setting-desc">Track name with play, pause and skip, for music or video playing in any app. Uses a small helper that runs in the background.</div>
+          </div>
+          <div class="setting-control"><input id="pref-island-media" type="checkbox" class="switch" data-pref="islandMedia" onchange="setPref('islandMedia', this.checked)" /></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Hide when another app is in front</div>
+            <div class="setting-desc">Full screen hides it for games, videos and presentations. Maximised also hides it whenever another app's maximised window is in front, so it only shows over PCC, the desktop and smaller windows.</div>
+          </div>
+          <div class="setting-control"><div class="segmented" data-pref="islandHide"><button data-value="never" onclick="setPref('islandHide', 'never')">Never</button><button data-value="fullscreen" onclick="setPref('islandHide', 'fullscreen')">Full screen</button><button data-value="maximized" onclick="setPref('islandHide', 'maximized')">Maximised</button></div></div>
         </div>
       </section>
 
@@ -870,6 +909,7 @@
 <script src="js/inbox.js"></script>
 <script src="js/evaluation.js"></script>
 <script src="js/today.js"></script>
+<script src="js/island-feed.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

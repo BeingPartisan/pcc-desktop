@@ -46,6 +46,10 @@ const PREF_DEFAULTS = {
   showStatusChips: true,
   focusMinutes: 25,
   breakMinutes: 5,
+  islandEnabled: true,        // the floating island (see island-feed.js)
+  islandMedia: true,          // show and control what's playing
+  islandPosition: 'center',   // 'left' | 'center' | 'right'
+  islandHide: 'fullscreen',   // 'never' | 'fullscreen' | 'maximized': when another app's window hides it
   todayCards: Object.keys(TODAY_CARDS).map(id => ({ id, visible: true })),
   pages: Object.keys(PAGES).map(id => ({ id, visible: true })),
 };
@@ -71,6 +75,8 @@ function initPrefs(){
   p.todayCards = reconcileOrder(saved.todayCards, Object.keys(TODAY_CARDS));
   p.pages = reconcileOrder(saved.pages, Object.keys(PAGES));
   p.pages.find(item => item.id === 'today').visible = true; // Today is home; it can't be hidden
+  // Before the three-way islandHide there was an on/off switch.
+  if('islandHideFullscreen' in saved){ if(!('islandHide' in saved)) p.islandHide = saved.islandHideFullscreen ? 'fullscreen' : 'never'; delete p.islandHideFullscreen; }
   state.settings.prefs = p;
 }
 
@@ -80,6 +86,8 @@ function setPref(key, value){
   applyAppearance();
   renderAppearanceSettings();
   if(key === 'clock24'){ updateClock(); renderTimetable(); }
+  if(key.startsWith('island')) configureIsland();
+  else pushIsland(); // accent and clock changes show on the island too
 }
 
 /* ----- Applying ----- */

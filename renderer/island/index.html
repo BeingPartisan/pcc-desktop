@@ -17,6 +17,35 @@
   </div>
 
   <div class="panel">
+    <section class="row" id="row-update" hidden>
+      <div class="row-main">
+        <div class="row-label" id="update-label">Update</div>
+        <div class="row-title" id="update-title"></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn accent" id="update-button" data-action="update-download">Download</button>
+      </div>
+    </section>
+
+    <section class="row" id="row-nudge" hidden>
+      <div class="row-main">
+        <div class="row-label" id="nudge-label"></div>
+        <div class="row-title">Stretch, look away, get some water</div>
+      </div>
+      <div class="row-actions"><button class="btn" data-action="dismiss-nudge">Got it</button></div>
+    </section>
+
+    <section class="row" id="row-message" hidden>
+      <div class="row-main">
+        <div class="row-label" id="message-label"></div>
+        <div class="row-text" id="message-text"></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn" id="message-reply">Reply</button>
+        <button class="btn" data-action="message-read">Done</button>
+      </div>
+    </section>
+
     <section class="row" id="row-timer">
       <div class="row-main">
         <div class="row-label" id="timer-label">Focus timer</div>
@@ -59,9 +88,23 @@
       <div class="row-actions"><button class="btn" data-action="open" data-page="inbox">Inbox</button></div>
     </section>
 
+    <section class="row stack" id="row-workspaces" hidden>
+      <div class="row-label">Workspaces</div>
+      <div class="chips" id="workspace-buttons"></div>
+    </section>
+
     <section class="row quote" id="row-quote">
-      <div class="row-main"><div class="quote-text" id="quote-text"></div></div>
+      <div class="row-main"><div class="quote-text" id="quote-text"></div><div class="row-sub" id="quote-author"></div></div>
       <div class="row-actions"><button class="btn" data-action="open" data-page="today">Open</button></div>
+    </section>
+
+    <!-- Type a quick note, a task, or a message to a channel -->
+    <section class="row stack" id="row-compose" hidden>
+      <div class="chips" id="compose-modes"></div>
+      <div class="compose-line">
+        <input id="compose-input" type="text" maxlength="500" autocomplete="off" spellcheck="false" />
+        <button class="btn accent" id="compose-send">Add</button>
+      </div>
     </section>
   </div>
 </div>

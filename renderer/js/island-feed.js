@@ -30,7 +30,11 @@ function islandSnapshot(){
     timer: { running: pomo.running, mode: pomo.mode, endsAt: pomo.endsAt, remaining: pomo.remaining, total: pomo.total },
     classes: islandClasses(),
     mail: { count: important.length, latest: important[0] ? { subject: important[0].subject, from: important[0].fromName || important[0].fromAddress } : null },
-    quote: currentWidgetQuote,
+    quote: currentWidgetQuote, quoteAuthor: currentWidgetAuthor,
+    capture: !!prefs().islandCapture,
+    channels: msg.channels.map(c => ({ id: c.id, name: c.name })),
+    message: msg.unread,
+    workspaces: islandWorkspaces(),
   };
 }
 
@@ -43,8 +47,24 @@ function pushIsland(){
 function configureIsland(){
   if(!window.pcc || !window.pcc.islandConfigure) return;
   const p = prefs();
-  window.pcc.islandConfigure({ enabled: !!p.islandEnabled, media: !!p.islandMedia, position: p.islandPosition, hide: p.islandHide })
+  window.pcc.islandConfigure({ enabled: !!p.islandEnabled, media: !!p.islandMedia, position: p.islandPosition, hide: p.islandHide, breaks: !!p.islandBreaks, breakMinutes: p.islandBreakMinutes })
     .then(pushIsland);
+}
+
+// Text typed into the island goes into one running note, newest line first,
+// so quick thoughts collect in a single place instead of a pile of notes.
+function addQuickNote(text){
+  let note = state.notes.find(n => n.quick);
+  if(!note){ note = { id: uid(), title: 'Quick notes', body: '', quick: true, updatedAt: Date.now() }; state.notes.unshift(note); }
+  const stamp = new Date().toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: !use24Hour() });
+  note.body = `${stamp}: ${text}` + (note.body ? '\n' + note.body : '');
+  note.updatedAt = Date.now();
+  Store.set('notes', state.notes); renderNotes();
+}
+
+function addQuickTask(text){
+  state.tasks.unshift({ id: uid(), text, done: false, priority: 'med' });
+  Store.set('tasks', state.tasks); renderTasks();
 }
 
 // Buttons pressed on the island
@@ -53,6 +73,11 @@ if(window.pcc && window.pcc.onIslandAction){
     if(action.type === 'pomo-toggle') pomoToggle();
     else if(action.type === 'pomo-reset') pomoReset();
     else if(action.type === 'open' && action.page) navigate(action.page);
+    else if(action.type === 'quick-note' && action.text) addQuickNote(String(action.text).slice(0, 500));
+    else if(action.type === 'quick-task' && action.text) addQuickTask(String(action.text).slice(0, 200));
+    else if(action.type === 'send-message') sendMessage(action.channelId, action.text);
+    else if(action.type === 'message-read') markMessageRead();
+    else if(action.type === 'open-workspace') openWorkspace(action.id);
     pushIsland();
   });
 }

@@ -15,21 +15,28 @@
 //       hidden, prints a JSON line when playback changes, and accepts
 //       toggle / next / prev on its standard input.
 
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, powerMonitor } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 
 const WINDOW_WIDTH = 420;   // wider and taller than the pill, so it has room to expand;
-const WINDOW_HEIGHT = 330;  // the unused area is transparent and lets clicks through
+const WINDOW_HEIGHT = 520;  // the unused area is transparent and lets clicks through
 const EDGE_GAP = 6;
 
-module.exports = function registerIsland({ logEvent, getMainWindow, showMainWindow }) {
+const NUDGE_SHOWN_MS = 3 * 60 * 1000;   // how long a break nudge stays up if ignored
+const IDLE_RESET_SECONDS = 5 * 60;      // this long away from the keyboard counts as a break taken
+
+module.exports = function registerIsland({ logEvent, getMainWindow, showMainWindow, onUpdateAction }) {
   let win = null;
   let helper = null;
   // hide: 'never' | 'fullscreen' (a window covering the whole screen) |
   //       'maximized' (also when another app's maximised window is in front)
-  let config = { enabled: false, media: true, position: 'center', hide: 'fullscreen' };
+  // breaks: gently suggest a break after breakMinutes of continuous use
+  let config = { enabled: false, media: true, position: 'center', hide: 'fullscreen', breaks: true, breakMinutes: 90 };
+  let lastUpdate = null;     // latest app-update status, shown as a row on the island
+  let nudge = null;          // a break suggestion currently showing, or null
+  let activeMinutes = 0;     // minutes of use since the last real pause
   let lastState = null;
   let lastMedia = { status: 'none', title: '', artist: '', app: '', front: 'normal' };
 
@@ -86,6 +93,8 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
       place();
       if (lastState) send('island-state', lastState);
       send('island-media', config.media ? lastMedia : { ...lastMedia, status: 'none' });
+      send('island-update', lastUpdate);
+      send('island-nudge', nudge);
       applyVisibility();
     });
     win.on('closed', () => { win = null; });
@@ -186,14 +195,47 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
   ipcMain.on('island-action', (event, action) => {
     if (!action || typeof action.type !== 'string') return;
     if (action.type === 'media') return mediaCommand(action.command);
+    if (action.type === 'update-download' || action.type === 'update-install') return onUpdateAction(action.type);
+    if (action.type === 'dismiss-nudge') { nudge = null; return send('island-nudge', null); }
     if (action.type === 'open') showMainWindow();
+    // Everything else (timer, quick notes, messages, workspaces) is the app's to carry out.
     const main = getMainWindow();
     if (main && !main.isDestroyed()) main.webContents.send('island-action', action);
   });
+
+  // From the island: its text box wants the keyboard (or is done with it).
+  // The window normally refuses focus so it never interrupts typing elsewhere.
+  ipcMain.on('island-focus', (event, wanted) => {
+    if (!alive()) return;
+    win.setFocusable(!!wanted);
+    if (wanted) win.focus(); else win.blur();
+  });
+
+  // --- Break nudge ---
+  // Once a minute: count it as "in use" if the keyboard or mouse moved within
+  // the last minute, start over after a real pause, and when the count
+  // reaches the limit, ask the island to pulse for a while.
+  function trackActivity() {
+    if (!config.enabled || !config.breaks) { activeMinutes = 0; return; }
+    const idle = powerMonitor.getSystemIdleTime();
+    if (idle >= IDLE_RESET_SECONDS) activeMinutes = 0;
+    else if (idle < 60) activeMinutes++;
+    if (nudge && Date.now() > nudge.until) { nudge = null; send('island-nudge', null); }
+    if (activeMinutes >= config.breakMinutes) {
+      activeMinutes = 0;
+      nudge = { type: 'break', minutes: config.breakMinutes, until: Date.now() + NUDGE_SHOWN_MS };
+      send('island-nudge', nudge);
+    }
+  }
+  app.whenReady().then(() => setInterval(trackActivity, 60 * 1000));
 
   // Keep it in place when the screen resolution or taskbar changes. The
   // screen module can only be used once the app is ready.
   app.whenReady().then(() => screen.on('display-metrics-changed', place));
 
-  return { stop: () => { stopHelper(); destroyWindow(); } };
+  return {
+    stop: () => { stopHelper(); destroyWindow(); },
+    // Called by the updater so an available update shows on the island too.
+    setUpdate: (status) => { lastUpdate = status; send('island-update', status); },
+  };
 };

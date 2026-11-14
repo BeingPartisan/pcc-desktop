@@ -40,6 +40,15 @@ contextBridge.exposeInMainWorld('pcc', {
   pickCustomImage: (kind) => ipcRenderer.invoke('pick-custom-image', kind),
   removeCustomImage: (kind) => ipcRenderer.invoke('remove-custom-image', kind),
 
+  // Messages between devices
+  messagesConfigure: (config) => ipcRenderer.invoke('messages-configure', config),
+  messagesSend: (message) => ipcRenderer.invoke('messages-send', message),
+  messagesBroadcast: (text) => ipcRenderer.invoke('messages-broadcast', text),
+  onMessage: (callback) => ipcRenderer.on('message-received', (event, message) => callback(message)),
+
+  // Quotes
+  fetchQuotes: () => ipcRenderer.invoke('fetch-quotes'),
+
   // Floating island
   islandConfigure: (config) => ipcRenderer.invoke('island-configure', config),
   islandState: (state) => ipcRenderer.send('island-state', state),
@@ -48,6 +57,10 @@ contextBridge.exposeInMainWorld('pcc', {
   // About
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
+  onUpdateStatus: (callback) => ipcRenderer.on('update-status', (event, status) => callback(status)),
+  updateDownload: () => ipcRenderer.invoke('update-download'),
+  updateInstall: () => ipcRenderer.invoke('update-install'),
 
   // Digiicampus timetable sync
   campusStatus: () => ipcRenderer.invoke('campus-status'),

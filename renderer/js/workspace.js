@@ -105,6 +105,7 @@ function pomoTick(){
       ? `Focus session done. Take a ${POMO_MINUTES.break}-minute break.`
       : `Break over. Back to a ${POMO_MINUTES.focus}-minute focus session.`;
     showToast(`Timer switched to ${pomo.mode}`);
+    if(pomo.mode === 'break') showNextQuote(); // a fresh quote to mark the finished session
     // Native notification so it's noticed even when PCC is in the tray.
     if(window.pcc && window.pcc.showNotification) window.pcc.showNotification('Deep Work Timer', msg);
   }

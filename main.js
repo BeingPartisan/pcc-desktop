@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, nativeImage, dialog, shell, safeStorage, globalShortcut, nativeTheme, systemPreferences } = require('electron');
+const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, nativeImage, dialog, shell, safeStorage, globalShortcut, nativeTheme, systemPreferences, net } = require('electron');
 const { pathToFileURL } = require('url');
 const path = require('path');
 const fs = require('fs');
@@ -39,9 +39,13 @@ ipcMain.handle('get-log-history', () => logBuffer);
 require('./campus')({ logEvent, getMainWindow: () => mainWindow });
 
 // The floating island (its own always-on-top window) lives in island.js
+const messaging = require('./messaging')({ logEvent, getMainWindow: () => mainWindow });
+
 const island = require('./island')({
   logEvent,
   getMainWindow: () => mainWindow,
+  // Download / Restart pressed on the island's update row
+  onUpdateAction: (type) => (type === 'update-download' ? startUpdateDownload() : installDownloadedUpdate()),
   showMainWindow: () => {
     if (!mainWindow) return;
     if (mainWindow.isMinimized()) mainWindow.restore();
@@ -417,6 +421,8 @@ function createTray() {
     {
       label: 'Check for Updates',
       click: () => {
+        // the answer appears as a dialog in the app window, so bring it forward
+        if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
         checkForUpdates(true);
       },
     },
@@ -1013,101 +1019,172 @@ ipcMain.handle('launch-game', async (event, exePath) => {
 });
 
 // --- Auto Updates (GitHub Releases via electron-updater) ---
-// Flow: check silently on startup -> if available, ask before downloading ->
-// once downloaded, ask before restarting to install. Nothing happens without
-// explicit confirmation at each step.
+// The app checks on startup and then every UPDATE_CHECK_MINUTES. Nothing is
+// downloaded or installed without the user saying so: each stage is sent to
+// the app window as an 'update-status' message, and its own styled dialog
+// (renderer/js/updates.js) asks before downloading and before restarting.
+//
+//   status.state: 'available' | 'downloading' | 'downloaded' | 'none' | 'error'
+
+const UPDATE_CHECK_MINUTES = 30;
 
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
 
+let lastUpdateCheckWasManual = false;
+let lastUpdateStatus = null;   // replayed to the window when it asks (e.g. after a reload)
+let announcedVersion = null;   // the version a system notification has already been shown for
+
+function sendUpdateStatus(status) {
+  lastUpdateStatus = status;
+  // The island shows real updates (not "you're up to date" or errors from a manual check).
+  island.setUpdate(['available', 'downloading', 'downloaded'].includes(status.state) ? status : null);
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('update-status', status);
+}
+
+// Release notes arrive as HTML, or as a list of them; the dialog wants plain text.
+function plainReleaseNotes(notes) {
+  const raw = Array.isArray(notes) ? notes.map((n) => n.note || '').join('\n') : String(notes || '');
+  return raw.replace(/<li>/gi, '• ').replace(/<\/(p|li|h\d|div)>|<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n').trim().slice(0, 1200);
+}
+
 autoUpdater.on('update-available', (info) => {
   logEvent('info', `Update available: v${info.version}`);
-  dialog
-    .showMessageBox(mainWindow, {
-      type: 'info',
-      title: 'Update available',
-      message: `A new version of PCC is available (v${info.version}).`,
-      detail: 'Do you want to download it now? It will install the next time you restart.',
-      buttons: ['Download', 'Not now'],
-      defaultId: 0,
-      cancelId: 1,
-    })
-    .then((result) => {
-      if (result.response === 0) {
-        logEvent('info', `Downloading update v${info.version}...`);
-        autoUpdater.downloadUpdate();
-      } else {
-        logEvent('info', 'Update download deferred by user');
-      }
-    });
+  sendUpdateStatus({ state: 'available', version: info.version, current: app.getVersion(), notes: plainReleaseNotes(info.releaseNotes), manual: lastUpdateCheckWasManual });
+  // If the window is tucked away in the tray, say so once with a system notification.
+  const hidden = !mainWindow || !mainWindow.isVisible() || mainWindow.isMinimized();
+  if (hidden && announcedVersion !== info.version && Notification.isSupported()) {
+    announcedVersion = info.version;
+    const note = new Notification({ title: 'Update available', body: `Version ${info.version} is ready to download. Click to open.`, icon: ICON_PATH });
+    note.on('click', () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } });
+    note.show();
+  }
+});
+
+autoUpdater.on('download-progress', (progress) => {
+  sendUpdateStatus({ ...(lastUpdateStatus || {}), state: 'downloading', percent: Math.round(progress.percent || 0) });
 });
 
 autoUpdater.on('update-downloaded', (info) => {
   logEvent('info', `Update v${info.version} downloaded, ready to install`);
-  dialog
-    .showMessageBox(mainWindow, {
-      type: 'info',
-      title: 'Update ready',
-      message: 'The update has finished downloading.',
-      detail: 'Restart PCC now to install it, or install it later on your own.',
-      buttons: ['Restart now', 'Later'],
-      defaultId: 0,
-      cancelId: 1,
-    })
-    .then((result) => {
-      if (result.response === 0) {
-        logEvent('info', 'Restarting to install update...');
-        isQuitting = true;
-        autoUpdater.quitAndInstall();
-      } else {
-        logEvent('info', 'Update install deferred by user');
-      }
-    });
+  sendUpdateStatus({ ...(lastUpdateStatus || {}), state: 'downloaded', version: info.version });
 });
 
 autoUpdater.on('update-not-available', () => {
   logEvent('info', 'No update available — running latest version');
-  // Only say so out loud when the user asked; the startup check stays silent.
-  if (lastUpdateCheckWasManual) {
-    lastUpdateCheckWasManual = false;
-    dialog.showMessageBox(mainWindow, {
-      type: 'info',
-      title: 'No updates',
-      message: `You're on the latest version (v${app.getVersion()}).`,
-    });
-  }
-});
-
-let lastUpdateCheckWasManual = false;
-
-ipcMain.handle('get-app-version', () => app.getVersion());
-
-ipcMain.handle('check-for-updates', () => {
-  // electron-updater only works in the installed (packaged) app.
-  if (!app.isPackaged) return { ok: false, reason: 'not-packaged' };
-  checkForUpdates(true);
-  return { ok: true };
+  // Only say so when the user asked; scheduled checks stay silent.
+  if (lastUpdateCheckWasManual) sendUpdateStatus({ state: 'none', current: app.getVersion(), manual: true });
+  lastUpdateCheckWasManual = false;
 });
 
 autoUpdater.on('error', (err) => {
   logEvent('error', 'Auto-update error', String(err));
+  const wasDownloading = lastUpdateStatus && lastUpdateStatus.state === 'downloading';
+  if (lastUpdateCheckWasManual || wasDownloading) sendUpdateStatus({ state: 'error', message: String(err.message || err).slice(0, 300), manual: true });
+  lastUpdateCheckWasManual = false;
 });
 
 function checkForUpdates(manual) {
+  // electron-updater only works in the installed (packaged) app.
+  // A development run shows a preview instead, so the dialog and the island's update row can be seen.
+  if (!app.isPackaged) {
+    if (manual) startUpdatePreview();
+    return;
+  }
+  // Don't interrupt a download, or re-offer something already downloaded.
+  if (lastUpdateStatus && ['downloading', 'downloaded'].includes(lastUpdateStatus.state)) {
+    if (manual) sendUpdateStatus({ ...lastUpdateStatus, manual: true });
+    return;
+  }
   lastUpdateCheckWasManual = !!manual;
-  logEvent('info', manual ? 'Checking for updates (manual)...' : 'Checking for updates (startup)...');
+  logEvent('info', manual ? 'Checking for updates (manual)...' : 'Checking for updates...');
   autoUpdater.checkForUpdates().catch((err) => {
     logEvent('error', 'checkForUpdates failed', String(err));
-    if (manual) {
-      dialog.showMessageBox(mainWindow, {
-        type: 'error',
-        title: 'Update check failed',
-        message: 'Could not check for updates.',
-        detail: String(err.message || err),
-      });
-    }
+    if (manual) sendUpdateStatus({ state: 'error', message: String(err.message || err).slice(0, 300), manual: true });
+    lastUpdateCheckWasManual = false;
   });
 }
+
+ipcMain.handle('get-app-version', () => app.getVersion());
+
+ipcMain.handle('check-for-updates', () => {
+  checkForUpdates(true);
+  return { ok: app.isPackaged };
+});
+
+// The window asks for the current status when it loads, so an update found
+// before it was ready (or before a reload) is still offered.
+ipcMain.handle('get-update-status', () => lastUpdateStatus);
+
+// --- Update preview (development runs only) ---
+// Walks through the same stages as a real update with a made-up version.
+// Nothing is downloaded or installed; each status carries preview: true.
+let previewTimer = null;
+
+function startUpdatePreview() {
+  clearInterval(previewTimer);
+  sendUpdateStatus({
+    state: 'available', version: '9.9.9', current: app.getVersion(), manual: true, preview: true,
+    notes: 'This is a preview of the update dialog.\n• Release notes from GitHub appear here\n• Download and Restart only pretend\n• The island shows the same update when you point at it',
+  });
+}
+
+function previewDownload() {
+  let percent = 0;
+  sendUpdateStatus({ ...lastUpdateStatus, state: 'downloading', percent });
+  clearInterval(previewTimer);
+  previewTimer = setInterval(() => {
+    percent += 8;
+    if (percent < 100) return sendUpdateStatus({ ...lastUpdateStatus, state: 'downloading', percent });
+    clearInterval(previewTimer);
+    sendUpdateStatus({ ...lastUpdateStatus, state: 'downloaded', percent: 100 });
+  }, 350);
+}
+
+function startUpdateDownload() {
+  if (!lastUpdateStatus || lastUpdateStatus.state !== 'available') return { ok: false };
+  if (lastUpdateStatus.preview) { previewDownload(); return { ok: true }; }
+  logEvent('info', `Downloading update v${lastUpdateStatus.version}...`);
+  sendUpdateStatus({ ...lastUpdateStatus, state: 'downloading', percent: 0 });
+  autoUpdater.downloadUpdate().catch((err) => {
+    logEvent('error', 'Update download failed', String(err));
+    sendUpdateStatus({ state: 'error', message: String(err.message || err).slice(0, 300), manual: true });
+  });
+  return { ok: true };
+}
+
+function installDownloadedUpdate() {
+  if (!lastUpdateStatus || lastUpdateStatus.state !== 'downloaded') return { ok: false };
+  if (lastUpdateStatus.preview) { sendUpdateStatus({ state: 'none', current: app.getVersion(), manual: true, preview: true }); return { ok: true }; }
+  logEvent('info', 'Restarting to install update...');
+  isQuitting = true;
+  autoUpdater.quitAndInstall();
+  return { ok: true };
+}
+
+ipcMain.handle('update-download', () => startUpdateDownload());
+ipcMain.handle('update-install', () => installDownloadedUpdate());
+
+// --- Quotes ---
+// A batch of quotes from a free public source (no account, nothing about
+// the user is sent). The renderer keeps the short ones; see renderer/js/quotes.js.
+const QUOTES_URL = 'https://dummyjson.com/quotes/random/10';
+
+ipcMain.handle('fetch-quotes', async () => {
+  try {
+    const res = await net.fetch(QUOTES_URL, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return { ok: false, error: `Quote service answered ${res.status}` };
+    const list = await res.json();
+    const quotes = (Array.isArray(list) ? list : [])
+      .map((q) => ({ text: String(q.quote || '').replace(/\s+/g, ' ').trim(), author: String(q.author || '').trim() }))
+      .filter((q) => q.text);
+    return { ok: true, quotes };
+  } catch (e) {
+    return { ok: false, error: String(e.message || e) };
+  }
+});
 
 // --- Appearance (Settings > Appearance) ---
 
@@ -1190,7 +1267,8 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
   registerHotkey(getHotkey());
-  checkForUpdates(false); // silent check on startup
+  checkForUpdates(false); // silent check on startup...
+  setInterval(() => checkForUpdates(false), UPDATE_CHECK_MINUTES * 60 * 1000); // ...and regularly while running
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -1204,6 +1282,7 @@ app.whenReady().then(() => {
 app.on('before-quit', () => {
   isQuitting = true;
   island.stop(); // close the island and its helper process with the app
+  messaging.stop();
 });
 
 app.on('will-quit', () => {

@@ -46,10 +46,16 @@ const PREF_DEFAULTS = {
   showStatusChips: true,
   focusMinutes: 25,
   breakMinutes: 5,
+  quotesOnline: true,         // top up the quote pool from the internet (quotes.js)
   islandEnabled: true,        // the floating island (see island-feed.js)
   islandMedia: true,          // show and control what's playing
   islandPosition: 'center',   // 'left' | 'center' | 'right'
   islandHide: 'fullscreen',   // 'never' | 'fullscreen' | 'maximized': when another app's window hides it
+  islandCapture: true,        // a text box on the island for quick notes and tasks
+  islandBreaks: true,         // glow softly after a long stretch of continuous use
+  islandBreakMinutes: 90,
+  workspacesEnabled: false,   // sets of Quick launch items that open together (workspaces.js)
+  msgNotify: true,            // Windows notification for messages when the island is off (messages.js)
   todayCards: Object.keys(TODAY_CARDS).map(id => ({ id, visible: true })),
   pages: Object.keys(PAGES).map(id => ({ id, visible: true })),
 };
@@ -86,8 +92,15 @@ function setPref(key, value){
   applyAppearance();
   renderAppearanceSettings();
   if(key === 'clock24'){ updateClock(); renderTimetable(); }
+  if(key === 'quotesOnline') initQuotes();
+  if(key === 'workspacesEnabled') workspacesSwitched();
   if(key.startsWith('island')) configureIsland();
   else pushIsland(); // accent and clock changes show on the island too
+}
+
+function setBreakMinutes(value){
+  const minutes = Math.min(240, Math.max(20, Math.round(Number(value)) || PREF_DEFAULTS.islandBreakMinutes));
+  setPref('islandBreakMinutes', minutes);
 }
 
 /* ----- Applying ----- */
@@ -263,6 +276,7 @@ function renderAppearanceSettings(){
   document.getElementById('wallpaper-choose-btn').textContent = customImages.wallpaper ? 'Change image…' : 'Choose image…';
   document.getElementById('pref-focus-minutes').value = p.focusMinutes;
   document.getElementById('pref-break-minutes').value = p.breakMinutes;
+  document.getElementById('pref-island-break-minutes').value = p.islandBreakMinutes;
 
   const start = document.getElementById('pref-start-page');
   start.innerHTML = PAGE_ORDER.map(id => `<option value="${id}" ${id === p.startPage ? 'selected' : ''}>${esc(PAGES[id])}</option>`).join('');

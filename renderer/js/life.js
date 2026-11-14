@@ -89,12 +89,12 @@ function handleImageUpload(files){
   reader.readAsDataURL(files[0]);
 }
 function shuffleAesthetics(){
-  currentWidgetQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
   if(state.images.length > 0) currentImageIdx = (currentImageIdx + 1) % state.images.length;
-  updateAestheticWidget();
+  showNextQuote(); // picks the quote and redraws (quotes.js)
 }
 function updateAestheticWidget(){
   document.getElementById('widget-quote-text').textContent = `“${currentWidgetQuote}”`;
+  document.getElementById('widget-quote-author').textContent = currentWidgetAuthor;
   if(state.images.length > 0) {
     document.getElementById('widget-img').style.backgroundImage = `url('${state.images[currentImageIdx]}')`;
   }

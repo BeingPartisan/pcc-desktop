@@ -106,7 +106,7 @@ async function loadAboutUI(){
 
 async function checkForUpdatesNow(){
   const result = await window.pcc.checkForUpdates();
-  showToast(result.ok ? 'Checking for updates…' : 'Updates are only checked in the installed app');
+  if(result.ok) showToast('Checking for updates…'); // the result arrives as a dialog (updates.js); a development run shows a preview
 }
 
 async function loadMailSettingsUI(){

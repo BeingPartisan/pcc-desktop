@@ -1,6 +1,6 @@
 {
   "name": "personal-command-center",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Partisan's Personal Command Center — desktop shell",
   "main": "main.js",
   "author": "Ansh (Partisan)",
@@ -27,6 +27,7 @@
       "main.js",
       "campus.js",
       "island.js",
+      "messaging.js",
       "island-preload.js",
       "media-helper.ps1",
       "preload.js",

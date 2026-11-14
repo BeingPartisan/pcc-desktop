@@ -32,6 +32,7 @@ The app is organised into pages on an icon rail. You can jump to any of them wit
 - **Appearance.** Settings include system, light or dark theme; an accent colour (including your Windows accent); a blur, solid or image background; density; text size; reduced motion; a custom logo; and a custom app name.
 - **Backups.** PCC makes an automatic daily backup and keeps the last 10. It also backs up before any import or reset. You can export and import all your data as one JSON file.
 - **Updates.** PCC checks GitHub Releases at startup and every 30 minutes. A new version is offered in a dialog with its release notes, and on the island. Nothing downloads or restarts until you press the button.
+- **Send feedback.** Settings → About, or "feedback" in the command palette, sends a bug report or an idea to the developer. It is encrypted on your computer so only the developer can read it, and PCC keeps trying for up to two weeks until it is confirmed as received. Attaching the app's activity log is optional.
 - **First-run welcome.** A new install asks for your name and city, offers to connect Digiicampus, and introduces the island. Every step can be skipped.
 - **Works offline.** Fonts are bundled. Everything except the items under [What uses the internet](#what-uses-the-internet) works without a network.
 
@@ -102,6 +103,7 @@ PCC has no account and no server of its own. These features contact other servic
 | Mail | Your mail provider (IMAP) | Your sign-in; mail is read, never changed, and stays on your computer |
 | Digiicampus sync | `nls.digiicampus.com` | Your session, to read timetable, attendance and results |
 | Messages | `ntfy.sh` | The messages you send, shared countdowns, your focus status if you share it, and the channel names you listen on |
+| Feedback | `ntfy.sh` | The report you write, encrypted; your PCC and Windows versions; the activity log only if you tick it |
 | Fresh quotes | `dummyjson.com` | Nothing about you; can be switched off in Settings |
 | Weather | `open-meteo.com` | The city you entered |
 | Updates | GitHub Releases | Nothing about you |
@@ -186,6 +188,7 @@ pcc-desktop/
 ├── island-preload.js   # bridge for the island window
 ├── media-helper.ps1    # Windows: what's playing, and which kind of window is in front
 ├── messaging.js        # messages over the ntfy.sh relay, signed announcements
+├── feedback.js         # encrypted bug reports and ideas to the developer
 ├── preload.js          # secure bridge exposing the window.pcc API to the UI
 ├── renderer/
 │   ├── index.html      # app shell and pages
@@ -197,7 +200,7 @@ pcc-desktop/
 │                       #   workspace (tasks/agenda), notes-links, flashcards, finance,
 │                       #   life (habits), games, vitals, console, palette, nav,
 │                       #   appearance, settings, core, app, island-feed, messages,
-│                       #   workspaces, moments, quotes, updates, welcome
+│                       #   workspaces, moments, feedback, quotes, updates, welcome
 └── assets/
     └── icon.png        # app and tray icon
 ```
@@ -210,6 +213,7 @@ pcc-desktop/
 - **One-tap messages** on the island, with phrases you can edit.
 - **Focus status:** optionally show the people in a channel when your focus timer is running.
 - **Countdowns** on the Life page and the island, private or shared with a channel.
+- **Send feedback:** bug reports and ideas go to the developer, encrypted, from inside the app.
 - Releases now include the blockmap file, so updates download only what changed (a few MB instead of the whole installer).
 
 ### 2.3.0

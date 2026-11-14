@@ -501,6 +501,7 @@
       <button class="settings-tab" data-tab="timetable" onclick="showSettingsTab('timetable')">Timetable</button>
       <button class="settings-tab" data-tab="mail" onclick="showSettingsTab('mail')">Mail</button>
       <button class="settings-tab" data-tab="data" onclick="showSettingsTab('data')">Data</button>
+      <button class="settings-tab" data-tab="feedback" id="feedback-tab" style="display:none;" onclick="showSettingsTab('feedback')">Feedback</button>
       <button class="settings-tab" data-tab="about" onclick="showSettingsTab('about')">About</button>
       <div class="settings-nav-foot" id="about-version-short"></div>
     </aside>
@@ -927,6 +928,16 @@
         </div>
       </section>
 
+      <!-- Feedback inbox: only on the developer's computer -->
+      <section class="settings-pane" data-tab="feedback">
+        <h2 class="pane-title">Feedback</h2>
+        <p class="pane-intro">Reports sent from other copies of PCC. Only this computer can read them. They are also kept as a file: <span id="feedback-folder" style="font-family:var(--mono); user-select:text;"></span></p>
+        <div class="row-form" style="margin-bottom:12px;">
+          <div class="segmented" id="feedback-filter"><button data-value="open" class="active" onclick="setFeedbackFilter('open')">Open</button><button data-value="done" onclick="setFeedbackFilter('done')">Done</button><button data-value="all" onclick="setFeedbackFilter('all')">All</button></div>
+        </div>
+        <div id="feedback-list" class="msg-log" style="max-height:none;"></div>
+      </section>
+
       <!-- About -->
       <section class="settings-pane" data-tab="about">
         <h2 class="pane-title">About</h2>
@@ -938,6 +949,14 @@
             <div class="setting-desc">Checked when the app starts and every 30 minutes. You're always asked before anything downloads or installs.</div>
           </div>
           <div class="setting-control"><button class="btn" onclick="checkForUpdatesNow()">Check for updates</button></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Feedback</div>
+            <div class="setting-desc">Found a bug or have an idea? It goes straight to the developer. <span id="feedback-pending"></span></div>
+          </div>
+          <div class="setting-control"><button class="btn" onclick="openFeedback()">Send feedback</button></div>
         </div>
 
         <div class="setting-row">
@@ -1001,6 +1020,28 @@
         <button class="btn" id="welcome-back-btn" onclick="welcomeBack()">Back</button>
         <button class="btn btn-primary" id="welcome-next-btn" onclick="welcomeNext()">Continue</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="feedback-overlay" onclick="if(event.target===this)closeFeedback()">
+  <div id="feedback-modal" role="dialog" aria-labelledby="feedback-title">
+    <div class="settings-title" id="feedback-title">Send feedback</div>
+    <div class="update-text">This goes to the person who makes PCC. It is encrypted on your computer so only they can read it.</div>
+    <div class="segmented" id="feedback-type"><button data-value="bug" class="active" onclick="setFeedbackType('bug')">Something's broken</button><button data-value="idea" onclick="setFeedbackType('idea')">An idea</button><button data-value="other" onclick="setFeedbackType('other')">Something else</button></div>
+    <div class="field">
+      <label class="field-label" for="feedback-text" id="feedback-text-label">What happened, and what did you expect?</label>
+      <textarea id="feedback-text" rows="6" maxlength="1200"></textarea>
+    </div>
+    <div class="field">
+      <label class="field-label" for="feedback-name">Your name (optional, so they can ask you about it)</label>
+      <input id="feedback-name" type="text" maxlength="40" />
+    </div>
+    <label class="workspace-item" style="background:transparent; padding:0;"><input type="checkbox" id="feedback-log" /><span style="white-space:normal;">Include the app's recent activity log. Helps with bugs; it lists what the app did (not your notes or mail), with email addresses removed.</span></label>
+    <div class="field-note">Sent with it: your PCC version and Windows version. Nothing else.</div>
+    <div class="row-form" style="justify-content:flex-end;">
+      <button class="btn" onclick="closeFeedback()">Cancel</button>
+      <button class="btn btn-primary" id="feedback-send-btn" onclick="sendFeedback()">Send</button>
     </div>
   </div>
 </div>
@@ -1110,6 +1151,7 @@
 <script src="js/messages.js"></script>
 <script src="js/workspaces.js"></script>
 <script src="js/moments.js"></script>
+<script src="js/feedback.js"></script>
 <script src="js/welcome.js"></script>
 <script src="js/island-feed.js"></script>
 <script src="js/updates.js"></script>

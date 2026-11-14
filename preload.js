@@ -46,6 +46,14 @@ contextBridge.exposeInMainWorld('pcc', {
   messagesBroadcast: (text) => ipcRenderer.invoke('messages-broadcast', text),
   onMessage: (callback) => ipcRenderer.on('message-received', (event, message) => callback(message)),
 
+  // Feedback to the developer
+  feedbackSend: (report) => ipcRenderer.invoke('feedback-send', report),
+  feedbackStatus: () => ipcRenderer.invoke('feedback-status'),
+  feedbackList: () => ipcRenderer.invoke('feedback-list'),
+  feedbackMark: (id, done) => ipcRenderer.invoke('feedback-mark', { id, done }),
+  onFeedbackReceived: (callback) => ipcRenderer.on('feedback-received', (event, report) => callback(report)),
+  onFeedbackDelivered: (callback) => ipcRenderer.on('feedback-delivered', (event, status) => callback(status)),
+
   // Quotes
   fetchQuotes: () => ipcRenderer.invoke('fetch-quotes'),
 

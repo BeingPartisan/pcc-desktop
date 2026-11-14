@@ -9,6 +9,7 @@ initQuotes();             // first quote, and a top-up from the internet if need
 configureIsland();        // creates the floating island if it's switched on
 configureMessages().then(() => setTimeout(syncAllCountdowns, 4000)); // listens on the message channels, then shares countdowns
 renderCountdowns();
+initFeedback();
 renderWorkspaces();
 if(localStorage.getItem(WELCOME_PENDING_KEY)) showWelcome();
 loadInbox();  // shows saved mail, then checks for new mail now and every 15 minutes

@@ -18,7 +18,8 @@ const PALETTE_ACTIONS = [
   { id: 'flashcard', title: 'Add flashcard', cat: 'Actions', action: () => { navigate('study'); document.getElementById('fc-new-term').focus(); } },
   { id: 'finance', title: 'Add expense', cat: 'Actions', action: () => { navigate('money'); document.getElementById('fin-name').focus(); } },
   { id: 'console', title: 'Open console', cat: 'Actions', action: () => openConsole() },
-  { id: 'settings', title: 'Open settings', cat: 'Actions', action: () => openSettings() }
+  { id: 'settings', title: 'Open settings', cat: 'Actions', action: () => openSettings() },
+  { id: 'feedback', title: 'Send feedback or report a bug', cat: 'Actions', action: () => openFeedback() }
 ];
 
 document.addEventListener('keydown', e => {

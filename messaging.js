@@ -50,6 +50,8 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
   let retryDelay = 5000;
   let lastEventTime = 0;     // seconds; where to resume from after a dropped connection
   const seen = new Set();    // event ids already delivered
+  let extra = null;          // more channels on the same connection, handled elsewhere (feedback.js)
+  let configured = false;    // the renderer has said which channels to listen on
 
   const deliver = (message) => {
     const main = getMainWindow();
@@ -73,6 +75,7 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
     seen.add(event.id);
     if (seen.size > 500) seen.delete(seen.values().next().value);
     lastEventTime = Math.max(lastEventTime, event.time || 0);
+    if (extra && extra.handles(event.topic)) return extra.handle(event);
 
     let payload;
     try { payload = JSON.parse(event.message); } catch (e) { return; }
@@ -97,7 +100,7 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
   // waiting a little longer each time, and resumes where it left off.
   async function listen() {
     stopListening();
-    const all = [BROADCAST_TOPIC, ...topics];
+    const all = [BROADCAST_TOPIC, ...topics, ...(extra ? extra.topics() : [])];
     const since = lastEventTime ? lastEventTime : Math.floor(Date.now() / 1000) - CATCH_UP_SECONDS;
     controller = new AbortController();
     const mine = controller;
@@ -151,6 +154,7 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
     const next = (Array.isArray(config.topics) ? config.topics : []).filter((t) => TOPIC_PATTERN.test(t));
     const changed = next.join(',') !== topics.join(',') || !controller;
     topics = next;
+    configured = true;
     deviceId = String(config.deviceId || '');
     if (changed) listen();
     return { ok: true, canBroadcast: fs.existsSync(KEY_FILE) };
@@ -195,5 +199,21 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
     }
   });
 
-  return { stop: stopListening };
+  // One-off fetch of what a channel still holds, without keeping a connection open.
+  async function poll(topic, since) {
+    const res = await net.fetch(`${RELAY}/${topic}/json?poll=1&since=${since}`, { signal: AbortSignal.timeout(20000) });
+    if (!res.ok) throw new Error(`Relay answered ${res.status}`);
+    return (await res.text()).split('\n').filter(Boolean).map((line) => { try { return JSON.parse(line); } catch (e) { return null; } })
+      .filter((event) => event && event.event === 'message');
+  }
+
+  return {
+    stop: stopListening,
+    publish,
+    poll,
+    setExtra: (next) => { extra = next; },
+    // Reconnect because the set of channels changed.
+    refresh: () => { if (configured) listen(); },
+    broadcastPublicKey: BROADCAST_PUBLIC_KEY,
+  };
 };

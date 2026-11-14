@@ -28,6 +28,7 @@
       "campus.js",
       "island.js",
       "messaging.js",
+      "feedback.js",
       "island-preload.js",
       "media-helper.ps1",
       "preload.js",

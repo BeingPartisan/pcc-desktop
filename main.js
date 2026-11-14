@@ -40,6 +40,7 @@ require('./campus')({ logEvent, getMainWindow: () => mainWindow });
 
 // The floating island (its own always-on-top window) lives in island.js
 const messaging = require('./messaging')({ logEvent, getMainWindow: () => mainWindow });
+require('./feedback')({ logEvent, getMainWindow: () => mainWindow, getLog: () => logBuffer, messaging, broadcastPublicKey: messaging.broadcastPublicKey });
 
 const island = require('./island')({
   logEvent,

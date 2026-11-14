@@ -157,8 +157,10 @@ Releases go to this repo's GitHub Releases. Installed copies of PCC check there 
 1. Make your changes.
 2. Bump `version` in `package.json` (for example `2.2.0` → `2.3.0`).
 3. Commit and push.
-4. Run `npm run release`. This builds the installer and uploads it, with `latest.yml`, to a **draft** release.
-5. On GitHub, open the draft under Releases and click **Publish release**. Drafts never reach users, so a bad build can't go live by accident.
+4. Run `npm run release`. This creates one **draft** release, builds the installer and uploads three files to it: the `.exe`, the `.exe.blockmap` and `latest.yml`.
+5. On GitHub, open the draft under Releases, check all three files are there, and click **Publish release**. Drafts never reach users, so a bad build can't go live by accident.
+
+The `.blockmap` file is what keeps updates small. With it on both the old and the new release, an installed copy downloads only the parts of the installer that changed (usually 1–3 MB) instead of all ~117 MB. `scripts/release.js` exists to make sure it lands on the same release as the installer.
 
 Whatever you write in the release description is shown to users as the release notes in the update dialog.
 

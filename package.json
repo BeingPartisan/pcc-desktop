@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder",
-    "release": "electron-builder --publish always"
+    "release": "node scripts/release.js"
   },
   "devDependencies": {
     "electron": "^45.3.0",

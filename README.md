@@ -1,8 +1,8 @@
 # Personal Command Center (PCC)
 
-A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It's built with Electron and runs on Windows, macOS and Linux. All your data stays on your own computer.
+A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.2.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
+**Current version:** 2.3.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
 
 ---
 
@@ -19,7 +19,7 @@ The app is organised into pages on an icon rail. You can jump to any of them wit
 | **Academics** | Attendance per course against a target you set, CGPA and SGPA per term, grades coloured on the 7-point scale (O to C, F, AB), and an **evaluation tracker**. The tracker shows the marks scored and lost in each course, and the marks you still need from what remains for each grade. |
 | **Money** | Expenses and budget, with spending by category and month by month. |
 | **Life** | Habit tracker with current and best streaks. |
-| **Launch** | Quick launcher for websites and local apps, plus a Steam-style **Games Library** with icons, folder sizes and tracked playtime. |
+| **Launch** | Quick launcher for websites and local apps, optional **workspaces** (sets of sites and apps that open together in one click), plus a Steam-style **Games Library** with icons, folder sizes and tracked playtime. |
 | **System** | Live CPU, RAM, disk, battery and OS info, plus a console that shows the app's own log. |
 
 **Across the app:**
@@ -31,8 +31,34 @@ The app is organised into pages on an icon rail. You can jump to any of them wit
 - **Native notifications** for timers, important mail and updates.
 - **Appearance.** Settings include system, light or dark theme; an accent colour (including your Windows accent); a blur, solid or image background; density; text size; reduced motion; a custom logo; and a custom app name.
 - **Backups.** PCC makes an automatic daily backup and keeps the last 10. It also backs up before any import or reset. You can export and import all your data as one JSON file.
-- **Auto-updates.** PCC checks GitHub Releases at startup and asks before downloading or installing anything.
-- **Works offline.** Fonts are bundled, and only mail, Digiicampus sync and updates need a network.
+- **Updates.** PCC checks GitHub Releases at startup and every 30 minutes. A new version is offered in a dialog with its release notes, and on the island. Nothing downloads or restarts until you press the button.
+- **First-run welcome.** A new install asks for your name and city, offers to connect Digiicampus, and introduces the island. Every step can be skipped.
+- **Works offline.** Fonts are bundled. Everything except the items under [What uses the internet](#what-uses-the-internet) works without a network.
+
+### The floating island
+
+A small bar that sits at the top of the screen above other windows, even while PCC itself is hidden in the tray. Its one line shows whatever matters most right now; pointing at it opens a panel with controls.
+
+- **Focus timer** with start, pause and reset.
+- **Current or next class**, with a countdown.
+- **What's playing** in any app, with play, pause and skip (Windows only).
+- **New important mail.**
+- **Quick capture:** type a note or a task without opening PCC. Notes collect in one "Quick notes" note.
+- **Messages:** incoming messages appear here, and you can reply from it.
+- **Workspaces:** one button per workspace, if you use them.
+- **Updates:** Download and Restart buttons when a new version is out.
+- **Break reminder:** after a long stretch at the computer (90 minutes by default) the island glows softly for a few minutes. No sound and no pop-up.
+
+It never takes keyboard focus unless you click its text box, and it can hide itself while another app is full screen or maximised. Everything above can be switched off individually in **Settings → Island**.
+
+### Messages
+
+Short messages between copies of PCC on different computers, set up in **Settings → Messages**.
+
+- **Channels.** One person creates a channel and gets a code like `PCC-XXXX-XXXX-XXXX-XXXX`; the other pastes it under "Join a channel". Everyone with the code can read and send on that channel.
+- **Announcements.** The developer can send an announcement to every running copy. Each one is signed, and PCC ignores any announcement whose signature doesn't check out.
+
+Messages travel through [ntfy.sh](https://ntfy.sh), a public relay, and are not encrypted beyond the connection itself. Treat a channel like a postcard: fine for "call me" or "class moved", not for anything private.
 
 ### Digiicampus sync (NLSIU only)
 
@@ -47,19 +73,34 @@ This depends on a website PCC doesn't control. If Digiicampus changes, sync may 
 1. Go to [Releases](https://github.com/BeingPartisan/pcc-desktop/releases/latest) and download `Personal Command Center Setup x.y.z.exe`.
 2. Run it. You don't need Node.js or anything else installed.
 3. Windows will probably show **"Windows protected your PC"** because the app isn't code-signed. Click **More info → Run anyway**. This is normal for a self-published personal app.
-4. Open **Settings** (gear icon, top right) to set up the parts you want:
+4. Open **Settings** (the sliders icon at the bottom of the rail) to set up the parts you want:
    - **Mail:** enter your email address, an **app password** (not your normal password) and an IMAP host, which defaults to `imap.gmail.com`. For Gmail, you need 2-Step Verification turned on before you can create an app password at Google Account → Security → App passwords.
    - **Timetable:** connect Digiicampus, or edit the manual timetable.
    - **General:** choose start at login and the global hotkey.
-5. On the **Launch** page, click **Set Folder** in the Games Library and choose your games directory (for example `D:\Games`). The first scan can take a while on a large library.
+   - **Island** and **Messages:** switch island features on or off, and create or join a message channel.
+5. On the **Launch** page, click **Choose folder** in the Games card and choose your games directory (for example `D:\Games`). The first scan can take a while on a large library.
 
 ### Where your data lives
 
 Nothing personal is stored in this repository or inside the installer. Every install starts empty, with generic sample data.
 
-- App data, settings and playtime are kept in Electron's per-user `userData` folder. On Windows this is usually `%APPDATA%\Personal Command Center`. Backups are in its `backups` subfolder, which you can open from Settings → Data.
+- App data, settings and playtime are kept in Electron's per-user `userData` folder. On Windows this is `%APPDATA%\personal-command-center`. Backups are in its `backups` subfolder, which you can open from Settings → Data.
 - The mail app password is encrypted with your operating system's credential store through Electron's `safeStorage`. It is never written in plain text.
+- Message channels and their codes are saved with the rest of your data, so they are included in backups and exports.
 - Uninstalling the app does not delete this folder. Use **Settings → Data** to export your data before moving to a new PC.
+
+### What uses the internet
+
+PCC has no account and no server of its own. These features contact other services, and only when you use them:
+
+| Feature | Contacts | What is sent |
+| --- | --- | --- |
+| Mail | Your mail provider (IMAP) | Your sign-in; mail is read, never changed, and stays on your computer |
+| Digiicampus sync | `nls.digiicampus.com` | Your session, to read timetable, attendance and results |
+| Messages | `ntfy.sh` | The messages you send, and the channel names you listen on |
+| Fresh quotes | `dummyjson.com` | Nothing about you; can be switched off in Settings |
+| Weather | `open-meteo.com` | The city you entered |
+| Updates | GitHub Releases | Nothing about you |
 
 ---
 
@@ -80,7 +121,11 @@ npm install
 npm start
 ```
 
-Start at login can't be turned on when running from source. It only works in the installed app.
+A few things behave differently when running from source:
+
+- Start at login can't be turned on. It only works in the installed app.
+- **Check for updates** plays a pretend update (version 9.9.9) so you can see the dialog and the island's update row. Nothing is downloaded.
+- The installed app and a source run share one data folder and can't run at the same time. Quit the installed app from the tray first.
 
 ### Build an installer locally
 
@@ -115,7 +160,9 @@ Releases go to this repo's GitHub Releases. Installed copies of PCC check there 
 4. Run `npm run release`. This builds the installer and uploads it, with `latest.yml`, to a **draft** release.
 5. On GitHub, open the draft under Releases and click **Publish release**. Drafts never reach users, so a bad build can't go live by accident.
 
-Running copies of PCC will offer the update at their next startup, or when the user picks tray → **Check for Updates**.
+Whatever you write in the release description is shown to users as the release notes in the update dialog.
+
+Running copies of PCC will offer the update within 30 minutes, or straight away when the user picks tray → **Check for Updates**.
 
 > **Note:** anyone who installed PCC from this repo receives every release you publish. Test a build before you publish its draft.
 
@@ -129,16 +176,22 @@ pcc-desktop/
 ├── main.js             # main process: window, tray, hotkey, IPC, mail, games,
 │                       #   system info, backups, autostart, auto-updater
 ├── campus.js           # Digiicampus sign-in and sync (timetable, attendance, results)
+├── island.js           # the floating island's window, break reminder, media helper
+├── island-preload.js   # bridge for the island window
+├── media-helper.ps1    # Windows: what's playing, and which kind of window is in front
+├── messaging.js        # messages over the ntfy.sh relay, signed announcements
 ├── preload.js          # secure bridge exposing the window.pcc API to the UI
 ├── renderer/
 │   ├── index.html      # app shell and pages
 │   ├── css/            # styles.css (theme tokens), fonts.css
 │   ├── fonts/          # Geist, Geist Mono, Instrument Serif (OFL), bundled for offline use
+│   ├── island/         # the island's own page, styles and script
 │   └── js/             # one module per feature:
 │                       #   today, inbox, academics, evaluation, campus, timetable-mail,
 │                       #   workspace (tasks/agenda), notes-links, flashcards, finance,
 │                       #   life (habits), games, vitals, console, palette, nav,
-│                       #   appearance, settings, core, app
+│                       #   appearance, settings, core, app, island-feed, messages,
+│                       #   workspaces, quotes, updates, welcome
 └── assets/
     └── icon.png        # app and tray icon
 ```
@@ -146,6 +199,17 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.3.0
+- **Messages** between copies of PCC: shared channels joined with a code, and signed announcements from the developer.
+- **Island:** a text box for quick notes, tasks and messages; rows for incoming messages and app updates; a soft break reminder; workspace buttons.
+- **Workspaces** on the Launch page: sets of Quick launch items that open together. Off until you set one up.
+- **New update flow:** an in-app dialog with release notes, a check every 30 minutes, and Download / Restart on the island.
+- Quotes are topped up from the internet and show their author. This can be switched off.
+- First-run welcome for new installs.
+
+### 2.2.1
+- **Floating island:** an always-on-top bar with the focus timer, current or next class, what's playing and important mail. It can hide while another app is full screen or maximised.
 
 ### 2.2.0
 - **New Inbox page.** It replaces the old keyword-based mail scan. Mail is sorted by sender label, and new senders are listed separately until you label them.

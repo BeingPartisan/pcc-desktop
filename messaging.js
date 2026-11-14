@@ -18,6 +18,12 @@
 //
 // What travels: a small JSON object in the message body.
 //   chat:      { v: 1, d: <sender's device id>, f: <sender's name>, t: <text> }
+//   moments:   the same, plus k: <kind> and x: <small data object>. Kinds:
+//                nudge       a one-tap message; t is its text
+//                status      what the sender is doing (focus timer); no t
+//                countdowns  the channel's shared countdowns; t only when one was just added
+//              Copies of PCC from before kinds existed show anything with a
+//              t as an ordinary message and ignore the rest.
 //   broadcast: { v: 1, b: 1, t: <text>, ts: <ms>, sig: <base64 signature of "ts|text"> }
 
 const { ipcMain, net, app } = require('electron');
@@ -30,6 +36,8 @@ const BROADCAST_TOPIC = 'pcc-announce-7f3k9q2m8x4w';
 const BROADCAST_PUBLIC_KEY = 'MCowBQYDK2VwAyEAtwAu9rPlfsh8uPJ8nkcCBFNDLX6wqFjoOizf/wn6t4g='; // Ed25519, SPKI DER, base64
 const BROADCAST_MAX_AGE_MS = 24 * 60 * 60 * 1000; // older announcements are ignored, so one can't be replayed later
 const MAX_TEXT = 500;
+const MAX_DATA = 3000;                            // characters of JSON in x; the relay caps a whole message at 4 KB
+const KINDS = ['nudge', 'status', 'countdowns'];
 const CATCH_UP_SECONDS = 10 * 60;                 // on connecting, also fetch what arrived in the last 10 minutes
 const TOPIC_PATTERN = /^pcc[a-z2-7]{16}$/;
 
@@ -68,15 +76,19 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
 
     let payload;
     try { payload = JSON.parse(event.message); } catch (e) { return; }
-    if (!payload || payload.v !== 1 || typeof payload.t !== 'string') return;
-    const text = payload.t.slice(0, MAX_TEXT);
+    if (!payload || payload.v !== 1) return;
+    const kind = KINDS.includes(payload.k) ? payload.k : '';
+    if (typeof payload.t !== 'string' && !kind) return;
+    const text = typeof payload.t === 'string' ? payload.t.slice(0, MAX_TEXT) : '';
 
     if (event.topic === BROADCAST_TOPIC) {
-      if (!verifyBroadcast(payload)) { logEvent('warn', 'Ignored a broadcast with a missing or wrong signature'); return; }
+      if (!text || !verifyBroadcast(payload)) { logEvent('warn', 'Ignored a broadcast with a missing or wrong signature'); return; }
       deliver({ id: event.id, topic: event.topic, broadcast: true, from: 'PCC', text, ts: payload.ts });
     } else if (topics.includes(event.topic)) {
       if (payload.d && payload.d === deviceId) return; // our own message coming back
-      deliver({ id: event.id, topic: event.topic, broadcast: false, from: String(payload.f || 'Someone').slice(0, 40), text, ts: (event.time || 0) * 1000 });
+      const data = kind && payload.x && typeof payload.x === 'object' ? payload.x : null;
+      deliver({ id: event.id, topic: event.topic, broadcast: false, from: String(payload.f || 'Someone').slice(0, 40), text, ts: (event.time || 0) * 1000,
+        kind, data, device: String(payload.d || '').slice(0, 40) });
     }
   }
 
@@ -144,11 +156,21 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
     return { ok: true, canBroadcast: fs.existsSync(KEY_FILE) };
   });
 
-  ipcMain.handle('messages-send', async (event, { topic, text, from }) => {
+  ipcMain.handle('messages-send', async (event, { topic, text, from, kind, data }) => {
     const body = String(text || '').trim().slice(0, MAX_TEXT);
-    if (!TOPIC_PATTERN.test(topic) || !body) return { ok: false, error: 'Nothing to send' };
+    const k = KINDS.includes(kind) ? kind : '';
+    if (!TOPIC_PATTERN.test(topic) || (!body && !k)) return { ok: false, error: 'Nothing to send' };
+    const payload = { v: 1, d: deviceId, f: String(from || '').slice(0, 40) };
+    if (body) payload.t = body;
+    if (k) {
+      payload.k = k;
+      if (data && typeof data === 'object') {
+        if (JSON.stringify(data).length > MAX_DATA) return { ok: false, error: 'Too much to send in one message' };
+        payload.x = data;
+      }
+    }
     try {
-      await publish(topic, { v: 1, d: deviceId, f: String(from || '').slice(0, 40), t: body });
+      await publish(topic, payload);
       return { ok: true };
     } catch (e) {
       logEvent('warn', 'Messages: could not send', String(e.message || e));

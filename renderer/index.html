@@ -382,6 +382,19 @@
         <div id="weather-body"></div>
       </section>
 
+      <section class="card full" id="card-countdowns">
+        <div class="card-head">
+          <div class="card-title"><span class="dot"></span>Countdowns</div>
+        </div>
+        <div id="countdowns-body" class="countdown-grid"></div>
+        <div class="row-form" style="border-top:1px solid var(--line); padding-top:16px;">
+          <input id="countdown-title" type="text" maxlength="40" placeholder="What are you counting down to?" style="flex:2;" onkeydown="if(event.key==='Enter')addCountdown()" />
+          <input id="countdown-date" type="date" style="flex:0 1 170px;" />
+          <select id="countdown-channel" style="flex:0 1 200px;" aria-label="Who sees this countdown"></select>
+          <button class="btn btn-primary" onclick="addCountdown()">Add</button>
+        </div>
+      </section>
+
       <div id="aesthetic-widget" class="full">
         <div class="widget-bg" id="widget-img" style="background-image: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop');"></div>
         <div class="widget-content">
@@ -784,6 +797,12 @@
           <div class="setting-control"><input id="pref-msg-notify" type="checkbox" class="switch" data-pref="msgNotify" onchange="setPref('msgNotify', this.checked)" /></div>
         </div>
 
+        <div class="setting-block">
+          <div class="setting-name">One-tap messages</div>
+          <div class="setting-desc">Short phrases that appear as buttons on the island when you pick a channel. One per line, up to six.</div>
+          <textarea id="msg-nudges" rows="4" style="width:100%; resize:vertical; line-height:1.5;" onchange="saveNudgePhrases(this.value)"></textarea>
+        </div>
+
         <div class="setting-block" id="msg-compose">
           <div class="setting-name">Send a message</div>
           <div class="setting-desc">You can also send from the island: point at it and pick the channel.</div>
@@ -1090,6 +1109,7 @@
 <script src="js/today.js"></script>
 <script src="js/messages.js"></script>
 <script src="js/workspaces.js"></script>
+<script src="js/moments.js"></script>
 <script src="js/welcome.js"></script>
 <script src="js/island-feed.js"></script>
 <script src="js/updates.js"></script>

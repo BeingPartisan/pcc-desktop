@@ -74,6 +74,9 @@ function render(){
   const message = state.message;
   const freshMessage = message && Date.now() - message.at < MESSAGE_FRESH_MS;
   const updateReady = update && update.state === 'downloaded';
+  const presence = (state.presence || []).filter(p => p.until > Date.now());
+  const countdowns = state.countdowns || [];
+  const soon = countdowns.find(c => c.soon);
 
   // --- Compact line: the first of these that applies ---
   let text, side = '', pulse = false;
@@ -95,6 +98,8 @@ function render(){
     text = `Update ${update.version} is ready`;
   } else if(update && update.state === 'available'){
     text = `Update ${update.version} available`;
+  } else if(soon){
+    text = soon.title; side = soon.text;
   } else if(state.mail.count){
     text = state.mail.count === 1 ? state.mail.latest.subject : `${state.mail.count} important emails`;
   } else {
@@ -103,6 +108,7 @@ function render(){
   $('pill-text').textContent = text;
   $('pill-side').textContent = side;
   $('pill-dot').classList.toggle('pulse', pulse);
+  $('pill-dot').classList.toggle('beat', !!(freshMessage && message.nudge)); // a nudge arrives with a heartbeat
   // A break nudge is a slow glow around the island, nothing more.
   $('island').classList.toggle('nudging', !!nudge);
 
@@ -131,6 +137,15 @@ function render(){
     $('message-text').textContent = message.text;
     $('message-reply').hidden = !message.channelId;
   }
+
+  $('row-presence').hidden = !presence.length;
+  setHtml('presence-lines', presence.map(p => {
+    const minutes = Math.max(1, Math.ceil((p.until - Date.now()) / 60000));
+    return `<div class="line"><span>${escapeHtml(p.from)}</span><span class="dim">${p.state === 'break' ? 'on a break' : 'focusing'} · ${awayText(minutes)} left</span></div>`;
+  }).join(''));
+
+  $('row-countdowns').hidden = !countdowns.length;
+  setHtml('countdown-lines', countdowns.map(c => `<div class="line"><span>${escapeHtml(c.title)}${c.shared ? ' <i class="shared" title="Shared">♥</i>' : ''}</span><span class="dim">${escapeHtml(c.text)}</span></div>`).join(''));
 
   $('timer-label').textContent = state.timer.running ? (state.timer.mode === 'break' ? 'Break' : 'Focus session') : 'Focus timer';
   $('timer-time').textContent = mmss(seconds);
@@ -172,6 +187,9 @@ function render(){
     const mode = modes.find(m => m.id === composeMode) || modes[0];
     composeMode = mode.id;
     setHtml('compose-modes', modes.map(m => `<button class="chip ${m.id === mode.id ? 'active' : ''}" data-mode="${escapeHtml(m.id)}">${escapeHtml(m.label)}</button>`).join(''));
+    // One-tap phrases, only while a channel is chosen
+    const isChannel = mode.id !== 'note' && mode.id !== 'task';
+    setHtml('compose-nudges', isChannel ? (state.nudges || []).map(n => `<button class="chip nudge" data-nudge="${escapeHtml(n)}">${escapeHtml(n)}</button>`).join('') : '');
     $('compose-input').placeholder = sentNote || mode.placeholder;
     $('compose-send').textContent = mode.button;
   }
@@ -237,6 +255,12 @@ document.addEventListener('click', (e) => {
   const modeBtn = e.target.closest('[data-mode]');
   if(modeBtn){ composeMode = modeBtn.dataset.mode; render(); return startComposing(); }
   if(e.target.closest('#compose-send')) return submitCompose();
+  const nudgeBtn = e.target.closest('[data-nudge]');
+  if(nudgeBtn){
+    window.island.action({ type: 'send-message', channelId: composeMode, text: nudgeBtn.dataset.nudge, kind: 'nudge' });
+    sentNote = 'Sent'; clearTimeout(sentTimer); sentTimer = setTimeout(() => { sentNote = ''; render(); }, 1800);
+    return render();
+  }
   if(e.target.closest('#message-reply')){ composeMode = state.message.channelId; render(); return startComposing(); }
   const mediaBtn = e.target.closest('[data-media]');
   if(mediaBtn) return window.island.action({ type: 'media', command: mediaBtn.dataset.media });

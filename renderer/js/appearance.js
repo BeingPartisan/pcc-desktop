@@ -55,6 +55,7 @@ const PREF_DEFAULTS = {
   islandBreaks: true,         // glow softly after a long stretch of continuous use
   islandBreakMinutes: 90,
   workspacesEnabled: false,   // sets of Quick launch items that open together (workspaces.js)
+  nudges: ['Thinking of you', 'Call me when you\'re free', 'Studying, talk later', 'Good night'], // one-tap messages on the island (moments.js)
   msgNotify: true,            // Windows notification for messages when the island is off (messages.js)
   todayCards: Object.keys(TODAY_CARDS).map(id => ({ id, visible: true })),
   pages: Object.keys(PAGES).map(id => ({ id, visible: true })),

@@ -67,6 +67,17 @@ button{font-family:inherit; cursor:pointer;}
 .icon.big:hover{background:var(--accent); filter:brightness(1.08);}
 .icon svg{width:15px; height:15px; fill:currentColor; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
 
+.pill-dot.beat{animation:beat 1.1s ease-in-out infinite;}
+@keyframes beat{0%,100%{transform:scale(1);} 15%{transform:scale(1.7);} 30%{transform:scale(1);} 45%{transform:scale(1.5);} 60%{transform:scale(1);}}
+
+/* Two-column lines: who is focusing, and countdowns */
+.lines{display:flex; flex-direction:column; gap:4px;}
+.line{display:flex; justify-content:space-between; gap:12px; font-size:13px;}
+.line span:first-child{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500;}
+.line .dim{color:var(--ink-dim); flex-shrink:0; font-variant-numeric:tabular-nums;}
+.line .shared{font-style:normal; font-size:10px; color:var(--accent); vertical-align:1px;}
+.chip.nudge{border-style:dashed; border-color:var(--line);}
+
 /* Small pill buttons: workspaces, and what the text box does */
 .chips{display:flex; flex-wrap:wrap; gap:6px;}
 .chips:empty{display:none;}

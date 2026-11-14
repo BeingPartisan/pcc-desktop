@@ -618,6 +618,19 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.7);}
 .msg-meta{font-size:11.5px; color:var(--ink-dim);}
 .msg-body{font-size:13.5px; line-height:1.45; overflow-wrap:anywhere; user-select:text;}
 
+.msg-share{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-dim); white-space:nowrap; cursor:pointer;}
+.msg-share input{accent-color:var(--accent);}
+.msg-presence{font-size:12px; color:var(--accent-text); margin-top:2px;}
+
+/* ---------- Countdowns (Life page) ---------- */
+.countdown-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:8px; margin-bottom:14px;}
+.countdown-grid .empty{grid-column:1 / -1;}
+.countdown-tile{display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:var(--radius-sm); background:var(--panel-alt);}
+.countdown-days{font-family:var(--serif); font-size:34px; line-height:1; min-width:54px; text-align:center; color:var(--accent-text);}
+.countdown-tile.past{opacity:.55;}
+.countdown-tile.past .countdown-days{color:var(--ink-dim);}
+.countdown-tile .btn-icon{background:transparent; border:none; color:var(--ink-dim);}
+
 /* ---------- Workspaces (Launch page) ---------- */
 .workspaces-body{display:flex; flex-direction:column; gap:14px;}
 .workspace-intro{display:flex; align-items:center; justify-content:space-between; gap:24px;}

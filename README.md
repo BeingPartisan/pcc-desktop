@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.3.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
+**Current version:** 2.4.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
 
 ---
 
@@ -18,7 +18,7 @@ The app is organised into pages on an icon rail. You can jump to any of them wit
 | **Study** | Weekly timetable, tasks and agenda, notes and links, and flashcards with decks. |
 | **Academics** | Attendance per course against a target you set, CGPA and SGPA per term, grades coloured on the 7-point scale (O to C, F, AB), and an **evaluation tracker**. The tracker shows the marks scored and lost in each course, and the marks you still need from what remains for each grade. |
 | **Money** | Expenses and budget, with spending by category and month by month. |
-| **Life** | Habit tracker with current and best streaks. |
+| **Life** | Habit tracker with current and best streaks, and countdowns to dates you care about. |
 | **Launch** | Quick launcher for websites and local apps, optional **workspaces** (sets of sites and apps that open together in one click), plus a Steam-style **Games Library** with icons, folder sizes and tracked playtime. |
 | **System** | Live CPU, RAM, disk, battery and OS info, plus a console that shows the app's own log. |
 
@@ -46,6 +46,7 @@ A small bar that sits at the top of the screen above other windows, even while P
 - **Quick capture:** type a note or a task without opening PCC. Notes collect in one "Quick notes" note.
 - **Messages:** incoming messages appear here, and you can reply from it.
 - **Workspaces:** one button per workspace, if you use them.
+- **Countdowns:** days until the dates you're waiting for, and who in your channels is in a focus session right now.
 - **Updates:** Download and Restart buttons when a new version is out.
 - **Break reminder:** after a long stretch at the computer (90 minutes by default) the island glows softly for a few minutes. No sound and no pop-up.
 
@@ -56,6 +57,9 @@ It never takes keyboard focus unless you click its text box, and it can hide its
 Short messages between copies of PCC on different computers, set up in **Settings → Messages**.
 
 - **Channels.** One person creates a channel and gets a code like `PCC-XXXX-XXXX-XXXX-XXXX`; the other pastes it under "Join a channel". Everyone with the code can read and send on that channel.
+- **One-tap messages.** Pick a channel on the island and a row of short phrases appears ("Thinking of you", "Call me when you're free"). One click sends it. The phrases are yours to edit.
+- **Focus status.** Optional, per channel: the people in it see when your focus timer is running and when it ends.
+- **Shared countdowns.** A countdown added on the Life page can be private or shared with a channel, so it counts down on everyone's island. Copies that were closed at the time catch up when they next start.
 - **Announcements.** The developer can send an announcement to every running copy. Each one is signed, and PCC ignores any announcement whose signature doesn't check out.
 
 Messages travel through [ntfy.sh](https://ntfy.sh), a public relay, and are not encrypted beyond the connection itself. Treat a channel like a postcard: fine for "call me" or "class moved", not for anything private.
@@ -97,7 +101,7 @@ PCC has no account and no server of its own. These features contact other servic
 | --- | --- | --- |
 | Mail | Your mail provider (IMAP) | Your sign-in; mail is read, never changed, and stays on your computer |
 | Digiicampus sync | `nls.digiicampus.com` | Your session, to read timetable, attendance and results |
-| Messages | `ntfy.sh` | The messages you send, and the channel names you listen on |
+| Messages | `ntfy.sh` | The messages you send, shared countdowns, your focus status if you share it, and the channel names you listen on |
 | Fresh quotes | `dummyjson.com` | Nothing about you; can be switched off in Settings |
 | Weather | `open-meteo.com` | The city you entered |
 | Updates | GitHub Releases | Nothing about you |
@@ -193,7 +197,7 @@ pcc-desktop/
 │                       #   workspace (tasks/agenda), notes-links, flashcards, finance,
 │                       #   life (habits), games, vitals, console, palette, nav,
 │                       #   appearance, settings, core, app, island-feed, messages,
-│                       #   workspaces, quotes, updates, welcome
+│                       #   workspaces, moments, quotes, updates, welcome
 └── assets/
     └── icon.png        # app and tray icon
 ```
@@ -201,6 +205,12 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.4.0
+- **One-tap messages** on the island, with phrases you can edit.
+- **Focus status:** optionally show the people in a channel when your focus timer is running.
+- **Countdowns** on the Life page and the island, private or shared with a channel.
+- Releases now include the blockmap file, so updates download only what changed (a few MB instead of the whole installer).
 
 ### 2.3.0
 - **Messages** between copies of PCC: shared channels joined with a code, and signed announcements from the developer.

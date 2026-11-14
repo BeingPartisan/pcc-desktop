@@ -35,6 +35,9 @@ function islandSnapshot(){
     channels: msg.channels.map(c => ({ id: c.id, name: c.name })),
     message: msg.unread,
     workspaces: islandWorkspaces(),
+    nudges: nudgePhrases(),
+    presence: activePresence().map(p => ({ channelId: p.channelId, from: p.from, state: p.state, until: p.until })),
+    countdowns: islandCountdowns(),
   };
 }
 
@@ -75,7 +78,7 @@ if(window.pcc && window.pcc.onIslandAction){
     else if(action.type === 'open' && action.page) navigate(action.page);
     else if(action.type === 'quick-note' && action.text) addQuickNote(String(action.text).slice(0, 500));
     else if(action.type === 'quick-task' && action.text) addQuickTask(String(action.text).slice(0, 200));
-    else if(action.type === 'send-message') sendMessage(action.channelId, action.text);
+    else if(action.type === 'send-message') sendMessage(action.channelId, action.text, action.kind);
     else if(action.type === 'message-read') markMessageRead();
     else if(action.type === 'open-workspace') openWorkspace(action.id);
     pushIsland();

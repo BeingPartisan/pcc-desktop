@@ -17,6 +17,7 @@ let state = null;
 let media = { status: 'none', title: '', artist: '' };
 let update = null;
 let nudge = null;
+let mini = false;                 // another app's maximised window is in front: show as a small handle
 let composeMode = 'note';         // 'note' | 'task' | a channel id
 let composing = false;            // the text box has the keyboard
 let hovering = false;
@@ -111,6 +112,8 @@ function render(){
   $('pill-dot').classList.toggle('beat', !!(freshMessage && message.nudge)); // a nudge arrives with a heartbeat
   // A break nudge is a slow glow around the island, nothing more.
   $('island').classList.toggle('nudging', !!nudge);
+  // As a handle it still opens on hover, and a new message brings the full line back for a moment.
+  $('island').classList.toggle('mini', mini && !freshMessage);
 
   // --- Panel rows ---
   $('row-update').hidden = !update;
@@ -206,6 +209,7 @@ window.island.onState((next) => { state = next; render(); });
 window.island.onMedia((next) => { media = next; render(); });
 window.island.onUpdate((next) => { update = next; render(); });
 window.island.onNudge((next) => { nudge = next; render(); });
+window.island.onMini((next) => { mini = next; render(); });
 window.island.onPosition((position) => { document.body.dataset.position = position; });
 setInterval(render, 500); // keeps countdowns and the clock moving between snapshots
 
@@ -268,10 +272,14 @@ document.addEventListener('click', (e) => {
   if(btn) window.island.action({ type: btn.dataset.action, page: btn.dataset.page, id: btn.dataset.id });
 });
 
-// Open while the pointer is over the island. The window ignores the mouse
-// everywhere else, so apps underneath stay clickable.
+// Open once the pointer has rested on the island for a moment. Until then
+// the window ignores the mouse completely, so passing over the island on
+// the way to a browser tab doesn't open it, and a click goes to whatever is
+// underneath.
+const OPEN_DELAY_MS = 280;
 const islandEl = $('island');
 let closeTimer = null;
+let openTimer = null;
 
 function closeIsland(){
   window.island.setHover(false);
@@ -281,11 +289,16 @@ function closeIsland(){
 islandEl.addEventListener('mouseenter', () => {
   hovering = true;
   clearTimeout(closeTimer);
-  window.island.setHover(true);
-  islandEl.classList.add('open');
+  if(islandEl.classList.contains('open')){ window.island.setHover(true); return; } // came back before it closed
+  clearTimeout(openTimer);
+  openTimer = setTimeout(() => {
+    window.island.setHover(true);
+    islandEl.classList.add('open');
+  }, OPEN_DELAY_MS);
 });
 islandEl.addEventListener('mouseleave', () => {
   hovering = false;
+  clearTimeout(openTimer);
   if(!composing) closeIsland(); // stays open while you're typing in it
 });
 // While typing, the whole window takes clicks; one outside the island ends it.

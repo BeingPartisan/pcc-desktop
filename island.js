@@ -31,13 +31,15 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
   let win = null;
   let helper = null;
   // hide: 'never' | 'fullscreen' (a window covering the whole screen) |
-  //       'maximized' (also when another app's maximised window is in front)
+  //       'shrink' (hide for full screen; a small handle over maximised windows) |
+  //       'maximized' (hide for both)
   // breaks: gently suggest a break after breakMinutes of continuous use
   let config = { enabled: false, media: true, position: 'center', hide: 'fullscreen', breaks: true, breakMinutes: 90 };
   let lastUpdate = null;     // latest app-update status, shown as a row on the island
   let nudge = null;          // a break suggestion currently showing, or null
   let activeMinutes = 0;     // minutes of use since the last real pause
   let lastState = null;
+  let mini = false;          // shown as a small handle, so it doesn't cover another app's tabs
   let lastMedia = { status: 'none', title: '', artist: '', app: '', front: 'normal' };
 
   const alive = () => win && !win.isDestroyed();
@@ -57,8 +59,10 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
   function applyVisibility() {
     if (!alive()) return;
     const front = lastMedia.front;
-    const hide = (config.hide === 'fullscreen' && front === 'fullscreen')
+    const hide = ((config.hide === 'fullscreen' || config.hide === 'shrink') && front === 'fullscreen')
       || (config.hide === 'maximized' && (front === 'fullscreen' || front === 'maximized'));
+    const nextMini = config.hide === 'shrink' && front === 'maximized';
+    if (nextMini !== mini) { mini = nextMini; send('island-mini', mini); }
     if (hide && win.isVisible()) win.hide();
     else if (!hide && !win.isVisible()) win.showInactive();
   }
@@ -95,6 +99,7 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
       send('island-media', config.media ? lastMedia : { ...lastMedia, status: 'none' });
       send('island-update', lastUpdate);
       send('island-nudge', nudge);
+      send('island-mini', mini);
       applyVisibility();
     });
     win.on('closed', () => { win = null; });

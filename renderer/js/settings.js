@@ -130,10 +130,18 @@ async function saveMailSettings(){
 
   await window.pcc.setMailConfig({ email, imapHost, allowedSenders, daysBack, appPassword });
   document.getElementById('mail-password').value = '';
-  showToast('Mail settings saved');
   inboxAccount = { email, gmail: /gmail|google/i.test(imapHost) };
-  scanMail(true); // pick up mail with the new settings straight away
   loadMailSettingsUI();
+
+  // Try signing in straight away, so a wrong password is reported here and not left to be found on the Inbox page.
+  const result = document.getElementById('mail-test-result');
+  result.className = 'mail-test';
+  result.textContent = 'Saved. Checking the sign-in…';
+  const test = await window.pcc.testMailLogin();
+  result.className = 'mail-test ' + (test.ok ? 'ok' : 'bad');
+  result.textContent = test.ok ? 'Signed in. Your mail is on the Inbox page.' : test.error;
+  if(test.ok) scanMail(true); // pick up mail with the new settings straight away
+  else { inboxError = test.error; renderInbox(); }
 }
 
 

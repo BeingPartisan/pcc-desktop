@@ -27,6 +27,12 @@ body[data-position="right"]{justify-content:flex-end;}
 .island.nudging{animation:nudge 3.2s ease-in-out infinite;}
 @keyframes nudge{0%,100%{box-shadow:0 6px 22px rgba(0,0,0,.4), 0 0 0 0 transparent; border-color:var(--line);} 50%{box-shadow:0 6px 22px rgba(0,0,0,.4), 0 0 16px 1px var(--accent); border-color:var(--accent);}}
 
+/* Handle: what's left of the island while another app's maximised window is in front */
+.island.mini:not(.open){min-width:64px; max-width:64px; max-height:9px; border-radius:6px; opacity:.75;}
+.island.mini:not(.open) .pill{opacity:0;}
+.island.mini:not(.open).nudging{opacity:1;}
+.pill{transition:opacity .15s;}
+
 /* Compact line */
 .pill{height:34px; display:flex; align-items:center; gap:9px; padding:0 14px; font-size:12.5px; font-weight:500; white-space:nowrap;}
 .pill-dot{width:7px; height:7px; border-radius:50%; background:var(--accent); flex-shrink:0;}

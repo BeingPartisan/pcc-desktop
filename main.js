@@ -742,8 +742,55 @@ ipcMain.handle('get-mail-config', async () => {
   };
 });
 
+// Mail servers answer a refused sign-in with little more than "Command
+// failed". This turns what they do say into something a person can act on.
+function explainMailError(e, host) {
+  const server = String(e.responseText || '').trim();
+  const gmail = /gmail|google/i.test(host || '');
+  if (e.authenticationFailed) {
+    if (/application-specific password/i.test(server)) {
+      return 'Sign-in refused: this account needs an app password, not your normal password. Create one at myaccount.google.com/apppasswords and paste it here.';
+    }
+    if (gmail) {
+      return 'Sign-in refused by Gmail. Check the email address, and use a 16-letter app password (not your normal password) from myaccount.google.com/apppasswords. That page only works once 2-Step Verification is on. If it says the setting is not available, a college or work account may have it switched off by its administrator.';
+    }
+    return `Sign-in refused by ${host}${server ? ' ("' + server + '")' : ''}. Check the email address and password. Many providers need a separate app password for mail apps.`;
+  }
+  if (['ENOTFOUND', 'EAI_AGAIN'].includes(e.code)) return `Could not find the mail server "${host}". Check the IMAP server name and your internet connection.`;
+  if (['ETIMEDOUT', 'ECONNREFUSED', 'ECONNRESET', 'ESOCKET', 'NoConnection'].includes(e.code)) return `Could not connect to ${host}. Check your internet connection; some networks block mail apps.`;
+  return `Could not read mail: ${String(e.message || e)}${server ? ' (' + server + ')' : ''}`;
+}
+
+// Google shows app passwords as four groups of four letters. The spaces are
+// only for reading; remove them, along with any stray space around a paste.
+function tidyMailPassword(raw) {
+  const value = String(raw || '').trim();
+  return /^([a-z]{4}\s+){3}[a-z]{4}$/i.test(value) ? value.replace(/\s+/g, '') : value;
+}
+
+// Signs in and straight out again, to check the saved settings work.
+ipcMain.handle('test-mail-login', async () => {
+  const mail = getMailConfig();
+  const password = await loadMailPassword();
+  if (!mail.email || !password) return { ok: false, error: 'Add your email address and app password first.' };
+  const host = mail.imapHost || 'imap.gmail.com';
+  const { ImapFlow } = require('imapflow');
+  const client = new ImapFlow({ host, port: 993, secure: true, auth: { user: mail.email, pass: password }, logger: false });
+  try {
+    await client.connect();
+    await client.logout().catch(() => {});
+    logEvent('info', 'Mail sign-in check passed');
+    return { ok: true };
+  } catch (e) {
+    try { client.close(); } catch (_) {}
+    logEvent('error', 'Mail sign-in check failed', { reason: e.authenticationFailed ? 'sign-in refused' : (e.code || String(e.message || e)), server: String(e.responseText || '') });
+    return { ok: false, error: explainMailError(e, host) };
+  }
+});
+
 ipcMain.handle('set-mail-config', async (event, { email, imapHost, allowedSenders, daysBack, appPassword }) => {
-  setMailConfig({ email, imapHost, allowedSenders, daysBack });
+  setMailConfig({ email: String(email || '').trim(), imapHost, allowedSenders, daysBack });
+  appPassword = tidyMailPassword(appPassword);
   if (appPassword) {
     await saveMailPassword(appPassword);
     logEvent('info', 'Mail settings saved (app password updated)', { email, imapHost, daysBack });
@@ -874,8 +921,8 @@ async function runMailScan(knownKeys) {
     try {
       await client.logout();
     } catch (_) {}
-    logEvent('error', 'Mail scan failed', String(e.message || e));
-    return { error: `Could not read mail: ${String(e.message || e)}`, messages: [] };
+    logEvent('error', 'Mail scan failed', { reason: e.authenticationFailed ? 'sign-in refused' : (e.code || String(e.message || e)), server: String(e.responseText || '') });
+    return { error: explainMailError(e, mail.imapHost || 'imap.gmail.com'), messages: [] };
   }
 }
 

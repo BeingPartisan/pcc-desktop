@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.4.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
+**Current version:** 2.4.1 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
 
 ---
 
@@ -208,6 +208,10 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.4.1
+- **Mail:** a refused sign-in now explains why and what to do, Settings checks the sign-in as soon as you save, and the Mail pane has app-password instructions.
+- **Island:** it opens only after the pointer rests on it, so passing over it to reach a browser tab does nothing and clicks go through. New **Shrink** option turns it into a small handle while another app's maximised window is in front.
 
 ### 2.4.0
 - **One-tap messages** on the island, with phrases you can edit.

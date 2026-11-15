@@ -722,9 +722,9 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Hide when another app is in front</div>
-            <div class="setting-desc">Full screen hides it for games, videos and presentations. Maximised also hides it whenever another app's maximised window is in front, so it only shows over PCC, the desktop and smaller windows.</div>
+            <div class="setting-desc">Full screen hides it for games, videos and presentations. Shrink does that too, and turns it into a small handle while another app's maximised window (a browser, say) is in front, so it doesn't cover tabs; point at the handle to open it. Maximised hides it completely in that case.</div>
           </div>
-          <div class="setting-control"><div class="segmented" data-pref="islandHide"><button data-value="never" onclick="setPref('islandHide', 'never')">Never</button><button data-value="fullscreen" onclick="setPref('islandHide', 'fullscreen')">Full screen</button><button data-value="maximized" onclick="setPref('islandHide', 'maximized')">Maximised</button></div></div>
+          <div class="setting-control"><div class="segmented" data-pref="islandHide"><button data-value="never" onclick="setPref('islandHide', 'never')">Never</button><button data-value="fullscreen" onclick="setPref('islandHide', 'fullscreen')">Full screen</button><button data-value="shrink" onclick="setPref('islandHide', 'shrink')">Shrink</button><button data-value="maximized" onclick="setPref('islandHide', 'maximized')">Maximised</button></div></div>
         </div>
 
         <div class="setting-row">
@@ -888,6 +888,18 @@
           <div id="mail-password-status" class="field-note"></div>
           <button class="btn btn-primary" onclick="saveMailSettings()">Save</button>
         </div>
+        <div id="mail-test-result" class="mail-test" role="status"></div>
+
+        <details class="mail-help">
+          <summary>How to get an app password (Gmail and college Google accounts)</summary>
+          <ol>
+            <li>An app password is a separate 16-letter password Google makes for one app. Your normal password will not work here.</li>
+            <li>Turn on <b>2-Step Verification</b> for the account first: Google Account &rarr; Security. App passwords don't exist without it.</li>
+            <li>Open <span class="mono">myaccount.google.com/apppasswords</span>, name it "PCC" and press Create.</li>
+            <li>Copy the 16 letters into "App password" above and press Save. PCC checks the sign-in and tells you the result.</li>
+          </ol>
+          <div class="field-note">If that page says the setting isn't available for your account, the college's administrator has switched app passwords off and PCC can't read that mailbox. Other providers (Outlook, Yahoo, Zoho) have their own app-password pages and IMAP server names.</div>
+        </details>
       </section>
 
       <!-- Data -->

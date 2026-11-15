@@ -50,7 +50,8 @@ const PREF_DEFAULTS = {
   islandEnabled: true,        // the floating island (see island-feed.js)
   islandMedia: true,          // show and control what's playing
   islandPosition: 'center',   // 'left' | 'center' | 'right'
-  islandHide: 'fullscreen',   // 'never' | 'fullscreen' | 'maximized': when another app's window hides it
+  islandHide: 'shrink',       // when another app's window is in front: 'never' | 'fullscreen' (hide for full screen) |
+                              // 'shrink' (that, and become a small handle over maximised windows) | 'maximized' (hide for both)
   islandCapture: true,        // a text box on the island for quick notes and tasks
   islandBreaks: true,         // glow softly after a long stretch of continuous use
   islandBreakMinutes: 90,

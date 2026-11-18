@@ -39,7 +39,7 @@ const PREF_DEFAULTS = {
   density: 'comfortable',     // 'comfortable' | 'compact'
   textSize: 100,              // percent
   reduceMotion: false,
-  logoText: 'P',
+  logoText: '',               // '' shows the PCC icon; otherwise one or two characters on the accent colour
   appName: 'Personal Command Center',
   clock24: false,
   startPage: 'today',
@@ -52,7 +52,9 @@ const PREF_DEFAULTS = {
   islandPosition: 'center',   // 'left' | 'center' | 'right'
   islandHide: 'shrink',       // when another app's window is in front: 'never' | 'fullscreen' (hide for full screen) |
                               // 'shrink' (that, and become a small handle over maximised windows) | 'maximized' (hide for both)
-  islandCapture: true,        // a text box on the island for quick notes and tasks
+  islandCapture: true,
+  musicBars: true,            // little bars that move to the music in the island's line
+  visualizer: 'off',          // 'off' | 'bars' | 'wave' | 'ring' | 'nebula' | 'orbit' | 'album': music visualiser on the desktop        // a text box on the island for quick notes and tasks
   islandBreaks: true,         // glow softly after a long stretch of continuous use
   islandBreakMinutes: 90,
   workspacesEnabled: false,   // sets of Quick launch items that open together (workspaces.js)
@@ -87,6 +89,8 @@ function initPrefs(){
   p.todayCards = reconcileOrder(saved.todayCards, Object.keys(TODAY_CARDS));
   p.pages = reconcileOrder(saved.pages, Object.keys(PAGES));
   p.pages.find(item => item.id === 'today').visible = true; // Today is home; it can't be hidden
+  // The logo used to default to the letter P; that default is now the PCC icon itself.
+  if(saved.logoText === 'P') p.logoText = '';
   // Before the three-way islandHide there was an on/off switch.
   if('islandHideFullscreen' in saved){ if(!('islandHide' in saved)) p.islandHide = saved.islandHideFullscreen ? 'fullscreen' : 'never'; delete p.islandHideFullscreen; }
   state.settings.prefs = p;
@@ -100,7 +104,7 @@ function setPref(key, value){
   if(key === 'clock24'){ updateClock(); renderTimetable(); }
   if(key === 'quotesOnline') initQuotes();
   if(key === 'workspacesEnabled') workspacesSwitched();
-  if(key.startsWith('island')) configureIsland();
+  if(key.startsWith('island') || key === 'visualizer') configureIsland();
   else pushIsland(); // accent and clock changes show on the island too
 }
 
@@ -143,10 +147,12 @@ function applyAppearance(){
   root.dataset.motion = p.reduceMotion ? 'reduced' : 'full';
   root.style.setProperty('--zoom', String(p.textSize / 100));
 
+  // Logo: your own image, else your characters, else the PCC icon.
   const logo = document.querySelector('.rail-logo');
-  logo.classList.toggle('has-image', !!customImages.logo);
-  logo.style.backgroundImage = customImages.logo ? `url("${customImages.logo}")` : '';
-  logo.textContent = p.logoText || PREF_DEFAULTS.logoText;
+  const logoImage = customImages.logo || (p.logoText ? '' : '../assets/icon.png');
+  logo.classList.toggle('has-image', !!logoImage);
+  logo.style.backgroundImage = logoImage ? `url("${logoImage}")` : '';
+  logo.textContent = logoImage ? '' : p.logoText;
 
   const name = (p.appName || '').trim() || PREF_DEFAULTS.appName;
   document.title = name; // the window title follows this

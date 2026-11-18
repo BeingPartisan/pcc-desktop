@@ -97,7 +97,7 @@ function render(){
   } else if(message){
     text = `${message.from}: ${message.text}`; side = more;
   } else if(playing && hasMedia){
-    text = media.title || media.artist; side = '♪';
+    text = media.title || media.artist; side = state.musicBars ? '' : '♪';
   } else if(updateReady){
     text = `Update ${update.version} is ready`;
   } else if(update && update.state === 'available'){
@@ -109,6 +109,10 @@ function render(){
   } else {
     text = state.quote; side = clock(Date.now());
   }
+  // Little bars that dance to the music, beside the track name.
+  const showEq = !!(state.musicBars && playing && hasMedia && text === (media.title || media.artist));
+  $('pill-eq').hidden = !showEq;
+  setEqRunning(showEq);
   $('pill-text').textContent = text;
   $('pill-side').textContent = side;
   $('pill-dot').classList.toggle('pulse', pulse);
@@ -216,11 +220,45 @@ function setHtml(id, html){
   if(el.dataset.html !== html){ el.innerHTML = html; el.dataset.html = html; }
 }
 
+// --- Music bars ---
+// They listen only while they're showing; with no sound to hear (or if
+// listening isn't allowed) they move by themselves instead.
+let eqRunning = false;
+const eqBars = Array.from(document.querySelectorAll('#pill-eq i'));
+let eqSmooth = [0, 0, 0, 0];
+function eqFrame(){
+  if(!eqRunning) return;
+  requestAnimationFrame(eqFrame);
+  let v;
+  if(PCCAudio.listening){
+    const b = PCCAudio.bands(4);
+    v = b.map((x, i) => Math.min(1, Math.pow(x, 1.4) * (i ? 1.15 : 1)));
+  } else {
+    const t = performance.now() / 1000;
+    v = eqBars.map((_, i) => 0.35 + 0.3 * Math.sin(t * (3 + i) + i));
+  }
+  eqSmooth = eqSmooth.map((s, i) => v[i] > s ? s + (v[i] - s) * 0.55 : s * 0.85 + v[i] * 0.15);
+  eqBars.forEach((bar, i) => { bar.style.transform = `scaleY(${0.15 + eqSmooth[i] * 0.85})`; });
+}
+// Listening goes on for as long as music plays (and a few seconds after), even
+// while the bars are hidden, so they don't have to start up again each time
+// they reappear. Starting to listen is the slow part.
+let eqStopTimer = null;
+function setEqRunning(on){
+  const playing = media.status === 'playing' && !!(state && state.musicBars);
+  if(playing){ clearTimeout(eqStopTimer); eqStopTimer = null; PCCAudio.start(); }
+  else if(PCCAudio.listening && !eqStopTimer) eqStopTimer = setTimeout(() => { eqStopTimer = null; PCCAudio.stop(); }, 8000);
+  if(on === eqRunning) return;
+  eqRunning = on;
+  if(on) requestAnimationFrame(eqFrame);
+}
+
 window.island.onState((next) => { state = next; render(); });
 window.island.onMedia((next) => { media = next; render(); });
 window.island.onUpdate((next) => { update = next; render(); });
 window.island.onNudge((next) => { nudge = next; render(); });
 window.island.onMini((next) => { mini = next; render(); });
+window.island.onCover((url) => { const img = $('media-cover'); img.hidden = !url; if(url) img.src = url; else img.removeAttribute('src'); });
 window.island.onPosition((position) => { document.body.dataset.position = position; });
 setInterval(render, 500); // keeps countdowns and the clock moving between snapshots
 
@@ -281,7 +319,7 @@ document.addEventListener('click', (e) => {
   const mediaBtn = e.target.closest('[data-media]');
   if(mediaBtn) return window.island.action({ type: 'media', command: mediaBtn.dataset.media });
   const btn = e.target.closest('[data-action]');
-  if(btn) window.island.action({ type: btn.dataset.action, page: btn.dataset.page, id: btn.dataset.id });
+  if(btn) window.island.action({ type: btn.dataset.action, page: btn.dataset.page, id: btn.dataset.id, minutes: btn.dataset.minutes });
 });
 
 // Open once the pointer has rested on the island for a moment. Until then

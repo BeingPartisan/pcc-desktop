@@ -20,6 +20,8 @@ const PALETTE_ACTIONS = [
   { id: 'console', title: 'Open console', cat: 'Actions', action: () => openConsole() },
   { id: 'settings', title: 'Open settings', cat: 'Actions', action: () => openSettings() },
   { id: 'feedback', title: 'Send feedback or report a bug', cat: 'Actions', action: () => openFeedback() },
+  { id: 'island-hide', title: 'Hide the island for an hour', cat: 'Actions', action: () => window.pcc.islandSnooze(60).then(() => showToast('Island hidden for an hour. Bring it back from the tray menu.')) },
+  { id: 'island-show', title: 'Show the island again', cat: 'Actions', action: () => window.pcc.islandSnooze(0) },
   { id: 'whats-new', title: "What's new in this version", cat: 'Actions', action: () => openWhatsNew() },
   { id: 'messages', title: 'Open chats', cat: 'Actions', action: () => navigate('messages') },
   { id: 'import-schedule', title: 'Import a schedule of evaluations', cat: 'Actions', action: () => { navigate('academics'); openScheduleImport(); } }

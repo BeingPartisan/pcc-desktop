@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('island', {
   onMedia: (callback) => ipcRenderer.on('island-media', (event, media) => callback(media)),
   onPosition: (callback) => ipcRenderer.on('island-position', (event, position) => callback(position)),
   onUpdate: (callback) => ipcRenderer.on('island-update', (event, status) => callback(status)),
+  onCover: (callback) => ipcRenderer.on('island-cover', (event, url) => callback(url)),
   onMini: (callback) => ipcRenderer.on('island-mini', (event, mini) => callback(mini)),
   onNudge: (callback) => ipcRenderer.on('island-nudge', (event, nudge) => callback(nudge)),
   // the text box asks for the keyboard while it's being typed in

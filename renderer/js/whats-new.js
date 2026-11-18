@@ -10,6 +10,18 @@
 
 const RELEASE_NOTES = [
   {
+    version: '2.6.0',
+    items: [
+      { icon: 'music', title: 'Your desktop dances to the music', text: 'Pick Bars, Wave or Ring and whatever you play moves on your wallpaper itself, behind your desktop icons, which stay clickable. Your windows simply cover it.', go: { label: 'Turn it on', run: () => openSettingsAt('island') } },
+      { icon: 'music', title: 'Nebula, Orbit and Album art', text: 'Three more styles: a turning galaxy that lights up with the song, a little solar system where each planet is a part of the music, and a corner card with the cover of what you\'re playing and a record spinning behind it.', go: { label: 'Pick a style', run: () => openSettingsAt('island') } },
+      { icon: 'music', title: 'It feels the music', text: 'Heavy, fast, bass-driven tracks make it punch on every kick and throw sparks; soft, slow songs make it drift and glow with long trails. It works this out as the song plays.' },
+      { icon: 'music', title: 'Bars in the island', text: 'While music plays, little bars beside the track name move with the beat.' },
+      { icon: 'star', title: 'The PCC icon is the logo', text: 'The mark at the top of the rail is now the PCC icon. You can still type your own letters or pick an image in Settings.' },
+      { icon: 'island', title: 'The island gets out of PCC\'s way', text: 'While you use PCC itself (or one of its file pickers) the island shrinks to a small handle.' },
+      { icon: 'island', title: 'Hide it for a while', text: 'Point at the island and choose "Hide 30 min" or "Hide 2 hours". Bring it back early from the tray icon\'s menu.' },
+    ],
+  },
+  {
     version: '2.5.0',
     items: [
       { icon: 'chat', title: 'Messages has its own page', text: 'Your chats are now on the rail, with the whole conversation, unread counts, and New / Join right there. No more digging in Settings.', go: { label: 'Open Messages', run: () => navigate('messages') } },
@@ -45,6 +57,7 @@ const WHATS_NEW_ICONS = {
   key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8"/><path d="M16 7l2 2"/>',
   island: '<rect x="5" y="9" width="14" height="6" rx="3"/>',
   heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  music: '<path d="M5 20v-6"/><path d="M10 20V8"/><path d="M15 20v-9"/><path d="M20 20V4"/>',
 };
 
 // 2.10.0 > 2.9.1: compare number by number.

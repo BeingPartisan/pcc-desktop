@@ -7,12 +7,16 @@
 #       fullscreen a window covering the whole screen (games, video, slides)
 #       maximized  a maximised window of another app
 #       normal     anything else
+# and, on a line of its own whenever the track changes, the cover picture
+# Windows has for it ({"cover": "data:image/jpeg;base64,..."} or "" when
+# there isn't one), shrunk to at most 480 pixels so the line stays small.
 # Reads one-word commands (toggle / next / prev) from standard input, and
 # exits when that input closes, i.e. when the app goes away.
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Runtime.WindowsRuntime
 Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
 
 $appPid = __APP_PID__   # filled in by island.js
 
@@ -28,6 +32,33 @@ function Await($operation, $resultType) {
 
 $managerType = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType = WindowsRuntime]
 $propsType = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties, Windows.Media.Control, ContentType = WindowsRuntime]
+$streamType = [Windows.Storage.Streams.IRandomAccessStreamWithContentType, Windows.Storage.Streams, ContentType = WindowsRuntime]
+$inputType = [Windows.Storage.Streams.IInputStream, Windows.Storage.Streams, ContentType = WindowsRuntime]
+# .NET's bridge from a Windows stream to an ordinary one. Called through
+# reflection: PowerShell 5 itself won't hand the Windows stream to it.
+$asStream = [System.IO.WindowsRuntimeStreamExtensions].GetMethod('AsStreamForRead', [type[]]@($inputType))
+
+# The cover as a small JPEG data: URL, or '' if the app gave Windows none.
+function Get-Cover($props) {
+  try {
+    if (-not $props.Thumbnail) { return '' }
+    $ras = Await ($props.Thumbnail.OpenReadAsync()) $streamType
+    $stream = New-Object System.IO.MemoryStream
+    $asStream.Invoke($null, @($ras)).CopyTo($stream)
+    $stream.Position = 0
+    $image = [System.Drawing.Image]::FromStream($stream)
+    $scale = [Math]::Min(1.0, 480.0 / [Math]::Max($image.Width, $image.Height))
+    $w = [int]([Math]::Max(1, $image.Width * $scale)); $h = [int]([Math]::Max(1, $image.Height * $scale))
+    $bmp = New-Object System.Drawing.Bitmap $w, $h
+    $gr = [System.Drawing.Graphics]::FromImage($bmp)
+    $gr.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $gr.DrawImage($image, 0, 0, $w, $h)
+    $out = New-Object System.IO.MemoryStream
+    $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Jpeg)
+    $gr.Dispose(); $bmp.Dispose(); $image.Dispose(); $stream.Dispose()
+    return 'data:image/jpeg;base64,' + [Convert]::ToBase64String($out.ToArray())
+  } catch { return '' }
+}
 $manager = Await ($managerType::RequestAsync()) $managerType
 
 # Looking at the front window directly. (Windows' own "user is busy" state
@@ -68,6 +99,7 @@ $pending = $stdin.ReadLineAsync()
 $media = @{ status = 'none'; title = ''; artist = ''; app = '' }
 $last = ''
 $tick = 0
+$coverKey = $null   # the track whose cover was last sent
 
 while ($true) {
   # Commands
@@ -99,8 +131,15 @@ while ($true) {
         $media.title = [string]$props.Title
         $media.artist = [string]$props.Artist
         $media.app = [string]$session.SourceAppUserModelId
+        $key = $media.app + '|' + $media.title + '|' + $media.artist
+        if ($key -ne $coverKey) {
+          $coverKey = $key
+          $line = @{ cover = (Get-Cover $props) } | ConvertTo-Json -Compress
+          [Console]::Out.WriteLine($line); [Console]::Out.Flush()
+        }
       }
     } catch { }
+    if ($media.status -eq 'none' -and $coverKey) { $coverKey = $null; [Console]::Out.WriteLine('{"cover":""}'); [Console]::Out.Flush() }
   }
 
   $state = @{ status = $media.status; title = $media.title; artist = $media.artist; app = $media.app; front = 'normal' }

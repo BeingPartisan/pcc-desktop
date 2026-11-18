@@ -14,6 +14,7 @@
     <span class="pill-dot" id="pill-dot"></span>
     <span class="pill-text" id="pill-text"></span>
     <span class="pill-side" id="pill-side"></span>
+    <span class="eq" id="pill-eq" hidden><i></i><i></i><i></i><i></i></span>
   </div>
 
   <div class="panel">
@@ -70,6 +71,7 @@
     </section>
 
     <section class="row" id="row-media">
+      <img class="media-cover" id="media-cover" alt="" hidden />
       <div class="row-main">
         <div class="row-label" id="media-label">Playing</div>
         <div class="row-title" id="media-title"></div>
@@ -106,6 +108,12 @@
       <div class="row-actions"><button class="btn" data-action="open" data-page="today">Open</button></div>
     </section>
 
+    <!-- Out of the way for a while; it comes back by itself, or from the tray menu -->
+    <section class="row island-foot">
+      <span class="dim small">In the way?</span>
+      <span><button class="link-btn" data-action="snooze" data-minutes="30">Hide 30 min</button> · <button class="link-btn" data-action="snooze" data-minutes="120">Hide 2 hours</button></span>
+    </section>
+
     <!-- Type a quick note, a task, or a message to a channel -->
     <section class="row stack" id="row-compose" hidden>
       <div class="chips" id="compose-modes"></div>
@@ -119,6 +127,7 @@
   </div>
 </div>
 
+<script src="../visualizer/audio.js"></script>
 <script src="island.js"></script>
 </body>
 </html>

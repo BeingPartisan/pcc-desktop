@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('pcc', {
   // Mail scan
   getMailConfig: () => ipcRenderer.invoke('get-mail-config'),
   setMailConfig: (config) => ipcRenderer.invoke('set-mail-config', config),
+  islandSnooze: (minutes) => ipcRenderer.invoke('island-snooze', minutes),
   testMailLogin: () => ipcRenderer.invoke('test-mail-login'),
   scanEmail: (knownKeys) => ipcRenderer.invoke('scan-email', knownKeys),
   clearLegacyMailSenders: () => ipcRenderer.invoke('clear-legacy-mail-senders'),

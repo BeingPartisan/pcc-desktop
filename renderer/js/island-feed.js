@@ -32,6 +32,7 @@ function islandSnapshot(){
     mail: { count: important.length, latest: important[0] ? { subject: important[0].subject, from: important[0].fromName || important[0].fromAddress } : null },
     quote: currentWidgetQuote, quoteAuthor: currentWidgetAuthor,
     capture: !!prefs().islandCapture,
+    musicBars: !!prefs().musicBars,
     channels: msg.channels.map(c => ({ id: c.id, name: c.name })),
     messages: msg.unread.slice(0, 8),
     unreadCount: msg.unread.length,
@@ -52,7 +53,7 @@ function pushIsland(){
 function configureIsland(){
   if(!window.pcc || !window.pcc.islandConfigure) return;
   const p = prefs();
-  window.pcc.islandConfigure({ enabled: !!p.islandEnabled, media: !!p.islandMedia, position: p.islandPosition, hide: p.islandHide, breaks: !!p.islandBreaks, breakMinutes: p.islandBreakMinutes })
+  window.pcc.islandConfigure({ enabled: !!p.islandEnabled, media: !!p.islandMedia, position: p.islandPosition, hide: p.islandHide, breaks: !!p.islandBreaks, breakMinutes: p.islandBreakMinutes, visualizer: p.visualizer })
     .then(pushIsland);
 }
 

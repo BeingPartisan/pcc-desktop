@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.5.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
+**Current version:** 2.6.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
 
 ---
 
@@ -53,6 +53,12 @@ A small bar that sits at the top of the screen above other windows, even while P
 - **Break reminder:** after a long stretch at the computer (90 minutes by default) the island glows softly for a few minutes. No sound and no pop-up.
 
 It never takes keyboard focus unless you click its text box, and it can hide itself while another app is full screen or maximised. Everything above can be switched off individually in **Settings → Island**.
+
+### Music visualiser
+
+Settings → Island → Music. Shapes that move to whatever your computer is playing, drawn on the wallpaper itself: behind the desktop icons (which stay clickable) and under all your windows. Seven styles: Bars, Wave, Ring, Nebula (a turning galaxy of gas and stars), Orbit (a small solar system where each planet is a part of the music), and Album art (the cover of what's playing in a corner card, with a record spinning behind it).
+
+It reads the feel of each song as it plays (loudness, how bass-heavy it is, and the beat and tempo) and moves to match: heavy, fast tracks make it punch on every kick and throw sparks; soft, slow songs make it drift and glow. It listens only to measure loudness; nothing is recorded or sent. The island also gets little bars beside the track name, and shows the cover.
 
 ### Messages
 
@@ -108,6 +114,8 @@ PCC has no account and no server of its own. These features contact other servic
 | Fresh quotes | `dummyjson.com` | Nothing about you; can be switched off in Settings |
 | Weather | `open-meteo.com` | The city you entered |
 | Updates | GitHub Releases | Nothing about you |
+
+The music visualiser listens to your computer's own sound output to measure loudness. That stays on your computer.
 
 ---
 
@@ -187,7 +195,9 @@ pcc-desktop/
 ├── campus.js           # Digiicampus sign-in and sync (timetable, attendance, results)
 ├── island.js           # the floating island's window, break reminder, media helper
 ├── island-preload.js   # bridge for the island window
-├── media-helper.ps1    # Windows: what's playing, and which kind of window is in front
+├── media-helper.ps1    # Windows: what's playing (and its cover), and which kind of window is in front
+├── wallpaper-helper.ps1 # puts the visualiser into the wallpaper layer, behind the icons
+├── visualizer-preload.js # bridge for the visualiser window
 ├── messaging.js        # messages over the ntfy.sh relay, signed announcements
 ├── feedback.js         # encrypted bug reports and ideas to the developer
 ├── preload.js          # secure bridge exposing the window.pcc API to the UI
@@ -196,6 +206,7 @@ pcc-desktop/
 │   ├── css/            # styles.css (theme tokens), fonts.css
 │   ├── fonts/          # Geist, Geist Mono, Instrument Serif (OFL), bundled for offline use
 │   ├── island/         # the island's own page, styles and script
+│   ├── visualizer/     # the music visualiser: audio analysis, mood, the styles
 │   └── js/             # one module per feature:
 │                       #   today, inbox, academics, evaluation, campus, timetable-mail,
 │                       #   workspace (tasks/agenda), notes-links, flashcards, finance,
@@ -209,6 +220,11 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.6.0
+- **Music visualiser** on the wallpaper, behind the desktop icons: Bars, Wave, Ring, Nebula, Orbit and Album art, reacting to the energy, bass and beat of each song.
+- **Island:** music bars and the album cover; shrinks to a handle while PCC itself is in front; "Hide 30 min" and "Hide 2 hours", with "Show the island now" in the tray menu.
+- The PCC icon is the default logo.
 
 ### 2.5.0
 - **Messages page** on the rail, with an unread badge. Chats are no longer buried in Settings.

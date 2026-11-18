@@ -657,10 +657,10 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-logo-text">Logo</label>
-            <div class="setting-desc">The mark in the top-left corner: one or two characters, an emoji, or your own image.</div>
+            <div class="setting-desc">The mark in the top-left corner. It's the PCC icon unless you type one or two characters (or an emoji) here, or choose your own image. Clear the box to go back to the icon.</div>
           </div>
           <div class="setting-control">
-            <input id="pref-logo-text" type="text" class="short" maxlength="4" onchange="setLogoText(this.value)" />
+            <input id="pref-logo-text" type="text" class="short" maxlength="4" placeholder="Icon" onchange="setLogoText(this.value)" />
             <button class="btn" onclick="chooseCustomImage('logo')">Image&hellip;</button>
             <button class="btn btn-danger" id="logo-remove-btn" onclick="removeCustomImage('logo')">Remove</button>
           </div>
@@ -785,6 +785,25 @@
           </div>
           <div class="setting-control"><input id="pref-workspaces" type="checkbox" class="switch" data-pref="workspacesEnabled" onchange="setPref('workspacesEnabled', this.checked)" /></div>
         </div>
+
+        <h3 class="pane-subtitle">Music</h3>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="pref-music-bars">Bars in the island</label>
+            <div class="setting-desc">Little bars beside the track name that move with the music.</div>
+          </div>
+          <div class="setting-control"><input id="pref-music-bars" type="checkbox" class="switch" data-pref="musicBars" onchange="setPref('musicBars', this.checked)" /></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Desktop visualiser</div>
+            <div class="setting-desc">Shapes that move to whatever is playing, drawn on your wallpaper itself: behind your desktop icons, which stay clickable, and under all your windows. It pauses while a maximised or full-screen window covers the desktop.</div>
+          </div>
+          <div class="setting-control"><div class="segmented" data-pref="visualizer"><button data-value="off" onclick="setPref('visualizer', 'off')">Off</button><button data-value="bars" onclick="setPref('visualizer', 'bars')">Bars</button><button data-value="wave" onclick="setPref('visualizer', 'wave')">Wave</button><button data-value="ring" onclick="setPref('visualizer', 'ring')">Ring</button><button data-value="nebula" onclick="setPref('visualizer', 'nebula')">Nebula</button><button data-value="orbit" onclick="setPref('visualizer', 'orbit')">Orbit</button><button data-value="album" onclick="setPref('visualizer', 'album')">Album art</button></div></div>
+        </div>
+        <div class="field-note">Both listen to the sound your computer is playing, only while music plays, and only to measure how loud it is. Nothing is recorded or sent anywhere.</div>
       </section>
 
       <!-- Messages -->

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, nativeImage, dialog, shell, safeStorage, globalShortcut, nativeTheme, systemPreferences, net } = require('electron');
+const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, nativeImage, dialog, shell, safeStorage, globalShortcut, nativeTheme, systemPreferences, net, session, desktopCapturer } = require('electron');
 const { pathToFileURL } = require('url');
 const path = require('path');
 const fs = require('fs');
@@ -47,6 +47,7 @@ const island = require('./island')({
   getMainWindow: () => mainWindow,
   // Download / Restart pressed on the island's update row
   onUpdateAction: (type) => (type === 'update-download' ? startUpdateDownload() : installDownloadedUpdate()),
+  onSnoozeChange: () => buildTrayMenu(),
   showMainWindow: () => {
     if (!mainWindow) return;
     if (mainWindow.isMinimized()) mainWindow.restore();
@@ -395,6 +396,11 @@ function createWindow() {
     logEvent(levelMap[level] || 'info', `[renderer] ${message}`, shortSource ? `${shortSource}:${lineNumber}` : null);
   });
 
+  // The island shrinks to a handle while PCC itself is being used.
+  mainWindow.on('focus', () => island.setAppFocused(true));
+  mainWindow.on('blur', () => island.setAppFocused(false));
+  mainWindow.on('hide', () => island.setAppFocused(false));
+
   // Minimize to tray instead of closing, unless we're actually quitting
   mainWindow.on('close', (event) => {
     if (!isQuitting) {
@@ -405,20 +411,33 @@ function createWindow() {
   });
 }
 
-function createTray() {
-  const trayIcon = nativeImage.createFromPath(ICON_PATH);
-  tray = new Tray(trayIcon.resize({ width: 16, height: 16 }));
-  tray.setToolTip('Personal Command Center (Beta)');
+// The music visualiser and the island's bars listen to what the computer is
+// playing. Chromium only hands out that "loopback" sound together with a
+// screen capture, so the screen goes along and the page stops it at once
+// (see renderer/visualizer/audio.js). Only PCC's own island and visualiser
+// pages are allowed; anything else asking gets nothing.
+function allowSystemAudio() {
+  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
+    const url = (request.frame && request.frame.url) || '';
+    const ours = url.startsWith('file://') && /\/renderer\/(island|visualizer)\//.test(url.replace(/\\/g, '/'));
+    if (!ours) return callback({});
+    desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 0, height: 0 } })
+      .then((sources) => callback(sources.length ? { video: sources[0], audio: 'loopback' } : {}))
+      .catch(() => callback({}));
+  });
+}
 
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Open PCC',
-      click: () => {
-        mainWindow.show();
-        mainWindow.focus();
-      },
-    },
+// Rebuilt when the island is hidden or comes back, so the menu offers the right one.
+function buildTrayMenu() {
+  if (!tray) return;
+  const islandItems = !island.isEnabled() ? []
+    : island.isSnoozed()
+      ? [{ label: 'Show the island now', click: () => island.snooze(0) }, { type: 'separator' }]
+      : [{ label: 'Hide the island for an hour', click: () => island.snooze(60) }, { type: 'separator' }];
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Open PCC', click: () => { mainWindow.show(); mainWindow.focus(); } },
     { type: 'separator' },
+    ...islandItems,
     {
       label: 'Check for Updates',
       click: () => {
@@ -428,17 +447,17 @@ function createTray() {
       },
     },
     { type: 'separator' },
-    {
-      label: 'Quit',
-      click: () => {
-        isQuitting = true;
-        app.quit();
-      },
-    },
-  ]);
+    { label: 'Quit', click: () => { isQuitting = true; app.quit(); } },
+  ]));
+}
 
-  tray.setContextMenu(contextMenu);
+ipcMain.handle('island-snooze', (event, minutes) => { island.snooze(Number(minutes) || 0); return { snoozed: island.isSnoozed() }; });
 
+function createTray() {
+  const trayIcon = nativeImage.createFromPath(ICON_PATH);
+  tray = new Tray(trayIcon.resize({ width: 16, height: 16 }));
+  tray.setToolTip('Personal Command Center (Beta)');
+  buildTrayMenu();
   tray.on('click', () => {
     if (mainWindow.isVisible()) {
       mainWindow.hide();
@@ -1350,6 +1369,7 @@ ipcMain.handle('remove-custom-image', (event, kind) => {
 app.whenReady().then(() => {
   logEvent('info', `PCC starting up (v${app.getVersion()})`);
   createWindow();
+  allowSystemAudio();
   createTray();
   registerHotkey(getHotkey());
   checkForUpdates(false); // silent check on startup...

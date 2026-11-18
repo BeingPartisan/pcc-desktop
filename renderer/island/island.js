@@ -72,8 +72,11 @@ function render(){
   const playing = media.status === 'playing';
   const hasMedia = media.status !== 'none' && (media.title || media.artist);
   const seconds = timerSeconds();
-  const message = state.message;
+  const messages = state.messages || [];
+  const message = messages[0];                       // the newest
   const freshMessage = message && Date.now() - message.at < MESSAGE_FRESH_MS;
+  const unread = state.unreadCount || 0;
+  const more = unread > 1 ? `+${unread - 1}` : '';
   const updateReady = update && update.state === 'downloaded';
   const presence = (state.presence || []).filter(p => p.until > Date.now());
   const countdowns = state.countdowns || [];
@@ -82,7 +85,7 @@ function render(){
   // --- Compact line: the first of these that applies ---
   let text, side = '', pulse = false;
   if(freshMessage){
-    text = `${message.from}: ${message.text}`; pulse = true;
+    text = `${message.from}: ${message.text}`; side = more; pulse = true;
   } else if(state.timer.running){
     text = state.timer.mode === 'break' ? 'Break' : 'Focus'; side = mmss(seconds); pulse = true;
   } else if(nudge){
@@ -92,7 +95,7 @@ function render(){
   } else if(cls && cls.minutes <= SOON_MINUTES){
     text = cls.subject; side = `in ${awayText(cls.minutes)}`;
   } else if(message){
-    text = `${message.from}: ${message.text}`;
+    text = `${message.from}: ${message.text}`; side = more;
   } else if(playing && hasMedia){
     text = media.title || media.artist; side = '♪';
   } else if(updateReady){
@@ -136,9 +139,14 @@ function render(){
 
   $('row-message').hidden = !message;
   if(message){
-    $('message-label').textContent = `${message.from} · ${message.channel} · ${clock(message.ts)}`;
-    $('message-text').textContent = message.text;
-    $('message-reply').hidden = !message.channelId;
+    $('message-label').textContent = unread === 1 ? '1 new message' : `${unread} new messages`;
+    const shown = messages.slice(0, 4);
+    setHtml('message-list', shown.map(m => `
+      <div class="msg-card ${m.channelId ? 'can-reply' : ''}" ${m.channelId ? `data-reply="${escapeHtml(m.channelId)}" title="Reply on ${escapeHtml(m.channel)}"` : ''}>
+        <div class="msg-card-head"><span>${escapeHtml(m.from)}<span class="dim">${m.channel !== m.from ? ' · ' + escapeHtml(m.channel) : ''} · ${clock(m.ts)}</span></span>
+          <button class="x" data-action="message-read" data-id="${escapeHtml(m.id)}" aria-label="Dismiss">×</button></div>
+        <div class="msg-card-text">${escapeHtml(m.text)}</div>
+      </div>`).join('') + (unread > shown.length ? `<div class="dim small">and ${unread - shown.length} more on the Messages page</div>` : ''));
   }
 
   $('row-presence').hidden = !presence.length;
@@ -192,6 +200,9 @@ function render(){
     setHtml('compose-modes', modes.map(m => `<button class="chip ${m.id === mode.id ? 'active' : ''}" data-mode="${escapeHtml(m.id)}">${escapeHtml(m.label)}</button>`).join(''));
     // One-tap phrases, only while a channel is chosen
     const isChannel = mode.id !== 'note' && mode.id !== 'task';
+    // While writing to a channel, its last few messages show above the box, so a reply has its context.
+    const thread = isChannel ? ((state.threads || {})[mode.id] || []) : [];
+    setHtml('compose-thread', thread.map(t => `<div class="bubble ${t.mine ? 'mine' : ''}"><span class="who">${escapeHtml(t.from)}</span> ${escapeHtml(t.text)}</div>`).join(''));
     setHtml('compose-nudges', isChannel ? (state.nudges || []).map(n => `<button class="chip nudge" data-nudge="${escapeHtml(n)}">${escapeHtml(n)}</button>`).join('') : '');
     $('compose-input').placeholder = sentNote || mode.placeholder;
     $('compose-send').textContent = mode.button;
@@ -223,7 +234,7 @@ function startComposing(){
   if(composing) return;
   composing = true;
   window.island.setFocus(true);
-  setTimeout(() => input.focus(), 60); // once the window has the keyboard
+  setTimeout(() => { input.focus(); $('row-compose').scrollIntoView({ block: 'end' }); }, 60); // once the window has the keyboard; the box sits at the bottom of the panel
 }
 
 function stopComposing(){
@@ -265,7 +276,8 @@ document.addEventListener('click', (e) => {
     sentNote = 'Sent'; clearTimeout(sentTimer); sentTimer = setTimeout(() => { sentNote = ''; render(); }, 1800);
     return render();
   }
-  if(e.target.closest('#message-reply')){ composeMode = state.message.channelId; render(); return startComposing(); }
+  const card = e.target.closest('[data-reply]');
+  if(card && !e.target.closest('.x')){ composeMode = card.dataset.reply; render(); return startComposing(); }
   const mediaBtn = e.target.closest('[data-media]');
   if(mediaBtn) return window.island.action({ type: 'media', command: mediaBtn.dataset.media });
   const btn = e.target.closest('[data-action]');

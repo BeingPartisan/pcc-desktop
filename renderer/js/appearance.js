@@ -73,7 +73,11 @@ function use24Hour(){ return !!(state.settings.prefs && state.settings.prefs.clo
 function reconcileOrder(saved, ids){
   const list = (Array.isArray(saved) ? saved : []).filter(item => item && ids.includes(item.id))
     .map(item => ({ id: item.id, visible: item.visible !== false }));
-  for(const id of ids) if(!list.some(item => item.id === id)) list.push({ id, visible: true });
+  ids.forEach((id, i) => {
+    if(list.some(item => item.id === id)) return;
+    const after = i ? list.findIndex(item => item.id === ids[i - 1]) : -1;
+    list.splice(after + 1, 0, { id, visible: true });
+  });
   return list;
 }
 

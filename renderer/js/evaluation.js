@@ -5,9 +5,11 @@
 // The university doesn't publish this as data, so the breakdown is entered
 // by hand, or pasted from the course page and read by parseEvaluationText().
 // Stored under "evaluations":
-//   { [courseName]: { components: [{ id, name, max, got, date }] } }
-// `got` is null until a mark is entered; `date` is optional and, while the
-// component is unmarked, shows up alongside the other deadlines.
+//   { [courseName]: { components: [{ id, name, max, got, date, time }] } }
+// `max` is null when the marks aren't known yet (a component imported from
+// a schedule); `got` is null until a mark is entered. `date` and `time`
+// are optional; while the component is unmarked, a dated one shows up
+// alongside the other deadlines.
 
 let evaluations = Store.get('evaluations', {});
 let evalPasteCourse = null; // course whose "paste pattern" dialog is open
@@ -46,13 +48,14 @@ function parseEvaluationText(text){
 }
 
 function evalSummary(course){
-  const comps = evalFor(course).components;
+  const comps = evalFor(course).components.filter(c => c.max != null); // ones without marks yet don't count
   const marked = comps.filter(c => c.got !== null);
   return {
     total: comps.reduce((s, c) => s + c.max, 0),
     got: marked.reduce((s, c) => s + c.got, 0),
     assessed: marked.reduce((s, c) => s + c.max, 0),
     remaining: comps.filter(c => c.got === null).reduce((s, c) => s + c.max, 0),
+    unknown: evalFor(course).components.length - comps.length,
   };
 }
 
@@ -73,7 +76,7 @@ function evaluationDeadlines(){
   const items = [];
   for(const [course, entry] of Object.entries(evaluations)){
     if(!current.has(course)) continue;
-    for(const c of entry.components) if(c.date && c.got === null) items.push({ title: `${course}: ${c.name}`, date: c.date, fromEvaluation: true });
+    for(const c of entry.components) if(c.date && c.got === null) items.push({ title: `${course}: ${c.name}${c.time ? ' · ' + c.time : ''}`, date: c.date, fromEvaluation: true });
   }
   return items;
 }
@@ -87,7 +90,7 @@ function evalChanged(){
 }
 
 function addEvalComponent(courseIndex){
-  evalFor(evalCourses()[courseIndex]).components.push({ id: uid(), name: 'New component', max: 10, got: null, date: '' });
+  evalFor(evalCourses()[courseIndex]).components.push({ id: uid(), name: 'New component', max: null, got: null, date: '', time: '' });
   evalChanged();
 }
 
@@ -102,13 +105,18 @@ function updateEvalComponent(courseIndex, id, field, value){
   if(!comp) return;
   if(field === 'name') comp.name = value.trim() || comp.name;
   if(field === 'date') comp.date = value;
-  if(field === 'max'){
+  if(field === 'time') comp.time = value.trim();
+  if(field === 'max' && value === ''){
+    if(comp.got !== null){ showToast('Remove the mark scored first'); return renderEvaluation(); }
+    comp.max = null; // not known yet
+  } else if(field === 'max'){
     const max = Number(value);
     if(!(max > 0 && max <= 100)){ showToast('Marks must be between 1 and 100'); return renderEvaluation(); }
     comp.max = max;
     if(comp.got !== null && comp.got > max) comp.got = max;
   }
   if(field === 'got'){
+    if(value !== '' && comp.max == null){ showToast('Fill in what it is out of first'); return renderEvaluation(); }
     if(value === ''){ comp.got = null; }
     else {
       const got = Number(value);
@@ -169,9 +177,10 @@ function renderEvaluation(){
     const rows = comps.map(c => `
       <tr>
         <td><input type="text" value="${esc(c.name)}" title="${esc(c.name)}" aria-label="Component name" onchange="updateEvalComponent(${i}, '${c.id}', 'name', this.value)" /></td>
-        <td class="num"><input type="number" min="1" max="100" value="${c.max}" aria-label="Marks available" onchange="updateEvalComponent(${i}, '${c.id}', 'max', this.value)" /></td>
-        <td class="num"><input type="number" min="0" max="${c.max}" step="0.25" value="${c.got === null ? '' : c.got}" placeholder="–" aria-label="Marks scored" onchange="updateEvalComponent(${i}, '${c.id}', 'got', this.value)" /></td>
-        <td><input type="date" value="${esc(c.date || '')}" aria-label="Date" onchange="updateEvalComponent(${i}, '${c.id}', 'date', this.value)" /></td>
+        <td class="num"><input type="number" min="1" max="100" value="${c.max == null ? '' : c.max}" placeholder="?" class="${c.max == null ? 'unknown' : ''}" title="${c.max == null ? 'Marks not known yet' : ''}" aria-label="Marks available" onchange="updateEvalComponent(${i}, '${c.id}', 'max', this.value)" /></td>
+        <td class="num"><input type="number" min="0" max="${c.max == null ? 100 : c.max}" step="0.25" value="${c.got === null ? '' : c.got}" placeholder="–" aria-label="Marks scored" ${c.max == null ? 'disabled' : ''} onchange="updateEvalComponent(${i}, '${c.id}', 'got', this.value)" /></td>
+        <td><input type="date" value="${esc(c.date || '')}" aria-label="Date" onchange="updateEvalComponent(${i}, '${c.id}', 'date', this.value)" />
+          <input type="text" class="eval-time" value="${esc(c.time || '')}" placeholder="Time, place" aria-label="Time and place" onchange="updateEvalComponent(${i}, '${c.id}', 'time', this.value)" /></td>
         <td class="num"><button class="btn btn-icon btn-danger" onclick="removeEvalComponent(${i}, '${c.id}')" aria-label="Remove ${esc(c.name)}">&times;</button></td>
       </tr>`).join('');
 
@@ -192,7 +201,8 @@ function renderEvaluation(){
           <div class="eval-total"><b>${+s.got.toFixed(2)}</b> of ${s.assessed} marked${s.remaining ? ` · ${s.remaining} to come` : ''}</div>
         </div>
         <div class="eval-bar"><span class="got" style="width:${s.got / scale * 100}%"></span><span class="lost" style="width:${lost / scale * 100}%"></span></div>
-        ${s.total !== 100 ? `<div class="mail-note" style="color:var(--amber);">These components add up to ${s.total}, not 100.</div>` : ''}
+        ${s.unknown ? `<div class="mail-note" style="color:var(--amber);">${s.unknown} component${s.unknown === 1 ? ' has' : 's have'} no marks yet. Fill in what ${s.unknown === 1 ? 'it is' : 'they are'} out of when you know.</div>` : ''}
+        ${s.total !== 100 && !s.unknown ? `<div class="mail-note" style="color:var(--amber);">These components add up to ${s.total}, not 100.</div>` : ''}
         <table class="eval-table">
           <tr><th>Component</th><th class="num">Out of</th><th class="num">Scored</th><th>Date</th><th></th></tr>
           ${rows}
@@ -200,7 +210,9 @@ function renderEvaluation(){
         <div class="eval-actions"><button class="btn" onclick="addEvalComponent(${i})">Add component</button><button class="btn" onclick="openEvalPaste(${i})">Paste pattern</button></div>
         ${s.remaining
           ? `<div class="eval-outlook"><div class="att-meta">Marks needed from the ${s.remaining} still to come${pass.status === 'secured' ? '' : pass.status === 'out' ? ' · a pass is out of reach' : ` · ${pass.need} to pass`}</div><div class="eval-grades">${outlook}</div></div>`
-          : `<div class="eval-outlook"><div class="att-meta">All components marked: ${+s.got.toFixed(2)} of ${s.total}</div></div>`}
+          : s.unknown
+            ? `<div class="eval-outlook"><div class="att-meta">${+s.got.toFixed(2)} of ${s.total} so far. Fill in the marks for the rest to see what you need for each grade.</div></div>`
+            : `<div class="eval-outlook"><div class="att-meta">All components marked: ${+s.got.toFixed(2)} of ${s.total}</div></div>`}
       </div>`;
   }).join('');
 }

@@ -11,6 +11,7 @@ configureMessages().then(() => setTimeout(syncAllCountdowns, 4000)); // listens 
 renderCountdowns();
 initFeedback();
 renderWorkspaces();
+checkWhatsNew();          // once per version, before the welcome marks this as a fresh install
 if(localStorage.getItem(WELCOME_PENDING_KEY)) showWelcome();
 loadInbox();  // shows saved mail, then checks for new mail now and every 15 minutes
 autoBackupIfDue();

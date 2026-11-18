@@ -35,15 +35,13 @@
       <div class="row-actions"><button class="btn" data-action="dismiss-nudge">Got it</button></div>
     </section>
 
-    <section class="row" id="row-message" hidden>
-      <div class="row-main">
+    <!-- Unread messages, newest first. Click one to reply on its channel. -->
+    <section class="row stack" id="row-message" hidden>
+      <div class="row-head">
         <div class="row-label" id="message-label"></div>
-        <div class="row-text" id="message-text"></div>
+        <span><button class="link-btn" data-action="open" data-page="messages">Open chats</button> · <button class="link-btn" data-action="message-read">Clear all</button></span>
       </div>
-      <div class="row-actions">
-        <button class="btn" id="message-reply">Reply</button>
-        <button class="btn" data-action="message-read">Done</button>
-      </div>
+      <div class="msg-stack" id="message-list"></div>
     </section>
 
     <section class="row stack" id="row-presence" hidden>
@@ -111,6 +109,7 @@
     <!-- Type a quick note, a task, or a message to a channel -->
     <section class="row stack" id="row-compose" hidden>
       <div class="chips" id="compose-modes"></div>
+      <div class="thread" id="compose-thread"></div>
       <div class="chips" id="compose-nudges"></div>
       <div class="compose-line">
         <input id="compose-input" type="text" maxlength="500" autocomplete="off" spellcheck="false" />

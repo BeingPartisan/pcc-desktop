@@ -84,6 +84,31 @@ button{font-family:inherit; cursor:pointer;}
 .line .shared{font-style:normal; font-size:10px; color:var(--accent); vertical-align:1px;}
 .chip.nudge{border-style:dashed; border-color:var(--line);}
 
+/* Unread messages */
+.row-head{display:flex; justify-content:space-between; align-items:center;}
+.link-btn{font-size:11.5px; color:var(--ink-dim); background:none; border:none; padding:0;}
+.link-btn:hover{color:var(--ink);}
+.msg-stack{display:flex; flex-direction:column; gap:5px;}
+.msg-card{padding:7px 9px; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid transparent; transition:border-color .15s, background .15s;}
+.msg-card.can-reply{cursor:pointer;}
+.msg-card.can-reply:hover{border-color:var(--accent); background:rgba(255,255,255,.08);}
+.msg-card-head{display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; font-weight:500;}
+.msg-card-head .dim, .dim{color:var(--ink-dim); font-weight:400;}
+.small{font-size:11.5px;}
+.msg-card .x{width:18px; height:18px; border:none; border-radius:50%; background:transparent; color:var(--ink-dim); font-size:14px; line-height:1; padding:0; opacity:0; transition:opacity .15s;}
+.msg-card:hover .x{opacity:1;}
+.msg-card .x:hover{color:var(--ink); background:rgba(255,255,255,.1);}
+.msg-card-text{font-size:13px; line-height:1.4; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+
+/* The conversation above the reply box */
+.thread{display:flex; flex-direction:column; gap:4px; max-height:150px; overflow-y:auto;}
+.thread:empty{display:none;}
+.thread::-webkit-scrollbar{width:0;}
+.bubble{align-self:flex-start; max-width:85%; font-size:12.5px; line-height:1.35; padding:5px 9px; border-radius:11px 11px 11px 3px; background:rgba(255,255,255,.07); overflow-wrap:anywhere;}
+.bubble .who{color:var(--ink-dim); font-size:11px; margin-right:3px;}
+.bubble.mine{align-self:flex-end; border-radius:11px 11px 3px 11px; background:color-mix(in srgb, var(--accent) 22%, transparent);}
+.bubble.mine .who{display:none;}
+
 /* Small pill buttons: workspaces, and what the text box does */
 .chips{display:flex; flex-wrap:wrap; gap:6px;}
 .chips:empty{display:none;}

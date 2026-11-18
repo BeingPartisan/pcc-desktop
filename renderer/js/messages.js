@@ -7,13 +7,13 @@
 // send on it, so two people share a channel by one of them creating it and
 // giving the other the code.
 
-const MSG_LOG_LIMIT = 40;
+const MSG_LOG_LIMIT = 400; // the chats' history, all channels together
 const CHANNEL_TOPIC = /^pcc[a-z2-7]{16}$/;
 
 const msg = {
   channels: Store.get('msgChannels', []),   // [{ id, name, topic, share? }]  share: send my focus status here (moments.js)
   log: Store.get('msgLog', []),             // newest first: { id, channelId, channel, from, text, ts, mine, broadcast }
-  unread: null,                             // the latest incoming message not yet dismissed (shown on the island)
+  unread: [].concat(Store.get('msgUnread', []) || []),     // incoming messages not yet dismissed, newest first (shown on the island)
   canBroadcast: false,                      // true only on the developer's computer
 };
 
@@ -34,6 +34,33 @@ function topicToCode(topic){ return 'PCC-' + topic.slice(3).toUpperCase().match(
 function codeToTopic(code){
   const topic = String(code).toLowerCase().replace(/[^a-z0-9]/g, '');
   return CHANNEL_TOPIC.test(topic) ? topic : null;
+}
+
+const UNREAD_LIMIT = 20;
+
+// Puts an incoming message on the island's list. at: when it arrived here, so the island can show it big for a moment.
+function addUnread(entry){
+  msg.unread = [{ ...entry, at: Date.now() }, ...msg.unread.filter(m => m.id !== entry.id)].slice(0, UNREAD_LIMIT);
+  Store.set('msgUnread', msg.unread);
+}
+
+// Dismisses one message, everything from one channel (after replying there), or everything.
+function dismissUnread({ id, channelId } = {}){
+  const before = msg.unread.length;
+  msg.unread = id ? msg.unread.filter(m => m.id !== id)
+    : channelId ? msg.unread.filter(m => m.channelId !== channelId)
+    : [];
+  if(msg.unread.length !== before){ Store.set('msgUnread', msg.unread); pushIsland(); }
+}
+
+// The last few messages of each channel, both ways, for the island's reply box.
+function channelThreads(perChannel = 4){
+  const threads = {};
+  for(const c of msg.channels){
+    threads[c.id] = msg.log.filter(m => m.channelId === c.id).slice(0, perChannel).reverse()
+      .map(m => ({ from: m.mine ? 'You' : m.from, text: m.text, ts: m.ts, mine: !!m.mine }));
+  }
+  return threads;
 }
 
 function saveMessages(){
@@ -102,6 +129,8 @@ async function sendMessage(channelId, text, kind){
   const result = await window.pcc.messagesSend({ topic: channel.topic, text: body, from: state.settings.name || 'Someone', kind: kind === 'nudge' ? 'nudge' : '' });
   if(!result.ok){ showToast(result.error || 'Could not send'); return false; }
   logMessage({ id: uid(), channelId: channel.id, channel: channel.name, from: 'You', text: body, ts: Date.now(), mine: true });
+  dismissUnread({ channelId: channel.id }); // replying answers what was waiting from that channel
+  pushIsland();
   return true;
 }
 
@@ -134,7 +163,7 @@ function receiveMessage(message){
     nudge: message.kind === 'nudge',
   };
   logMessage(entry);
-  msg.unread = { ...entry, at: Date.now() };
+  addUnread(entry);
   showToast(`${entry.from}: ${entry.text}`);
   // With the island off there's nothing on screen while PCC is hidden, so use a Windows notification.
   if(prefs().msgNotify && !prefs().islandEnabled){
@@ -143,9 +172,9 @@ function receiveMessage(message){
   pushIsland();
 }
 
-function markMessageRead(){ msg.unread = null; pushIsland(); }
+function markMessageRead(id){ dismissUnread(id ? { id } : {}); }
 
-function clearMessageLog(){ msg.log = []; msg.unread = null; saveMessages(); renderMessagesSettings(); pushIsland(); }
+function clearMessageLog(){ msg.log = []; saveMessages(); dismissUnread(); renderMessagesSettings(); pushIsland(); }
 
 function renderMessagesSettings(){
   const list = document.getElementById('msg-channels');

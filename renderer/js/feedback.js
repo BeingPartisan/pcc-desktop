@@ -119,7 +119,7 @@ if(window.pcc && window.pcc.onFeedbackReceived){
     renderFeedbackInbox();
     const label = report.type === 'bug' ? 'Bug report' : report.type === 'idea' ? 'Idea' : 'Feedback';
     showToast(`${label} from ${report.name || 'someone'}`);
-    msg.unread = { id: report.id, channelId: '', channel: label, from: report.name || 'Someone', text: report.text, ts: report.sentAt, at: Date.now() };
+    addUnread({ id: report.id, channelId: '', channel: label, from: report.name || 'Someone', text: report.text, ts: report.sentAt });
     pushIsland();
   });
   window.pcc.onFeedbackDelivered((status) => {

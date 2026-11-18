@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.4.1 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
+**Current version:** 2.5.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
 
 ---
 
@@ -13,6 +13,7 @@ The app is organised into pages on an icon rail. You can jump to any of them wit
 | Page | What it does |
 | --- | --- |
 | **Today** | Live view of today's classes, tasks, deadlines, focus timer, budget, habits, attendance and important mail. The cards can be reordered or hidden. |
+| **Messages** | Chats with friends who use PCC: the whole conversation, unread counts, one-tap phrases, and starting or joining a chat with a code. New messages also show on the floating island. |
 | **Inbox** | IMAP mail sorted by *who sent it*. Label a sender once (Important, Opportunity, For information, Ignore) and their mail is sorted that way from then on. Mail that mentions one of your courses is promoted to Important. Dates found in an email can be added to Deadlines in one click. The inbox checks for new mail every 15 minutes. |
 | **Focus** | Pomodoro timer with adjustable focus and break lengths, plus a native notification when a session ends. |
 | **Study** | Weekly timetable, tasks and agenda, notes and links, and flashcards with decks. |
@@ -208,6 +209,15 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.5.0
+- **Messages page** on the rail, with an unread badge. Chats are no longer buried in Settings.
+- **Feedback button** (the star) at the bottom of the rail.
+- **What's new:** after an update, a card shows what changed, with buttons to try each thing.
+- **Island messages:** every unread message is listed, clicking one replies on its chat with the conversation above the box, and replying clears that chat's messages.
+- **"To you" mail tags** and a "To you only" filter, for mail sent to you personally rather than to a list.
+- **Import schedule** on the Evaluation card: paste a table of dates, components and courses; short course names are matched and marks can be left blank.
+- **Fix:** the Digiicampus sign-in no longer has to be repeated after every restart.
 
 ### 2.4.1
 - **Mail:** a refused sign-in now explains why and what to do, Settings checks the sign-in as soon as you save, and the Mail pane has app-password instructions.

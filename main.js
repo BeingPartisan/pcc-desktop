@@ -810,6 +810,37 @@ ipcMain.handle('clear-legacy-mail-senders', () => {
   return { ok: true };
 });
 
+// Who an email was addressed to, from the user's point of view:
+//   'direct'  to you, alone or with a few others (up to DIRECT_MAX_RECIPIENTS)
+//   'cc'      you were copied in
+//   'group'   to you along with many others
+//   'list'    reached you through a mailing list or a group address
+//             (you aren't named in To or Cc, or the mail says it's from a list)
+const DIRECT_MAX_RECIPIENTS = 5;
+
+// Gmail ignores dots and anything after a "+" in the part before the @, so
+// "a.b+x@gmail.com" is the same inbox as "ab@gmail.com".
+function sameInbox(address) {
+  let [local, domain] = String(address || '').toLowerCase().trim().split('@');
+  if (!domain) return '';
+  local = local.split('+')[0];
+  if (domain === 'googlemail.com') domain = 'gmail.com';
+  if (domain === 'gmail.com') local = local.replace(/\./g, '');
+  return `${local}@${domain}`;
+}
+
+function mailAudience(envelope, headers, myAddress) {
+  const me = sameInbox(myAddress);
+  const to = ((envelope && envelope.to) || []).map((a) => sameInbox(a.address));
+  const cc = ((envelope && envelope.cc) || []).map((a) => sameInbox(a.address));
+  const h = String(headers || '').toLowerCase();
+  const fromList = /^list-id:/m.test(h) || /^list-unsubscribe:/m.test(h) || /^precedence:\s*(bulk|list)/m.test(h);
+  if (!me || fromList) return 'list';
+  if (to.includes(me)) return to.length + cc.length <= DIRECT_MAX_RECIPIENTS ? 'direct' : 'group';
+  if (cc.includes(me)) return 'cc';
+  return 'list';
+}
+
 // Only one scan at a time: a second request while one is running just
 // waits for the same result instead of opening another IMAP connection.
 let mailScanInFlight = null;
@@ -866,14 +897,19 @@ async function runMailScan(knownKeys) {
       const uids = (await client.search({ since }, { uid: true })) || [];
       const allowed = (mail.allowedSenders || []).map((a) => a.toLowerCase()).filter(Boolean);
 
-      // Pass 1: envelopes for everything in the window (one round trip).
+      // Pass 1: envelopes for everything in the window (one round trip),
+      // plus the three headers that say whether a message came from a list.
+      // Who each message was addressed to is worked out for all of them, so
+      // mail fetched before this existed gets it too.
       const wanted = [];
+      const audiences = {};
       if (uids.length) {
-        for await (const m of client.fetch(uids, { envelope: true }, { uid: true })) {
+        for await (const m of client.fetch(uids, { envelope: true, headers: ['list-id', 'list-unsubscribe', 'precedence'] }, { uid: true })) {
           const from = ((m.envelope && m.envelope.from) || [])[0] || {};
           const fromText = `${from.name || ''} <${from.address || ''}>`.toLowerCase();
           if (allowed.length && !allowed.some((a) => fromText.includes(a))) continue;
           present.push(keyOf(m.uid));
+          audiences[keyOf(m.uid)] = mailAudience(m.envelope, m.headers, mail.email);
           if (!known.has(keyOf(m.uid))) wanted.push(m.uid);
         }
       }
@@ -907,12 +943,13 @@ async function runMailScan(knownKeys) {
           date: m.envelope.date ? new Date(m.envelope.date).toISOString() : new Date().toISOString(),
           text: body.slice(0, MAIL_TEXT_CHARS),
           seen: !!(m.flags && m.flags.has('\\Seen')),
+          audience: audiences[keyOf(m.uid)] || 'list',
         });
       }
 
       logEvent('info', `Mail scan complete: ${messages.length} new of ${present.length} in the last ${daysBack} days` +
         (wanted.length > batch.length ? ` (${wanted.length - batch.length} more next time)` : ''));
-      return { messages, present, more: wanted.length > batch.length };
+      return { messages, present, audiences, more: wanted.length > batch.length };
     } finally {
       lock.release();
       await client.logout().catch(() => {});

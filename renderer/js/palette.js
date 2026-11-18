@@ -19,7 +19,10 @@ const PALETTE_ACTIONS = [
   { id: 'finance', title: 'Add expense', cat: 'Actions', action: () => { navigate('money'); document.getElementById('fin-name').focus(); } },
   { id: 'console', title: 'Open console', cat: 'Actions', action: () => openConsole() },
   { id: 'settings', title: 'Open settings', cat: 'Actions', action: () => openSettings() },
-  { id: 'feedback', title: 'Send feedback or report a bug', cat: 'Actions', action: () => openFeedback() }
+  { id: 'feedback', title: 'Send feedback or report a bug', cat: 'Actions', action: () => openFeedback() },
+  { id: 'whats-new', title: "What's new in this version", cat: 'Actions', action: () => openWhatsNew() },
+  { id: 'messages', title: 'Open chats', cat: 'Actions', action: () => navigate('messages') },
+  { id: 'import-schedule', title: 'Import a schedule of evaluations', cat: 'Actions', action: () => { navigate('academics'); openScheduleImport(); } }
 ];
 
 document.addEventListener('keydown', e => {

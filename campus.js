@@ -57,7 +57,34 @@ module.exports = function registerCampus({ logEvent, getMainWindow }) {
     if (token.split('.').length !== 3) return null;
     const expiresAt = tokenExpiry(token);
     if (expiresAt && expiresAt <= Date.now()) return null;
+    if (cookies[0].session && expiresAt) await keepCookie(cookies[0], expiresAt);
     return { token, expiresAt };
+  }
+
+  // The site sets its token as a session cookie: one with no expiry date,
+  // which the browser profile forgets when the app closes. That made PCC ask
+  // for a new sign-in after every restart even though the token itself is
+  // good for about a week. Saving the same cookie again with the token's own
+  // expiry date makes the profile keep it until then. The token stays in the
+  // sign-in profile; it isn't copied anywhere else.
+  async function keepCookie(cookie, expiresAt) {
+    try {
+      const ses = campusSession();
+      await ses.cookies.set({
+        url: CAMPUS_ORIGIN,
+        name: cookie.name,
+        value: cookie.value,
+        path: cookie.path || '/',
+        domain: cookie.hostOnly ? undefined : cookie.domain,
+        secure: cookie.secure,
+        httpOnly: cookie.httpOnly,
+        sameSite: cookie.sameSite,
+        expirationDate: Math.floor(expiresAt / 1000),
+      });
+      await ses.cookies.flushStore();
+    } catch (e) {
+      logEvent('warn', 'Digiicampus: could not keep the sign-in for the next start', String(e.message || e));
+    }
   }
 
   // --- Feed ---

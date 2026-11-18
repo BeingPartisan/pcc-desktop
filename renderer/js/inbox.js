@@ -201,6 +201,7 @@ function ingestMail(messages){
       key: m.key, messageId: m.messageId, fromName: m.fromName, fromAddress: m.fromAddress,
       subject: m.subject, date: m.date, snippet: m.text.slice(0, 220), seen: m.seen,
       course: detectCourse(text), due: detectDue(text, m.date), done: false, deadlineAdded: false,
+      audience: m.audience || '',
     };
     inbox.messages.push(record);
     fresh.push(record);
@@ -222,6 +223,8 @@ async function scanMail(manual){
     } else {
       inboxError = null;
       const fresh = ingestMail(result.messages || []);
+      // Who each message was addressed to; this also fills it in for mail saved before it was tracked.
+      for(const m of inbox.messages){ const a = (result.audiences || {})[m.key]; if(a) m.audience = a; }
       const important = fresh.filter(m => mailCategory(m).category === 'important');
       // Don't announce the first scan: it brings in two weeks of mail at once.
       if(inbox.hadScan && important.length && window.pcc.showNotification){
@@ -286,11 +289,23 @@ function inboxCounts(){
   return counts;
 }
 
+// "To you" filter: mail addressed to you personally, or with you in Cc.
+let inboxToMeOnly = false;
+const isToMe = (m) => m.audience === 'direct' || m.audience === 'cc';
+function toggleInboxToMe(on){ inboxToMeOnly = on; renderInbox(); }
+
+function audiencePill(m){
+  if(m.audience === 'direct') return '<span class="pill to-you" title="Sent to you, not to a list or a big group">To you</span>';
+  if(m.audience === 'cc') return '<span class="pill to-you cc" title="You were copied in">Cc you</span>';
+  return '';
+}
+
 function mailRowHtml(msg, compact){
   const sort = mailCategory(msg);
   const name = msg.fromName || msg.fromAddress;
   const upcoming = msg.due && msg.due.date >= todayStr(); // a date that has passed is shown, but not offered as a deadline
   const tags = [
+    audiencePill(msg),
     msg.course ? `<span class="pill" style="background:color-mix(in srgb, ${colorForSubject(msg.course)} 18%, transparent); color:color-mix(in srgb, ${colorForSubject(msg.course)} 65%, var(--ink));">${esc(msg.course)}</span>` : '',
     msg.due ? `<span class="pill ${upcoming ? describeDaysAway(msg.due.date).cls : ''}" title="Date found in the email">${esc(dueLabel(msg.due))}</span>` : '',
     sort.promoted && sort.label !== 'new' ? `<span class="mail-note">Moved up from ${esc(MAIL_CATEGORIES[sort.label].label)}</span>` : '',
@@ -368,6 +383,8 @@ function renderInbox(){
   document.getElementById('inbox-status').textContent = inbox.lastScan ? `Checked ${describeAgo(inbox.lastScan)}` : '';
   document.getElementById('inbox-done-toggle').style.display = inboxTab === 'senders' ? 'none' : '';
   document.getElementById('inbox-show-done').checked = inboxShowDone;
+  document.getElementById('inbox-to-me').checked = inboxToMeOnly;
+  document.getElementById('inbox-to-me-toggle').style.display = inboxTab === 'senders' ? 'none' : '';
 
   let notice = '';
   if(inboxError === 'not-configured'){
@@ -379,16 +396,17 @@ function renderInbox(){
   if(inboxTab === 'senders'){
     body.innerHTML = notice + renderInboxSenders();
   } else {
-    const list = inbox.messages.filter(m => mailCategory(m).category === inboxTab && (inboxShowDone || !m.done));
+    const list = inbox.messages.filter(m => mailCategory(m).category === inboxTab && (inboxShowDone || !m.done) && (!inboxToMeOnly || isToMe(m)));
     const hint = inboxTab === 'new' && list.length
       ? '<div class="mail-hint">Label a sender once and all their mail, past and future, is sorted for you.</div>' : '';
-    const empty = {
+    let empty = {
       important: 'Nothing important waiting.',
       opportunity: 'No opportunities waiting.',
       info: 'Nothing here.',
       new: 'Every sender is sorted.',
       ignore: 'Nothing ignored.',
     }[inboxTab];
+    if(inboxToMeOnly && !list.length) empty = 'Nothing here was sent to you personally.';
     body.innerHTML = notice + hint + (list.length ? list.map(m => mailRowHtml(m, false)).join('') : (inboxError ? '' : `<div class="empty">${empty}</div>`));
   }
   renderTodayMail(counts);

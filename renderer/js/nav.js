@@ -5,6 +5,7 @@
 const PAGES = {
   today: 'Today',
   inbox: 'Inbox',
+  messages: 'Messages',
   focus: 'Focus',
   study: 'Study',
   academics: 'Academics',
@@ -39,6 +40,7 @@ function navigate(page){
   // Expensive work is deferred until its page is actually opened.
   if(page === 'launch' && firstVisit) loadGames(false);
   if(page === 'system') loadSystemVitals();
+  if(page === 'messages') refreshChats(true);
 }
 
 // Ctrl+1 … Ctrl+9 jump straight to a page.

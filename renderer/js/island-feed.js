@@ -33,7 +33,9 @@ function islandSnapshot(){
     quote: currentWidgetQuote, quoteAuthor: currentWidgetAuthor,
     capture: !!prefs().islandCapture,
     channels: msg.channels.map(c => ({ id: c.id, name: c.name })),
-    message: msg.unread,
+    messages: msg.unread.slice(0, 8),
+    unreadCount: msg.unread.length,
+    threads: channelThreads(),
     workspaces: islandWorkspaces(),
     nudges: nudgePhrases(),
     presence: activePresence().map(p => ({ channelId: p.channelId, from: p.from, state: p.state, until: p.until })),
@@ -79,7 +81,7 @@ if(window.pcc && window.pcc.onIslandAction){
     else if(action.type === 'quick-note' && action.text) addQuickNote(String(action.text).slice(0, 500));
     else if(action.type === 'quick-task' && action.text) addQuickTask(String(action.text).slice(0, 200));
     else if(action.type === 'send-message') sendMessage(action.channelId, action.text, action.kind);
-    else if(action.type === 'message-read') markMessageRead();
+    else if(action.type === 'message-read') markMessageRead(action.id);
     else if(action.type === 'open-workspace') openWorkspace(action.id);
     pushIsland();
   });

@@ -22,6 +22,7 @@ const DPR = Math.min(window.devicePixelRatio || 1, 1.5);   // a sharper canvas t
 const FRAME_MS = 1000 / 40;
 
 let style = 'bars', accent = '#C9F26C', bottomInset = 48;
+let place = 'raised';                   // where bars and wave stand: 'raised' (just above the taskbar) or 'edge' (the screen's bottom edge)
 let listening = false, active = false, running = false;
 let fade = 0;                         // 0 = invisible, 1 = fully drawn; eased towards active
 let smooth = [];                      // eased band levels
@@ -36,6 +37,8 @@ resize();
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
+// Rounds off the top: loud stays loud but never pins flat against the ceiling.
+const softTop = (v) => Math.tanh(Math.max(0, v) * 1.5) / Math.tanh(1.5);
 const avg = (arr, from, to) => { let s = 0; for(let i = from; i < to; i++) s += arr[i]; return s / (to - from); };
 
 /* ---------- Colour ---------- */
@@ -69,29 +72,31 @@ function tone(alpha, tip = 0){
 //   energy    how loud it is on average over the last few seconds
 //   bass      how much of that loudness is in the low end
 //   beats     kicks, found as sudden jumps in the bass; their spacing gives the tempo
-// These blend into `intensity`, 0 (still, soft) to 1 (hard, fast, bass-heavy),
-// which changes slowly, over a few seconds, so the mood follows the song
-// rather than flickering. `pulse` jumps to 1 on each kick and dies away.
+// These blend into `intensity`, 0 (still, soft) to 1 (hard, fast, bass-heavy).
+// It rises within a fraction of a second, so a slow intro that drops into
+// phonk is picked up the moment the drop hits, and falls back slowly, so a
+// short break in the beat doesn't make it flicker. `pulse` jumps to 1 on
+// each kick and dies away.
 // Levels are also auto-scaled, so a quiet song still fills the screen.
 
 const mood = {
   intensity: 0.35, pulse: 0,
-  energy: 0, kickAvg: 0, kickPrev: 0, bassShare: 0.3, peak: 0.35,
+  loud: { now: 0.3, recent: 0.3 }, loudState: {},           // real loudness against the loudest of the last minute (dynamics.js)
+  kickAvg: 0, kickPrev: 0, bassShare: 0.3,
   lastBeat: 0, beats: [],               // times of recent kicks (ms)
   bpm: 0,
 };
 window.__mood = mood; // for checking in tests
 
-function updateMood(now){
+function updateMood(now, dt){
   mood.pulse *= lerp(0.84, 0.74, mood.intensity);     // kicks fade faster when the music is fast
   if(!PCCAudio.listening){ mood.intensity += (0.3 - mood.intensity) * 0.02; return; }
+
+  // How loud it really is, now and over the last few seconds, against the loudest of the last minute.
+  mood.loud = Dyn.loudness(mood.loudState, PCCAudio.rms(), dt);
   const b = PCCAudio.bands(24);
   const bass = avg(b, 0, 4), all = avg(b, 0, 24);
-
-  // Auto-gain: follow the loudest recent level, falling back slowly.
-  mood.peak = Math.max(all, mood.peak * 0.997, 0.12);
-  mood.energy += (all / mood.peak - mood.energy) * 0.02;
-  mood.bassShare += (clamp01((bass / Math.max(all, 0.01)) / 2) - mood.bassShare) * 0.02;
+  mood.bassShare += (clamp01((bass / Math.max(all, 0.01)) / 2) - mood.bassShare) * Math.min(1, dt * 4);
 
   // A kick: the deep bass (unsmoothed) jumps well above its recent average,
   // and is rising rather than already fading. Ratios, so loudness doesn't matter.
@@ -99,52 +104,74 @@ function updateMood(now){
   const ratio = kick / Math.max(mood.kickAvg, 1e-4);
   const rising = kick > mood.kickPrev * 1.08;
   mood.kickPrev = kick;
-  mood.kickAvg += (kick - mood.kickAvg) * 0.06;
+  mood.kickAvg += (kick - mood.kickAvg) * Math.min(1, dt * 2.4);
+  let kicked = false;
   if(kick > 0.002 && ratio > 1.45 && rising && now - mood.lastBeat > 240){
     mood.lastBeat = now;
     mood.pulse = Math.min(1, 0.45 + (ratio - 1.45) * 0.6);
     mood.beats.push(now);
-    onBeat();
+    kicked = true;
   }
-  mood.beats = mood.beats.filter(t => now - t < 6000);
-  // Tempo only from a steady beat: the gaps between kicks have to agree.
-  let steady = 0;
+  mood.beats = mood.beats.filter(t => now - t < 4000);
+  // Tempo only from a steady beat: the gaps between kicks have to agree. Three kicks are enough.
   mood.bpm = 0;
-  if(mood.beats.length >= 4){
+  if(mood.beats.length >= 3){
     const gaps = mood.beats.slice(1).map((t, i) => t - mood.beats[i]).sort((x, y) => x - y);
     const median = gaps[Math.floor(gaps.length / 2)];
     const spread = gaps.reduce((sum, gp) => sum + Math.abs(gp - median), 0) / gaps.length / median;
-    steady = clamp01(1 - spread * 3);
-    if(steady > 0.4) mood.bpm = Math.round(60000 / median);
+    if(spread < 0.2) mood.bpm = Math.round(60000 / median);
   }
 
-  // Blend: loudness, bass weight, and a steady, fast kick (60 to 160 BPM maps to 0 to 1).
-  // Kicks only count with real bass behind them, so swells in soft music don't pass for drums.
+  // Mostly how loud it is right now; extra when it just got much louder (a drop);
+  // and kicks with real bass behind them. Up within a fraction of a second,
+  // back down over a couple of seconds.
   const bassy = clamp01((mood.bassShare - 0.2) * 3.5);
-  const tempo = mood.bpm ? clamp01((mood.bpm - 60) / 100) : 0;
-  const kickRate = clamp01(mood.beats.length / 12) * steady * bassy;
-  const target = clamp01(0.3 * mood.energy + 0.3 * clamp01((mood.bassShare - 0.3) * 2.2) + 0.2 * tempo * bassy + 0.3 * kickRate - 0.08);
-  mood.intensity += (target - mood.intensity) * 0.012;
+  const kickRate = clamp01(mood.beats.length / 8) * bassy;
+  const jump = Math.max(0, mood.loud.now - mood.loud.recent) * 3;
+  const target = clamp01(0.55 * mood.loud.now + 0.15 * jump + 0.3 * kickRate - 0.05);
+  mood.intensity += (target - mood.intensity) * Math.min(1, dt * (target > mood.intensity ? 6 : 0.5));
+  if(kicked) onBeat(ratio);
 }
 
-// Levels to draw, auto-scaled and eased. Calm music rises and falls slowly;
-// energetic music snaps up and drops fast.
+// The readings everything is drawn from (see dynamics.js): the raw spectrum
+// through a fixed loudness window, rising instantly and falling quickly.
+//   spectrum(n, key, fall)  for the bars and the wave: falls fast, so kicks land sharply
+//   levels(n)               for the other styles: the same reading, falling at a pace that suits the mood
+const levelStates = {};
+let frameDt = 1 / 60;
+let sensitivity = 1;                    // Settings > Island > Music: shifts the loudness window
+let calibrateWith = 0;                  // the band count of the first reading each frame, used for calibration
+function frameStartReadings(){ calibrateWith = 0; }
+
+function readSpectrum(n){
+  if(PCCAudio.listening){
+    const db = PCCAudio.spectrumDb(n);
+    if(n === calibrateWith) Dyn.calibrate(db, frameDt);
+    return db.map((d, i) => Dyn.windowed(d, i, n, sensitivity));
+  }
+  const t = performance.now() / 1000;  // not listening: a gentle made-up motion
+  return Array.from({ length: n }, (_, i) => 0.22 + 0.16 * Math.sin(t * 2.1 + i * 0.45) * Math.sin(t * 0.6 + i * 0.11));
+}
+
+function spectrum(n, key, fall){
+  if(!calibrateWith) calibrateWith = n;
+  const st = levelStates[key + n] || (levelStates[key + n] = {});
+  const target = readSpectrum(n);
+  st.target = target;                   // the raw reading this frame, for spotting sudden jumps
+  return Dyn.follow(st, target, frameDt, fall);
+}
+
 function levels(n){
-  let raw;
-  if(PCCAudio.listening){ raw = PCCAudio.bands(n); const k = 0.85 / mood.peak; raw = raw.map(v => clamp01(v * k)); }
-  else { const t = performance.now() / 1000; raw = Array.from({ length: n }, (_, i) => 0.22 + 0.16 * Math.sin(t * 2.1 + i * 0.45) * Math.sin(t * 0.6 + i * 0.11)); }
-  if(smooth.length !== n) smooth = raw.slice();
-  const I = mood.intensity, attack = lerp(0.22, 0.8, I), release = lerp(0.95, 0.78, I);
-  for(let i = 0; i < n; i++) smooth[i] = raw[i] > smooth[i] ? smooth[i] + (raw[i] - smooth[i]) * attack : smooth[i] * release + raw[i] * (1 - release);
-  return smooth;
+  return spectrum(n, 'levels', lerp(1.6, 3.6, mood.intensity));
 }
 
 /* ---------- Particles ---------- */
 // Energetic music: sparks thrown up on every kick. Calm music: a few motes
 // of light drifting slowly upwards.
 let particles = [];
-function onBeat(){
-  if(mood.intensity < 0.45 || !active) return;
+function onBeat(strength = 1.5){
+  // Sparks for energetic music, or for any really hard kick (so the first kicks of a drop get them too).
+  if(!active || (mood.intensity < 0.45 && strength < 2.2)) return;
   const w = canvas.width, h = canvas.height;
   const count = Math.round(lerp(4, 14, mood.intensity));
   for(let i = 0; i < count && particles.length < 90; i++){
@@ -181,32 +208,63 @@ function drawParticles(w, h){
 /* ---------- Shapes ---------- */
 
 // The floor the shapes stand on: just above the taskbar.
-const floorY = (h) => h - (bottomInset + 64) * DPR;
+const floorY = (h) => place === 'edge' ? h - 2 * DPR : h - (bottomInset + 64) * DPR;
 
 function roundRect(x, y, w, h, r){
   r = Math.min(r, w / 2, h / 2);
   g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
 }
 
+// Bars, mirrored from the middle: the bass in the centre, the highs out to
+// both edges, so the shape is symmetric and the beat lands in the middle.
+// Heights are the raw spectrum through the fixed loudness window, so quiet
+// passages sit low and a drop jumps up. A bar that jumps hard lights up and
+// fades back over a moment. Every bar is a glowing capsule
+// with a bright tip; a small cap marks its recent peak and falls back
+// slowly; the floor flashes on a kick and the bars reflect in it.
+let barPeaks = [], barFlash = [], barPrev = [];
 function drawBars(w, h){
-  const n = Math.max(40, Math.min(96, Math.round(w / (26 * DPR))));
-  const lv = levels(n);
+  const half = Math.max(24, Math.min(48, Math.round(w / (48 * DPR))));
+  const lv = spectrum(half, 'bars', 3.2);
   const I = mood.intensity, kick = mood.pulse * I;
-  const floor = floorY(h), gap = w / n, bw = gap * lerp(0.62, 0.5, I), maxH = h * lerp(0.22, 0.32, I);
-  document.body.style.setProperty('--floor', `${(h - floor + maxH * 0.85) / DPR}px`); // the title sits above the tallest bars
-  for(let i = 0; i < n; i++){
-    const v = clamp01(Math.pow(lv[i], lerp(1.3, 1.7, I)) * (1 + kick * 0.35)) * fade;
-    const bh = Math.max(3 * DPR, v * maxH), x = i * gap + (gap - bw) / 2;
-    g.fillStyle = tone(lerp(0.1, 0.18, I) + kick * 0.15); roundRect(x - bw * 0.35, floor - bh - 6 * DPR, bw * 1.7, bh + 6 * DPR, bw); g.fill();
-    const grad = g.createLinearGradient(0, floor - bh, 0, floor);
-    grad.addColorStop(0, tone(0.95, v)); grad.addColorStop(1, tone(0.4));
-    g.fillStyle = grad; roundRect(x, floor - bh, bw, bh, bw / 2); g.fill();
-    const ref = g.createLinearGradient(0, floor, 0, floor + bh * 0.4);
-    ref.addColorStop(0, tone(0.2)); ref.addColorStop(1, tone(0));
-    g.fillStyle = ref; roundRect(x, floor + 4 * DPR, bw, bh * 0.4, bw / 2); g.fill();
+  if(barPeaks.length !== half){ barPeaks = lv.map(() => 0); barFlash = lv.map(() => 0); barPrev = lv.slice(); }
+  // a sudden jump in a band lights its bars up
+  for(let i = 0; i < half; i++){
+    if(lv[i] - barPrev[i] > 0.18) barFlash[i] = 1;
+    barFlash[i] = Math.max(0, barFlash[i] - frameDt * 2.8);
+    barPrev[i] = lv[i];
   }
-  // energetic: a flash line along the floor on each kick
-  if(kick > 0.05){ g.fillStyle = tone(kick * 0.5, 1); g.fillRect(0, floor + 1 * DPR, w, 2 * DPR); }
+  const floor = floorY(h), n = half * 2, gap = w / n, bw = gap * lerp(0.58, 0.5, I), maxH = h * lerp(0.2, 0.3, I);
+  document.body.style.setProperty('--floor', `${(h - floor + maxH * 0.85) / DPR}px`); // the title sits above the tallest bars
+
+  // floor line, glowing with the bass and flashing on a kick
+  const bass = (lv[0] + lv[1] + lv[2]) / 3;
+  const line = g.createLinearGradient(0, 0, w, 0);
+  line.addColorStop(0, tone(0)); line.addColorStop(0.5, tone(0.35 + bass * 0.3 + kick * 0.4, 1)); line.addColorStop(1, tone(0));
+  g.fillStyle = line; g.fillRect(0, floor + 2 * DPR, w, (1.5 + kick * 2) * DPR);
+
+  for(let k = 0; k < n; k++){
+    const band = k < half ? half - 1 - k : k - half;                // centre outwards
+    const v = clamp01(lv[band]) * fade, flash = barFlash[band] * fade;
+    const bh = Math.max(4 * DPR, v * maxH), x = k * gap + (gap - bw) / 2, top = floor - bh;
+    // peak cap: jumps up with the bar, then sinks slowly
+    barPeaks[band] = Math.max(v, (barPeaks[band] || 0) - frameDt * 0.5);
+    // glow behind
+    g.fillStyle = tone(lerp(0.08, 0.14, I) + v * 0.1 + flash * 0.25, flash); roundRect(x - bw * (0.4 + flash * 0.5), top - (4 + flash * 6) * DPR, bw * (1.8 + flash), bh + (4 + flash * 6) * DPR, bw); g.fill();
+    // the capsule: brighter and shifting hue towards its tip
+    const body = g.createLinearGradient(0, top, 0, floor);
+    body.addColorStop(0, tone(1, 0.6 + v * 0.4)); body.addColorStop(0.35, tone(0.9 + flash * 0.1, v * 0.5 + flash * 0.5)); body.addColorStop(1, tone(0.35 + flash * 0.3));
+    g.fillStyle = body; roundRect(x, top, bw, bh, bw / 2); g.fill();
+    // a thin highlight down its left side, like light on glass
+    g.fillStyle = `rgba(255,255,255,${0.18 * v * fade})`; roundRect(x + bw * 0.18, top + bw * 0.3, bw * 0.18, Math.max(0, bh - bw * 0.6), bw * 0.1); g.fill();
+    // peak cap
+    const py = floor - Math.max(4 * DPR, barPeaks[band] * fade * maxH) - 6 * DPR;
+    g.fillStyle = tone(0.85, 1); roundRect(x, py, bw, 2.5 * DPR, 1.25 * DPR); g.fill();
+    // reflection
+    const ref = g.createLinearGradient(0, floor + 5 * DPR, 0, floor + 5 * DPR + bh * 0.45);
+    ref.addColorStop(0, tone(0.22)); ref.addColorStop(1, tone(0));
+    g.fillStyle = ref; roundRect(x, floor + 5 * DPR, bw, bh * 0.45, bw / 2); g.fill();
+  }
 }
 
 // Ribbons: each is a slow sine that rolls sideways; its height follows one
@@ -220,41 +278,67 @@ const RIBBONS = [
 let ribbonLevel = [0, 0, 0];
 let ripples = [];                       // { born } kick ripples
 function drawWave(w, h){
-  const b = levels(12);
   const I = mood.intensity;
-  const bandLevels = [(b[0] + b[1] + b[2]) / 3, (b[4] + b[5] + b[6]) / 3, (b[8] + b[9] + b[10]) / 3];
-  ribbonLevel = ribbonLevel.map((v, i) => v + (bandLevels[i] - v) * lerp(0.08, 0.3, I));
-  if(mood.pulse > 0.95 && I > 0.4 && (!ripples.length || clock - ripples[ripples.length - 1].born > 0.2)) ripples.push({ born: clock });
+  const spec = spectrum(40, 'wave', 2.6);                            // the raw reading: follows the song as it plays
+  const bandLevels = [(spec[0] + spec[2] + spec[4]) / 3, (spec[12] + spec[15] + spec[18]) / 3, (spec[26] + spec[30] + spec[34]) / 3];
+  // the ambient ribbons follow their bands quickly on the way up, gently on the way down
+  ribbonLevel = ribbonLevel.map((v, i) => v + (bandLevels[i] - v) * (bandLevels[i] > v ? 0.5 : 0.12));
+  if(mood.pulse > 0.9 && (I > 0.3 || mood.pulse > 0.98) && (!ripples.length || clock - ripples[ripples.length - 1].born > 0.2)) ripples.push({ born: clock });
   ripples = ripples.filter(r => clock - r.born < 1.4);
   const mid = floorY(h) - h * 0.06;
-  document.body.style.setProperty('--floor', `${(h - mid) / DPR + h * 0.1 / DPR}px`);
+  document.body.style.setProperty('--floor', `${(h - mid) / DPR + h * 0.12 / DPR}px`);
   const steps = 96;
+
+  // 1. ambient ribbons, behind, fainter than before
   RIBBONS.forEach((r, ri) => {
-    const amp = h * r.height * (0.15 + ribbonLevel[r.band] * lerp(0.9, 1.4, I)) * (1 + mood.pulse * I * 0.4) * fade;
+    const amp = h * r.height * (0.12 + ribbonLevel[r.band] * lerp(0.8, 1.2, I)) * fade;
     const len = r.len * lerp(0.75, 1.5, I);
     const path = [];
     for(let i = 0; i <= steps; i++){
-      const x = i / steps;
-      const edge = Math.sin(Math.PI * x);                       // calm at the screen edges
-      let y = Math.sin((x * len * Math.PI * 2) + clock * r.speed * Math.PI) * 0.75
-            + Math.sin((x * len * 1.7 * Math.PI * 2) - clock * r.speed * 1.3) * 0.25;
-      // kick ripples: a bump travelling outwards from the centre
-      for(const rp of ripples){
-        const age = clock - rp.born, front = age * 0.45, d = Math.abs(x - 0.5);
-        y += Math.exp(-Math.pow((d - front) / 0.04, 2)) * (1 - age / 1.4) * 1.4 * (ri === 0 ? 1 : 0.5);
-      }
+      const x = i / steps, edge = Math.sin(Math.PI * x);
+      const y = Math.sin((x * len * Math.PI * 2) + clock * r.speed * Math.PI) * 0.75 + Math.sin((x * len * 1.7 * Math.PI * 2) - clock * r.speed * 1.3) * 0.25;
       path.push([x * w, mid + y * amp * edge]);
     }
-    for(const [lw, a] of [[r.width * 6, 0.07], [r.width * 2.5, 0.18], [r.width, 0.95]]){
-      g.beginPath(); g.moveTo(path[0][0], path[0][1]);
-      for(let i = 1; i < path.length - 1; i++){
-        const mx = (path[i][0] + path[i + 1][0]) / 2, my = (path[i][1] + path[i + 1][1]) / 2;
-        g.quadraticCurveTo(path[i][0], path[i][1], mx, my);
-      }
-      g.lineWidth = lw * DPR * lerp(1.15, 1, I); g.strokeStyle = tone(a * r.alpha, ri / 2);
-      g.lineCap = 'round'; g.lineJoin = 'round'; g.stroke();
-    }
+    strokeSmooth(path, [[r.width * 5, 0.05], [r.width * 1.6, 0.4]], r.alpha * 0.7, ri / 2);
   });
+
+  // 2. the live wave: the spectrum drawn as one smooth line, bass in the middle,
+  //    highs out to both edges, with kick ripples running along it
+  const pts = [];
+  for(let i = 0; i <= steps; i++){
+    const x = i / steps, d = Math.abs(x - 0.5) * 2;                  // 0 at the centre, 1 at the edges
+    const pos = d * (spec.length - 1), lo = Math.floor(pos), t = pos - lo;
+    let v = lerp(spec[lo], spec[Math.min(spec.length - 1, lo + 1)], t);
+    for(const rp of ripples){ const age = clock - rp.born; v += Math.exp(-Math.pow((d - age * 0.8) / 0.06, 2)) * (1 - age / 1.4) * 0.5 * mood.intensity; }
+    const edge = Math.pow(Math.sin(Math.PI * x), 0.6);
+    pts.push([x * w, mid - clamp01(v) * h * lerp(0.16, 0.26, I) * edge * fade]);
+  }
+  // soft fill under the line
+  const fill = g.createLinearGradient(0, mid - h * 0.25, 0, mid);
+  fill.addColorStop(0, tone(0.22 + mood.pulse * I * 0.15, 0.6)); fill.addColorStop(1, tone(0));
+  g.beginPath(); g.moveTo(0, mid);
+  traceSmooth(pts); g.lineTo(w, mid); g.closePath();
+  g.fillStyle = fill; g.fill();
+  strokeSmooth(pts, [[12, 0.07], [5, 0.2], [2.2, 1]], 1, 0.4);
+  // its mirror, faint, below the line
+  strokeSmooth(pts.map(([x, y]) => [x, mid + (mid - y) * 0.35]), [[2, 0.25]], 1, 0.4);
+}
+
+function traceSmooth(path){
+  for(let i = 1; i < path.length - 1; i++){
+    const mx = (path[i][0] + path[i + 1][0]) / 2, my = (path[i][1] + path[i + 1][1]) / 2;
+    g.quadraticCurveTo(path[i][0], path[i][1], mx, my);
+  }
+  g.lineTo(path[path.length - 1][0], path[path.length - 1][1]);
+}
+
+// layers: [[width, alpha], ...] from the widest glow to the line itself
+function strokeSmooth(path, layers, alpha, tip){
+  for(const [lw, a] of layers){
+    g.beginPath(); g.moveTo(path[0][0], path[0][1]); traceSmooth(path);
+    g.lineWidth = lw * DPR; g.strokeStyle = tone(a * alpha, tip);
+    g.lineCap = 'round'; g.lineJoin = 'round'; g.stroke();
+  }
 }
 
 function drawRing(w, h){
@@ -287,10 +371,13 @@ function drawRing(w, h){
 function frame(now){
   if(!running) return;
   requestAnimationFrame(frame);
-  if(now - lastFrame < FRAME_MS) return;
-  const dt = lastFrame ? Math.min(0.1, (now - lastFrame) / 1000) : FRAME_MS / 1000;
+  const minGap = (style === 'bars' || style === 'wave') ? 0 : FRAME_MS;   // the sharp styles draw every frame
+  if(now - lastFrame < minGap) return;
+  const dt = lastFrame ? Math.min(0.1, (now - lastFrame) / 1000) : 1 / 60;
   lastFrame = now;
-  updateMood(now);
+  frameDt = dt;
+  frameStartReadings();
+  updateMood(now, dt);
   clock += dt * lerp(0.55, 1.6, mood.intensity);               // calm music slows everything down
   fade += ((active ? 1 : 0) - fade) * 0.08;
   const w = canvas.width, h = canvas.height;
@@ -313,6 +400,8 @@ window.viz.onConfig((config) => {
   style = config.style || 'bars';
   if(/^#[0-9a-f]{6}$/i.test(config.accent || '')){ accent = config.accent; accentHsl = hexToHsl(accent); }
   if(typeof config.bottomInset === 'number') bottomInset = config.bottomInset;
+  if(config.place) place = config.place;
+  if(typeof config.sensitivity === 'number') sensitivity = config.sensitivity;
   document.body.dataset.style = style;
   smooth = []; particles = []; ripples = []; nebula = null; orbitTrails = PLANETS.map(() => []); starfield = null;
 });

@@ -54,6 +54,7 @@ const PREF_DEFAULTS = {
                               // 'shrink' (that, and become a small handle over maximised windows) | 'maximized' (hide for both)
   islandCapture: true,
   musicBars: true,            // little bars that move to the music in the island's line
+  visualizerPlace: 'raised',  // 'raised' (just above the taskbar) | 'edge' (the screen's bottom edge)
   visualizer: 'off',          // 'off' | 'bars' | 'wave' | 'ring' | 'nebula' | 'orbit' | 'album': music visualiser on the desktop        // a text box on the island for quick notes and tasks
   islandBreaks: true,         // glow softly after a long stretch of continuous use
   islandBreakMinutes: 90,
@@ -104,7 +105,7 @@ function setPref(key, value){
   if(key === 'clock24'){ updateClock(); renderTimetable(); }
   if(key === 'quotesOnline') initQuotes();
   if(key === 'workspacesEnabled') workspacesSwitched();
-  if(key.startsWith('island') || key === 'visualizer') configureIsland();
+  if(key.startsWith('island') || key.startsWith('visualizer')) configureIsland();
   else pushIsland(); // accent and clock changes show on the island too
 }
 

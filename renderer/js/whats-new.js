@@ -10,6 +10,15 @@
 
 const RELEASE_NOTES = [
   {
+    version: '2.6.1',
+    items: [
+      { icon: 'music', title: 'Catches the drop', text: 'When a slow intro turns into phonk, the visualiser switches to its energetic look within about a second, instead of five.' },
+      { icon: 'music', title: 'New bars', text: 'Mirrored from the middle with the beat at the centre, glowing glassy bars with falling peak caps, and every part of the song gets to move.' },
+      { icon: 'music', title: 'A live wave', text: 'The wave is now drawn straight from the music as it plays, with the slow ribbons rolling behind it.' },
+      { icon: 'music', title: 'Bars on the bottom edge', text: 'Bars and wave can now stand right on the bottom edge of the screen instead of just above the taskbar.', go: { label: 'Change it', run: () => openSettingsAt('island') } },
+    ],
+  },
+  {
     version: '2.6.0',
     items: [
       { icon: 'music', title: 'Your desktop dances to the music', text: 'Pick Bars, Wave or Ring and whatever you play moves on your wallpaper itself, behind your desktop icons, which stay clickable. Your windows simply cover it.', go: { label: 'Turn it on', run: () => openSettingsAt('island') } },

@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.6.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
+**Current version:** 2.6.1 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
 
 ---
 
@@ -220,6 +220,12 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.6.1
+- **Bars and wave rebuilt** on the classic desktop-visualiser model: a raw, unsmoothed spectrum shown through a fixed loudness window (with very slow self-calibration), instant rise and quick fall, redrawn every frame. Quiet parts look quiet and drops jump.
+- The mood reacts to a drop within about a second.
+- Bars that jump hard light up and fade; mirrored layout with peak caps.
+- **Bars and wave stand:** just above the taskbar, or on the screen's bottom edge.
 
 ### 2.6.0
 - **Music visualiser** on the wallpaper, behind the desktop icons: Bars, Wave, Ring, Nebula, Orbit and Album art, reacting to the energy, bass and beat of each song.

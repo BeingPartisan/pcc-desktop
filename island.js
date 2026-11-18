@@ -35,7 +35,8 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
   //       'maximized' (hide for both)
   // breaks: gently suggest a break after breakMinutes of continuous use
   // visualizer: 'off' | 'bars' | 'wave' | 'ring' | 'nebula' | 'orbit' | 'album': the desktop music visualiser
-  let config = { enabled: false, media: true, position: 'center', hide: 'fullscreen', breaks: true, breakMinutes: 90, visualizer: 'off' };
+  // visualizerPlace: 'raised' | 'edge': bars and wave just above the taskbar, or on the screen's bottom edge
+  let config = { enabled: false, media: true, position: 'center', hide: 'fullscreen', breaks: true, breakMinutes: 90, visualizer: 'off', visualizerPlace: 'raised' };
   let viz = null;            // the visualiser window, while the feature is on
   let vizShown = false;
   let lastUpdate = null;     // latest app-update status, shown as a row on the island
@@ -273,7 +274,7 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
     const display = screen.getPrimaryDisplay();
     // How far the taskbar reaches into the screen, so the shapes sit above it.
     const bottomInset = display.bounds.y + display.bounds.height - (display.workArea.y + display.workArea.height);
-    vizSend('viz-config', { style: config.visualizer, accent: lastState && lastState.accent, bottomInset });
+    vizSend('viz-config', { style: config.visualizer, accent: lastState && lastState.accent, bottomInset, place: config.visualizerPlace });
   }
 
   function applyVisualizer() {

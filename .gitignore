@@ -2,3 +2,6 @@ node_modules/
 dist/
 *.log
 .DS_Store
+
+# Reference material kept locally, not part of PCC
+fountain-of-colors/

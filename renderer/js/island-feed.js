@@ -53,7 +53,7 @@ function pushIsland(){
 function configureIsland(){
   if(!window.pcc || !window.pcc.islandConfigure) return;
   const p = prefs();
-  window.pcc.islandConfigure({ enabled: !!p.islandEnabled, media: !!p.islandMedia, position: p.islandPosition, hide: p.islandHide, breaks: !!p.islandBreaks, breakMinutes: p.islandBreakMinutes, visualizer: p.visualizer })
+  window.pcc.islandConfigure({ enabled: !!p.islandEnabled, media: !!p.islandMedia, position: p.islandPosition, hide: p.islandHide, breaks: !!p.islandBreaks, breakMinutes: p.islandBreakMinutes, visualizer: p.visualizer, visualizerPlace: p.visualizerPlace })
     .then(pushIsland);
 }
 

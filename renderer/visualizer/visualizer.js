@@ -401,6 +401,9 @@ window.viz.onConfig((config) => {
   if(/^#[0-9a-f]{6}$/i.test(config.accent || '')){ accent = config.accent; accentHsl = hexToHsl(accent); }
   if(typeof config.bottomInset === 'number') bottomInset = config.bottomInset;
   if(config.place) place = config.place;
+  // Over other windows it's see-through, more so for the styles that fill the screen, so work underneath stays readable.
+  const OVER_WINDOWS_OPACITY = { bars: 0.85, wave: 0.85, ring: 0.6, nebula: 0.4, orbit: 0.45, album: 0.9 };
+  document.body.style.opacity = config.layer === 'top' ? (OVER_WINDOWS_OPACITY[style] ?? 0.6) : 1;
   if(typeof config.sensitivity === 'number') sensitivity = config.sensitivity;
   document.body.dataset.style = style;
   smooth = []; particles = []; ripples = []; nebula = null; orbitTrails = PLANETS.map(() => []); starfield = null;

@@ -524,6 +524,7 @@
       <button class="settings-tab" data-tab="appearance" onclick="showSettingsTab('appearance')">Appearance</button>
       <button class="settings-tab" data-tab="layout" onclick="showSettingsTab('layout')">Layout</button>
       <button class="settings-tab" data-tab="island" onclick="showSettingsTab('island')">Island</button>
+      <button class="settings-tab" data-tab="desktop" onclick="showSettingsTab('desktop')">Desktop</button>
       <button class="settings-tab" data-tab="messages" onclick="showSettingsTab('messages')">Messages</button>
       <button class="settings-tab" data-tab="timetable" onclick="showSettingsTab('timetable')">Timetable</button>
       <button class="settings-tab" data-tab="mail" onclick="showSettingsTab('mail')">Mail</button>
@@ -810,7 +811,37 @@
           </div>
           <div class="setting-control"><div class="segmented" data-pref="visualizerPlace"><button data-value="raised" onclick="setPref('visualizerPlace', 'raised')">Above taskbar</button><button data-value="edge" onclick="setPref('visualizerPlace', 'edge')">Screen bottom</button></div></div>
         </div>
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Visualiser shows</div>
+            <div class="setting-desc">On the wallpaper, behind your icons and windows, or over every window. Over windows it's see-through and clicks go straight through it, so you can keep working; it hides for full-screen videos and games. The layers button on the island and the tray menu switch it too.</div>
+          </div>
+          <div class="setting-control"><div class="segmented" data-pref="visualizerLayer"><button data-value="wallpaper" onclick="setPref('visualizerLayer', 'wallpaper')">On the wallpaper</button><button data-value="top" onclick="setPref('visualizerLayer', 'top')">Over windows</button></div></div>
+        </div>
         <div class="field-note">Both listen to the sound your computer is playing, only while music plays, and only to measure how loud it is. Nothing is recorded or sent anywhere.</div>
+      </section>
+
+      <!-- Desktop mode -->
+      <section class="settings-pane" data-tab="desktop">
+        <h2 class="pane-title">Desktop</h2>
+        <p class="pane-intro">Turn your desktop into a PCC dashboard: a big clock, today's classes, tasks, deadlines, important mail and messages, your stats, what's playing and more, drawn on the wallpaper itself. Your desktop icons stay on top and clickable, and your windows cover it as usual.</p>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="pref-desktop-mode">Desktop mode</label>
+            <div class="setting-desc">Shows while PCC is running, even when its window is hidden. It stops updating while a maximised or full-screen window covers the desktop. Windows only.</div>
+          </div>
+          <div class="setting-control"><input id="pref-desktop-mode" type="checkbox" class="switch" data-pref="desktopMode" onchange="setPref('desktopMode', this.checked)" /></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Your desktop icons are on the</div>
+            <div class="setting-desc">The dashboard leaves those sides free so it doesn't sit behind your icons.</div>
+          </div>
+          <div class="setting-control"><div class="segmented" data-pref="desktopIcons"><button data-value="left" onclick="setPref('desktopIcons', 'left')">Left</button><button data-value="right" onclick="setPref('desktopIcons', 'right')">Right</button><button data-value="both" onclick="setPref('desktopIcons', 'both')">Both sides</button></div></div>
+        </div>
+        <div class="field-note">For the weather, set your city in Settings &gt; General. Looking at the dashboard is all it does for now; clicking things on it is coming later.</div>
       </section>
 
       <!-- Messages -->
@@ -1267,6 +1298,7 @@
 <script src="js/feedback.js"></script>
 <script src="js/welcome.js"></script>
 <script src="js/island-feed.js"></script>
+<script src="js/desktop-feed.js"></script>
 <script src="js/chats.js"></script>
 <script src="js/updates.js"></script>
 <script src="js/whats-new.js"></script>

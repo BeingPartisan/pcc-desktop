@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PCC desktop</title>
+<link rel="stylesheet" href="../css/fonts.css">
+<link rel="stylesheet" href="desktop.css">
+</head>
+<body>
+
+<!-- Desktop mode: drawn on the wallpaper, under the desktop icons. Read-only.
+     Every card stays hidden until it has something to show. Cards marked
+     data-drop give way, lowest number first, when a column runs out of room. -->
+
+<div class="update glass" id="p-update" hidden>
+  <svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span id="update-text"></span>
+</div>
+
+<main class="desk" id="desk" hidden>
+
+  <div class="col col-left">
+    <section class="card glass" id="p-today" hidden>
+      <div class="label"><span id="today-label">Today</span><span class="label-side" id="today-side"></span></div>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <section class="card glass" id="p-tasks" hidden data-drop="4">
+      <div class="label"><span>Tasks</span><span class="label-side" id="task-count"></span></div>
+      <div id="tasks"></div>
+    </section>
+
+    <section class="card glass" id="p-deadlines" hidden data-drop="3">
+      <div class="label"><span>Coming up</span></div>
+      <div id="deadlines"></div>
+    </section>
+  </div>
+
+  <div class="col col-mid">
+    <div class="hero">
+      <div class="clock" id="clock"></div>
+      <div class="date"><span id="date"></span><span class="weather" id="weather" hidden></span></div>
+      <div class="greeting" id="greeting"></div>
+      <div class="next glass" id="next" hidden></div>
+    </div>
+
+    <section class="week glass" id="p-week" data-drop="2"></section>
+
+    <section class="card glass" id="p-inbox" hidden data-drop="5">
+      <div class="label"><span>Mail and messages</span></div>
+      <div id="inbox"></div>
+    </section>
+
+    <section class="tiles" id="p-countdowns" hidden data-drop="3"></section>
+
+    <section class="quote" id="p-quote" hidden data-drop="1">
+      <div class="quote-text" id="quote"></div>
+      <div class="quote-by" id="quote-by"></div>
+    </section>
+  </div>
+
+  <div class="col col-right">
+    <section class="card glass" id="p-system">
+      <div class="label"><span>System</span><span class="label-side" id="network"></span></div>
+      <div class="gauges" id="gauges"></div>
+    </section>
+
+    <section class="card glass" id="p-glance" hidden data-drop="3">
+      <div class="glance" id="glance"></div>
+    </section>
+
+    <section class="card glass music" id="p-music" hidden>
+      <div class="label"><span id="music-label">Now playing</span><span class="label-side" id="music-app"></span></div>
+      <div class="track">
+        <div class="cover" id="cover"></div>
+        <div class="track-text"><div class="track-title" id="track-title"></div><div class="track-artist" id="track-artist"></div></div>
+      </div>
+      <div class="eq" id="eq"></div>
+    </section>
+  </div>
+</main>
+
+<script src="desktop.js"></script>
+</body>
+</html>

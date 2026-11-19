@@ -48,6 +48,8 @@ const PREF_DEFAULTS = {
   breakMinutes: 5,
   quotesOnline: true,         // top up the quote pool from the internet (quotes.js)
   islandEnabled: true,        // the floating island (see island-feed.js)
+  desktopMode: false,         // a PCC dashboard drawn on the desktop wallpaper (see desktop-feed.js)
+  desktopIcons: 'left',       // which side the desktop icons are on, so the dashboard leaves them room: 'left' | 'right' | 'both'
   islandMedia: true,          // show and control what's playing
   islandPosition: 'center',   // 'left' | 'center' | 'right'
   islandHide: 'shrink',       // when another app's window is in front: 'never' | 'fullscreen' (hide for full screen) |
@@ -55,6 +57,7 @@ const PREF_DEFAULTS = {
   islandCapture: true,
   musicBars: true,            // little bars that move to the music in the island's line
   visualizerPlace: 'raised',  // 'raised' (just above the taskbar) | 'edge' (the screen's bottom edge)
+  visualizerLayer: 'wallpaper', // 'wallpaper' (behind icons and windows) | 'top' (over every window, clicks pass through)
   visualizer: 'off',          // 'off' | 'bars' | 'wave' | 'ring' | 'nebula' | 'orbit' | 'album': music visualiser on the desktop        // a text box on the island for quick notes and tasks
   islandBreaks: true,         // glow softly after a long stretch of continuous use
   islandBreakMinutes: 90,
@@ -105,7 +108,8 @@ function setPref(key, value){
   if(key === 'clock24'){ updateClock(); renderTimetable(); }
   if(key === 'quotesOnline') initQuotes();
   if(key === 'workspacesEnabled') workspacesSwitched();
-  if(key.startsWith('island') || key.startsWith('visualizer')) configureIsland();
+  if(key.startsWith('desktop')) configureDesktop();
+  else if(key.startsWith('island') || key.startsWith('visualizer')) configureIsland();
   else pushIsland(); // accent and clock changes show on the island too
 }
 

@@ -1,8 +1,13 @@
 # Puts one of PCC's windows into the desktop's wallpaper layer: above the
 # wallpaper picture, below the desktop icons. That's how the music
 # visualiser draws "on" the wallpaper while the icons stay on top and
-# clickable. Run once by island.js, which fills in the window's handle and
+# clickable. Run once per window by wallpaper.js, which fills in the window's handle and
 # position below; prints one JSON line saying what happened.
+#
+# Several PCC windows can share the layer (the visualiser and Desktop mode).
+# The last number says where this one goes among them: 1 = just below the icons,
+# 0 = just above the wallpaper picture. The picture itself is always sent to
+# the very bottom, so joining never hides a window that joined earlier.
 #
 # Windows keeps the wallpaper and the icons in windows that belong to
 # Explorer. Sending the "Progman" window message 0x052C asks Explorer to
@@ -31,7 +36,9 @@ public static class PccWallpaper {
 
   const uint NOACTIVATE = 0x0010, SHOW = 0x0040, NOMOVE = 0x0002, NOSIZE = 0x0001;
 
-  public static string Run(long hwnd, int x, int y, int w, int h) {
+  static readonly IntPtr BOTTOM = new IntPtr(1);
+
+  public static string Run(long hwnd, int x, int y, int w, int h, int onTop) {
     // Work in real screen pixels, like PCC does; otherwise Windows scales every number on a 125% or 150% screen.
     SetProcessDPIAware();
     IntPtr win = new IntPtr(hwnd), r;
@@ -50,8 +57,8 @@ public static class PccWallpaper {
     if (icons != IntPtr.Zero) {
       IntPtr wallpaper = FindWindowExW(progman, IntPtr.Zero, "WorkerW", null);
       SetParent(win, progman);
-      SetWindowPos(win, icons, x - vx, y - vy, w, h, NOACTIVATE | SHOW);           // just below the icons
-      if (wallpaper != IntPtr.Zero) SetWindowPos(wallpaper, win, 0, 0, 0, 0, NOACTIVATE | NOMOVE | NOSIZE);
+      SetWindowPos(win, onTop == 1 ? icons : BOTTOM, x - vx, y - vy, w, h, NOACTIVATE | SHOW);   // just below the icons, or lowest
+      if (wallpaper != IntPtr.Zero) SetWindowPos(wallpaper, BOTTOM, 0, 0, 0, 0, NOACTIVATE | NOMOVE | NOSIZE); // the picture under everything
       return GetParent(win) == progman ? "{\"ok\":true,\"layout\":\"raised\"}" : "{\"ok\":false,\"reason\":\"could not join the desktop\"}";
     }
 
@@ -62,9 +69,9 @@ public static class PccWallpaper {
     }, IntPtr.Zero);
     if (target == IntPtr.Zero) return "{\"ok\":false,\"reason\":\"no wallpaper layer found\"}";
     SetParent(win, target);
-    SetWindowPos(win, IntPtr.Zero, x - vx, y - vy, w, h, NOACTIVATE | SHOW);
+    SetWindowPos(win, onTop == 1 ? IntPtr.Zero : BOTTOM, x - vx, y - vy, w, h, NOACTIVATE | SHOW);   // IntPtr.Zero: the top of the layer
     return GetParent(win) == target ? "{\"ok\":true,\"layout\":\"classic\"}" : "{\"ok\":false,\"reason\":\"could not join the desktop\"}";
   }
 }
 "@
-[PccWallpaper]::Run(__HWND__, __X__, __Y__, __W__, __H__)
+[PccWallpaper]::Run(__HWND__, __X__, __Y__, __W__, __H__, __ONTOP__)

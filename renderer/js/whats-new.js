@@ -10,6 +10,14 @@
 
 const RELEASE_NOTES = [
   {
+    version: '2.7.0',
+    items: [
+      { icon: 'star', title: 'Desktop mode', text: 'Your desktop becomes a PCC dashboard: a big clock, today\'s classes, tasks, deadlines, important mail and messages, CPU, memory, battery and weather, what\'s playing and more, drawn on the wallpaper. Your icons stay on top and clickable.', go: { label: 'Turn it on', run: () => openSettingsAt('desktop') } },
+      { icon: 'music', title: 'Visualiser over your windows', text: 'The visualiser can now float over everything you have open, see-through and with clicks going straight through it. Switch it with the layers button on the island, the tray menu, or Settings.', go: { label: 'Change it', run: () => openSettingsAt('island') } },
+      { icon: 'music', title: 'Visualiser and Desktop mode together', text: 'Both can be on at once: the music plays on the wallpaper, behind the dashboard.' },
+    ],
+  },
+  {
     version: '2.6.1',
     items: [
       { icon: 'music', title: 'Catches the drop', text: 'When a slow intro turns into phonk, the visualiser switches to its energetic look within about a second, instead of five.' },

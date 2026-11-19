@@ -64,6 +64,10 @@ contextBridge.exposeInMainWorld('pcc', {
   islandState: (state) => ipcRenderer.send('island-state', state),
   onIslandAction: (callback) => ipcRenderer.on('island-action', (event, action) => callback(action)),
 
+  // Desktop mode (a dashboard on the wallpaper)
+  desktopConfigure: (config) => ipcRenderer.invoke('desktop-configure', config),
+  desktopState: (state) => ipcRenderer.send('desktop-state', state),
+
   // About
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),

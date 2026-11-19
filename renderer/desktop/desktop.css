@@ -1,0 +1,175 @@
+/* Desktop mode. The window is transparent and covers the whole screen, so
+   the wallpaper shows everywhere except the cards. Cards are frosted glass:
+   each one paints a blurred copy of the part of the wallpaper behind it
+   (desktop.js lines it up), since a transparent window can't blur the real
+   desktop. --accent comes from the app; --top, --left... leave room for the
+   island, the taskbar and the desktop icons. */
+
+:root{
+  --accent:#C9F26C; --accent-ink:#151A07;
+  --ink:#F5F5F2; --ink-2:#C9CBD2; --ink-3:#8E909A;
+  --warn:#FF9A7A; --hot:#FF6B6B;
+  --sans:'Geist','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
+  --mono:'Geist Mono','Cascadia Code',Consolas,monospace;
+  --serif:'Instrument Serif',Georgia,serif;
+  --top:84px; --bottom:72px; --left:220px; --right:48px;
+  --wp-img:none; --wp-size:cover; --wp-x:0px; --wp-y:0px; --wp-repeat:no-repeat;
+  --radius:22px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0; height:100%; background:transparent; overflow:hidden; user-select:none; cursor:default;}
+body{font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialiased; font-size:14px; line-height:1.4; font-variant-numeric:tabular-nums;}
+svg{fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0;}
+[hidden]{display:none !important;}
+
+/* ---------- glass ---------- */
+.glass{position:relative; isolation:isolate; overflow:hidden; border-radius:var(--radius);}
+.glass::before{content:''; position:absolute; inset:-48px; z-index:-2;
+  background-image:var(--wp-img); background-size:var(--wp-size); background-repeat:var(--wp-repeat);
+  background-position:calc(var(--wp-x) - var(--px, 0px) + 48px) calc(var(--wp-y) - var(--py, 0px) + 48px);
+  filter:blur(28px) saturate(1.6) brightness(.78); will-change:transform;}
+.glass::after{content:''; position:absolute; inset:0; z-index:-1; border-radius:inherit;
+  background:linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.03) 38%, rgba(0,0,0,.10)), rgba(10,11,16,.40);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), inset 0 0 0 1px rgba(255,255,255,.08);}
+body.no-wp .glass::after{background:linear-gradient(155deg, rgba(255,255,255,.10), rgba(255,255,255,.02) 40%), rgba(12,13,18,.62);}
+
+/* ---------- layout ---------- */
+.desk{position:absolute; inset:var(--top) var(--right) var(--bottom) var(--left);
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr); gap:26px;
+  max-width:1600px; margin:0 auto;}
+.col{display:flex; flex-direction:column; gap:14px; min-width:0; min-height:0; overflow:hidden;}
+.col > *{flex-shrink:0; animation:appear .9s ease both;}
+.col > *:nth-child(2){animation-delay:.08s;} .col > *:nth-child(3){animation-delay:.16s;} .col > *:nth-child(4){animation-delay:.24s;} .col > *:nth-child(5){animation-delay:.32s;}
+/* opacity only: the glass is lined up with the wallpaper, so the cards mustn't move */
+@keyframes appear{from{opacity:0;} to{opacity:1;}}
+
+.card{padding:14px 18px;}
+.label{display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12px; font-weight:500; color:var(--ink-2); margin-bottom:10px; letter-spacing:.01em;}
+.label-side{font-family:var(--mono); font-weight:400; color:var(--ink-3); font-size:11.5px;}
+.dim{color:var(--ink-3);}
+.more{font-size:12px; color:var(--ink-3); padding-top:6px;}
+
+/* ---------- today's timeline ---------- */
+/* one line down through the dots, from the first to the last */
+.timeline{position:relative;}
+.timeline::before{content:''; position:absolute; left:67px; top:14px; bottom:var(--tail, 14px); width:1.5px; background:rgba(255,255,255,.14);}
+.tl{display:grid; grid-template-columns:52px 16px minmax(0,1fr); align-items:start; column-gap:8px; padding:4px 0; position:relative;}
+.tl-time{font-family:var(--mono); font-size:12px; color:var(--ink-3); padding-top:2px; text-align:right;}
+.tl-dot{width:10px; height:10px; border-radius:50%; margin:4px 0 0 3px; background:rgba(20,22,28,.9); border:2px solid rgba(255,255,255,.35); position:relative; z-index:1;}
+.tl-body{min-width:0;}
+.tl-subject{font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tl-meta{font-size:12px; color:var(--ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tl.past .tl-subject{color:var(--ink-3);} .tl.past .tl-dot{border-color:rgba(255,255,255,.18);}
+.tl.next .tl-dot{border-color:var(--accent);}
+.tl.next .tl-meta{color:var(--accent);}
+.tl.now .tl-dot{background:var(--accent); border-color:var(--accent); box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);}
+.tl.now .tl-time{color:var(--accent);}
+.tl-progress{height:3px; border-radius:2px; background:rgba(255,255,255,.12); margin-top:6px; overflow:hidden;}
+.tl-progress i{display:block; height:100%; background:var(--accent); border-radius:2px;}
+
+/* ---------- tasks and deadlines ---------- */
+.task{display:flex; align-items:center; gap:11px; padding:5px 0; min-width:0;}
+.task .ring{width:16px; height:16px; border-radius:50%; border:2px solid var(--ink-3); flex-shrink:0;}
+.task .ring.high{border-color:var(--warn);} .task .ring.med{border-color:var(--accent);}
+.task .txt{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px;}
+
+.deadline{display:flex; align-items:center; gap:12px; padding:5px 0; min-width:0;}
+.badge{width:42px; height:40px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;
+  background:rgba(255,255,255,.08); line-height:1;}
+.badge b{font-size:16px; font-weight:500;} .badge small{font-size:9.5px; color:var(--ink-3); margin-top:3px; letter-spacing:.04em;}
+.badge.soon{background:color-mix(in srgb, var(--warn) 22%, transparent);} .badge.soon b{color:var(--warn);}
+.badge.today{background:var(--warn);} .badge.today b, .badge.today small{color:#2A0F06;}
+.deadline .txt{min-width:0;} .deadline .title{font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.deadline .when{font-size:12px; color:var(--ink-3);}
+
+/* ---------- hero ---------- */
+.hero{text-align:center; padding:4px 0 2px; display:flex; flex-direction:column; align-items:center;}
+/* no glass behind these, so a soft dark halo keeps them readable on a bright wallpaper */
+.clock, .date, .greeting, .quote{text-shadow:0 1px 2px rgba(0,0,0,.45), 0 4px 30px rgba(0,0,0,.55);}
+.clock{font-size:clamp(78px, min(8.4vw, 13vh), 150px); font-weight:250; letter-spacing:-.045em; line-height:.95;}
+.clock .colon{color:var(--accent); animation:tick 2s steps(1) infinite; margin:0 .02em;}
+@keyframes tick{0%{opacity:1;} 50%{opacity:.35;}}
+.clock .ampm{font-size:.22em; font-weight:400; letter-spacing:.02em; margin-left:.35em; color:var(--ink-2); vertical-align:.9em;}
+.date{font-size:17px; color:var(--ink-2); margin-top:10px; letter-spacing:.01em; display:flex; align-items:center; justify-content:center;}
+.greeting{font-size:26px; margin-top:4px; font-weight:400;}
+.greeting em{font-family:var(--serif); font-style:italic; color:var(--accent); font-size:1.2em;}
+.next{display:inline-flex; align-items:center; gap:10px; margin-top:14px; padding:8px 16px 8px 14px; border-radius:99px; font-size:13.5px; max-width:100%;}
+.next .pulse{width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0; animation:pulse 2s ease-out infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent);} 100%{box-shadow:0 0 0 10px transparent;}}
+.next .k{color:var(--ink-3);} .next b{font-weight:500;} .next .t{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+/* ---------- week strip ---------- */
+.week{display:grid; grid-template-columns:repeat(7, 1fr); gap:6px; padding:10px;}
+.day{text-align:center; padding:8px 0 9px; border-radius:14px;}
+.day .wd{font-size:11px; color:var(--ink-3);}
+.day .dn{font-size:18px; margin-top:2px;}
+.day .dots{display:flex; justify-content:center; gap:3px; height:5px; margin-top:5px;}
+.day .dots i{width:5px; height:5px; border-radius:50%; background:var(--warn);}
+.day .dots i.c{background:var(--ink-2);}
+.day.today{background:var(--accent); color:var(--accent-ink);}
+.day.today .wd{color:var(--accent-ink); opacity:.7;}
+.day.today .dots i{background:var(--accent-ink);}
+.day.past .dn{color:var(--ink-3);}
+
+/* ---------- inbox ---------- */
+.msg{display:flex; align-items:center; gap:12px; padding:6px 0; min-width:0;}
+.avatar{width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:13px; font-weight:500; flex-shrink:0; color:#101114;}
+.msg .body{min-width:0; flex:1;}
+.msg .title{font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.msg .sub{font-size:12px; color:var(--ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.msg .time{font-family:var(--mono); font-size:11.5px; color:var(--ink-3); flex-shrink:0;}
+.tag{font-size:10.5px; padding:1px 7px; border-radius:6px; background:color-mix(in srgb, var(--accent) 22%, transparent); color:var(--accent); margin-right:7px; vertical-align:1px;}
+
+/* ---------- countdown tiles ---------- */
+.tiles{display:grid; grid-template-columns:repeat(auto-fit, minmax(0, 1fr)); gap:14px;}
+.tile{padding:14px 16px;}
+.tile .num{font-size:34px; font-weight:300; letter-spacing:-.03em; line-height:1;}
+.tile .num small{font-size:13px; letter-spacing:0; color:var(--ink-2); margin-left:5px; font-weight:400;}
+.tile .what{font-size:12.5px; color:var(--ink-2); margin-top:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tile.soon .num{color:var(--accent);}
+
+.quote{text-align:center; padding:2px 28px;}
+.quote-text{font-family:var(--serif); font-style:italic; font-size:21px; line-height:1.3;}
+.quote-by{font-size:12px; color:var(--ink-2); margin-top:6px;}
+
+/* ---------- weather, beside the date ---------- */
+.weather{display:inline-flex; align-items:center; gap:7px; margin-left:16px; padding-left:16px; border-left:1px solid rgba(255,255,255,.25);}
+.weather svg{width:20px; height:20px; color:var(--accent); stroke-width:1.7;}
+.weather b{font-weight:500; color:var(--ink);}
+
+/* ---------- system gauges ---------- */
+.gauges{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; text-align:center;}
+.gauge{position:relative; width:76px; height:76px; margin:0 auto;}
+.gauge svg{width:76px; height:76px; transform:rotate(-90deg);}
+.gauge .track{stroke:rgba(255,255,255,.10); stroke-width:6;}
+.gauge .fill{stroke:var(--accent); stroke-width:6; transition:stroke-dashoffset 1s ease, stroke .4s;}
+.gauge.hot .fill{stroke:var(--hot);} .gauge.low .fill{stroke:var(--warn);}
+.gauge .val{position:absolute; inset:0; display:grid; place-items:center; font-size:16px; font-weight:500;}
+.gauge .val small{font-size:10px; color:var(--ink-3); font-weight:400;}
+.gauge-name{font-size:11.5px; color:var(--ink-3); margin-top:6px;}
+
+/* ---------- at a glance ---------- */
+.glance{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.stat{padding:10px 12px; border-radius:14px; background:rgba(255,255,255,.06);}
+.stat .num{font-size:22px; font-weight:500; line-height:1.15;}
+.stat .num.accent{color:var(--accent);} .stat .num.warn{color:var(--warn);}
+.stat .what{font-size:11.5px; color:var(--ink-3); margin-top:2px;}
+
+/* ---------- music: the card takes on the colours of the cover ---------- */
+.music.has-cover::before{background-image:var(--cover); background-size:cover; background-position:center; inset:-60px; filter:blur(40px) saturate(1.9) brightness(.62);}
+.track{display:flex; gap:14px; align-items:center;}
+.cover{width:64px; height:64px; border-radius:14px; background:rgba(255,255,255,.08) center/cover no-repeat; flex-shrink:0; box-shadow:0 8px 24px rgba(0,0,0,.35);}
+.track-text{min-width:0;}
+.track-title{font-size:16px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.track-artist{font-size:13px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px;}
+.eq{display:flex; align-items:flex-end; gap:3px; height:28px; margin-top:14px;}
+.eq i{flex:1; height:100%; border-radius:3px; background:var(--accent); transform-origin:bottom; transform:scaleY(.1); opacity:.9;}
+.playing .eq i{animation:eq 1.1s ease-in-out infinite alternate;}
+@keyframes eq{0%{transform:scaleY(.12);} 50%{transform:scaleY(var(--h, .7));} 100%{transform:scaleY(.28);}}
+
+/* ---------- update ---------- */
+.update{position:absolute; top:calc(var(--top) - 52px); right:var(--right); display:flex; gap:9px; align-items:center; padding:9px 16px; border-radius:99px; font-size:13px; animation:appear .9s ease both;}
+.update svg{width:15px; height:15px; color:var(--accent);}
+
+/* while a window covers the desktop nothing moves */
+body.still *{animation-play-state:paused !important;}

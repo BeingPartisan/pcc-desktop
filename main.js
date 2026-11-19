@@ -42,8 +42,12 @@ require('./campus')({ logEvent, getMainWindow: () => mainWindow });
 const messaging = require('./messaging')({ logEvent, getMainWindow: () => mainWindow });
 require('./feedback')({ logEvent, getMainWindow: () => mainWindow, getLog: () => logBuffer, messaging, broadcastPublicKey: messaging.broadcastPublicKey });
 
+// Desktop mode: a PCC dashboard drawn on the wallpaper (desktop.js); the island's media helper feeds it.
+const desktop = require('./desktop')({ logEvent });
+
 const island = require('./island')({
   logEvent,
+  desktop,
   getMainWindow: () => mainWindow,
   // Download / Restart pressed on the island's update row
   onUpdateAction: (type) => (type === 'update-download' ? startUpdateDownload() : installDownloadedUpdate()),
@@ -434,10 +438,18 @@ function buildTrayMenu() {
     : island.isSnoozed()
       ? [{ label: 'Show the island now', click: () => island.snooze(0) }, { type: 'separator' }]
       : [{ label: 'Hide the island for an hour', click: () => island.snooze(60) }, { type: 'separator' }];
+  // While the desktop visualiser is on: draw it over every window (click-through) or back on the wallpaper.
+  const viz = island.visualizer();
+  const visualizerItems = viz.style === 'off' ? [] : [
+    { label: 'Visualiser over windows', type: 'checkbox', checked: viz.layer === 'top',
+      click: () => { if (mainWindow) mainWindow.webContents.send('island-action', { type: 'visualizer-layer' }); } },
+    { type: 'separator' },
+  ];
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Open PCC', click: () => { mainWindow.show(); mainWindow.focus(); } },
     { type: 'separator' },
     ...islandItems,
+    ...visualizerItems,
     {
       label: 'Check for Updates',
       click: () => {
@@ -1387,6 +1399,7 @@ app.whenReady().then(() => {
 app.on('before-quit', () => {
   isQuitting = true;
   island.stop(); // close the island and its helper process with the app
+  desktop.stop();
   messaging.stop();
 });
 

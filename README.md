@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.6.1 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
+**Current version:** 2.7.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
 
 ---
 
@@ -58,7 +58,13 @@ It never takes keyboard focus unless you click its text box, and it can hide its
 
 Settings → Island → Music. Shapes that move to whatever your computer is playing, drawn on the wallpaper itself: behind the desktop icons (which stay clickable) and under all your windows. Seven styles: Bars, Wave, Ring, Nebula (a turning galaxy of gas and stars), Orbit (a small solar system where each planet is a part of the music), and Album art (the cover of what's playing in a corner card, with a record spinning behind it).
 
+It can also float over every open window instead (Settings → Island → Visualiser shows, the layers button on the island, or the tray menu): see-through, with clicks going straight through it, and hidden for full-screen apps.
+
 It reads the feel of each song as it plays (loudness, how bass-heavy it is, and the beat and tempo) and moves to match: heavy, fast tracks make it punch on every kick and throw sparks; soft, slow songs make it drift and glow. It listens only to measure loudness; nothing is recorded or sent. The island also gets little bars beside the track name, and shows the cover.
+
+### Desktop mode
+
+Settings → Desktop. Turns the desktop into a PCC dashboard, drawn on the wallpaper under the desktop icons (which stay on top and clickable) and under all windows: a large clock with the weather, a "now / next" line, today's classes as a timeline, tasks, upcoming deadlines, this week, important mail and messages, countdowns, CPU / memory / battery gauges and network speed, attendance, budget and habits, what's playing, and a notice when an update is out. The cards are frosted glass: each shows a blurred copy of the wallpaper behind it (PCC reads the wallpaper picture from Windows' settings to do this). You tell it which side your icons are on (left, right or both) so it leaves them room. It stops updating while a maximised or full-screen window covers the desktop, and it works alongside the music visualiser, which plays behind it. For now it's for looking at; clicking things on it is planned.
 
 ### Messages
 
@@ -193,10 +199,13 @@ pcc-desktop/
 ├── main.js             # main process: window, tray, hotkey, IPC, mail, games,
 │                       #   system info, backups, autostart, auto-updater
 ├── campus.js           # Digiicampus sign-in and sync (timetable, attendance, results)
-├── island.js           # the floating island's window, break reminder, media helper
+├── island.js           # the floating island's window, break reminder, media helper, visualiser window
+├── desktop.js          # Desktop mode: the dashboard window on the wallpaper, system stats, wallpaper picture
+├── desktop-preload.js  # bridge for the Desktop mode window
+├── wallpaper.js        # joins a window to the wallpaper layer (visualiser and Desktop mode)
 ├── island-preload.js   # bridge for the island window
 ├── media-helper.ps1    # Windows: what's playing (and its cover), and which kind of window is in front
-├── wallpaper-helper.ps1 # puts the visualiser into the wallpaper layer, behind the icons
+├── wallpaper-helper.ps1 # Windows: the wallpaper-layer placement itself, behind the icons
 ├── visualizer-preload.js # bridge for the visualiser window
 ├── messaging.js        # messages over the ntfy.sh relay, signed announcements
 ├── feedback.js         # encrypted bug reports and ideas to the developer
@@ -207,11 +216,12 @@ pcc-desktop/
 │   ├── fonts/          # Geist, Geist Mono, Instrument Serif (OFL), bundled for offline use
 │   ├── island/         # the island's own page, styles and script
 │   ├── visualizer/     # the music visualiser: audio analysis, mood, the styles
+│   ├── desktop/        # the Desktop mode dashboard page
 │   └── js/             # one module per feature:
 │                       #   today, inbox, academics, evaluation, campus, timetable-mail,
 │                       #   workspace (tasks/agenda), notes-links, flashcards, finance,
 │                       #   life (habits), games, vitals, console, palette, nav,
-│                       #   appearance, settings, core, app, island-feed, messages,
+│                       #   appearance, settings, core, app, island-feed, desktop-feed, messages,
 │                       #   workspaces, moments, feedback, quotes, updates, welcome
 └── assets/
     └── icon.png        # app and tray icon
@@ -220,6 +230,11 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.7.0
+- **Desktop mode** (Settings → Desktop): a PCC dashboard on the wallpaper with frosted-glass cards, a class timeline, tasks, deadlines, a week strip, mail and messages, countdowns, system gauges, weather, at-a-glance stats and what's playing. Leaves room for desktop icons on the left, right or both sides.
+- **Visualiser over windows**: it can float over everything, see-through and click-through; switch from the island, the tray menu, Settings or Ctrl+K.
+- The visualiser and Desktop mode now work at the same time (the wallpaper layer keeps both).
 
 ### 2.6.1
 - **Bars and wave rebuilt** on the classic desktop-visualiser model: a raw, unsmoothed spectrum shown through a fixed loudness window (with very slow self-calibration), instant rise and quick fall, redrawn every frame. Quiet parts look quiet and drops jump.

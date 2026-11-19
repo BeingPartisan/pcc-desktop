@@ -179,6 +179,10 @@ function render(){
     $('media-title').textContent = media.title || 'Unknown track';
     $('media-artist').textContent = media.artist || '';
     $('media-toggle').innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+    const over = state.visualizerLayer === 'top';
+    $('viz-layer').hidden = !state.visualizer || state.visualizer === 'off';
+    $('viz-layer').classList.toggle('on', over);
+    $('viz-layer').title = over ? 'Put the visualiser back on the wallpaper' : 'Show the visualiser over your windows';
   }
 
   $('row-mail').hidden = !state.mail.count;

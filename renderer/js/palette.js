@@ -22,6 +22,8 @@ const PALETTE_ACTIONS = [
   { id: 'feedback', title: 'Send feedback or report a bug', cat: 'Actions', action: () => openFeedback() },
   { id: 'island-hide', title: 'Hide the island for an hour', cat: 'Actions', action: () => window.pcc.islandSnooze(60).then(() => showToast('Island hidden for an hour. Bring it back from the tray menu.')) },
   { id: 'island-show', title: 'Show the island again', cat: 'Actions', action: () => window.pcc.islandSnooze(0) },
+  { id: 'visualizer-layer', title: 'Visualiser: over windows or on the wallpaper', cat: 'Actions', action: () => { if(prefs().visualizer === 'off') return openSettingsAt('island'); setPref('visualizerLayer', prefs().visualizerLayer === 'top' ? 'wallpaper' : 'top'); showToast(prefs().visualizerLayer === 'top' ? 'Visualiser is over your windows' : 'Visualiser is back on the wallpaper'); } },
+  { id: 'desktop-mode', title: 'Turn Desktop mode on or off', cat: 'Actions', action: () => { setPref('desktopMode', !prefs().desktopMode); showToast(prefs().desktopMode ? 'Desktop mode is on. Show the desktop to see it.' : 'Desktop mode is off'); } },
   { id: 'whats-new', title: "What's new in this version", cat: 'Actions', action: () => openWhatsNew() },
   { id: 'messages', title: 'Open chats', cat: 'Actions', action: () => navigate('messages') },
   { id: 'import-schedule', title: 'Import a schedule of evaluations', cat: 'Actions', action: () => { navigate('academics'); openScheduleImport(); } }

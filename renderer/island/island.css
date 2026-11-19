@@ -69,6 +69,9 @@ button{font-family:inherit; cursor:pointer;}
 .btn.accent:hover{filter:brightness(1.08);}
 .icon{width:30px; height:30px; display:grid; place-items:center; border:none; border-radius:50%; background:transparent; color:var(--ink); transition:background .15s;}
 .icon:hover{background:rgba(255,255,255,.1);}
+/* the visualiser layers button: lit while it's over the windows */
+.icon.layer svg{fill:none;}
+.icon.layer.on{color:var(--accent); background:rgba(255,255,255,.08);}
 .icon.big{width:36px; height:36px; background:var(--accent); color:var(--accent-ink);}
 .icon.big:hover{background:var(--accent); filter:brightness(1.08);}
 .icon svg{width:15px; height:15px; fill:currentColor; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}

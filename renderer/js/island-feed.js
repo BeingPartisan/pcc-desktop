@@ -41,6 +41,7 @@ function islandSnapshot(){
     nudges: nudgePhrases(),
     presence: activePresence().map(p => ({ channelId: p.channelId, from: p.from, state: p.state, until: p.until })),
     countdowns: islandCountdowns(),
+    visualizer: prefs().visualizer, visualizerLayer: prefs().visualizerLayer,
   };
 }
 
@@ -53,7 +54,7 @@ function pushIsland(){
 function configureIsland(){
   if(!window.pcc || !window.pcc.islandConfigure) return;
   const p = prefs();
-  window.pcc.islandConfigure({ enabled: !!p.islandEnabled, media: !!p.islandMedia, position: p.islandPosition, hide: p.islandHide, breaks: !!p.islandBreaks, breakMinutes: p.islandBreakMinutes, visualizer: p.visualizer, visualizerPlace: p.visualizerPlace })
+  window.pcc.islandConfigure({ enabled: !!p.islandEnabled, media: !!p.islandMedia, position: p.islandPosition, hide: p.islandHide, breaks: !!p.islandBreaks, breakMinutes: p.islandBreakMinutes, visualizer: p.visualizer, visualizerPlace: p.visualizerPlace, visualizerLayer: p.visualizerLayer, desktop: !!p.desktopMode })
     .then(pushIsland);
 }
 
@@ -84,6 +85,8 @@ if(window.pcc && window.pcc.onIslandAction){
     else if(action.type === 'send-message') sendMessage(action.channelId, action.text, action.kind);
     else if(action.type === 'message-read') markMessageRead(action.id);
     else if(action.type === 'open-workspace') openWorkspace(action.id);
+    // the layers button on the island, and the tray menu: visualiser over windows, or back on the wallpaper
+    else if(action.type === 'visualizer-layer') setPref('visualizerLayer', prefs().visualizerLayer === 'top' ? 'wallpaper' : 'top');
     pushIsland();
   });
 }

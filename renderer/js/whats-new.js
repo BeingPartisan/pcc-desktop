@@ -12,7 +12,7 @@ const RELEASE_NOTES = [
   {
     version: '2.8.1',
     items: [
-      { icon: 'island', title: 'Deadlines on your phone\'s island', text: 'PCC for Android 0.1.1 shows deadlines due today on the island with a Done button, tomorrow\'s the evening before, and overdue ones in the morning. Hide it for a few hours and it comes back by itself. Get it from the same release page.' },
+      { icon: 'island', title: 'Deadlines on your phone\'s island', text: 'PCC for Android 0.1.1 shows deadlines due today on the island with a Done button, tomorrow\'s the day before, and overdue ones in the morning. Hide it for a few hours and it comes back by itself. Get it from the same release page.' },
       { icon: 'star', title: 'Smoother loading', text: 'While classes, attendance, mail and weather load, pages show a soft outline of what\'s coming instead of empty space.' },
     ],
   },

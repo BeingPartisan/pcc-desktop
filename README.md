@@ -279,7 +279,7 @@ pcc-desktop/
 ## Changelog
 
 ### 2.8.1
-- **PCC for Android 0.1.1**: deadlines and tasks on the island. Deadlines due today show from the morning with a **Done** button, tomorrow's from the evening before, then overdue ones and (if you turn it on) high-priority tasks. Classes still come first. **Hide** puts the island away for 3 or 4 hours, then it comes back by itself. All of it is adjustable in More > Island.
+- **PCC for Android 0.1.1**: deadlines and tasks on the island. Deadlines due today show from the morning with a **Done** button, tomorrow's from the day before (from the morning or as late as 8 PM, your choice), then overdue ones and (if you turn it on) high-priority tasks. Classes still come first. **Hide** puts the island away for 3 or 4 hours, then it comes back by itself. All of it is adjustable in More > Island.
 - **Android**: typing is no longer interrupted when something updates in the background.
 - **Loading placeholders**: on PC and Android, pages show a soft outline of what's coming while classes, attendance, mail and weather load, instead of empty space.
 

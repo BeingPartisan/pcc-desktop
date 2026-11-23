@@ -4,7 +4,7 @@
 // days and hand it over; only one thing shows at a time, in this order:
 //   0 class      from `lead` minutes before a class until it ends
 //   1 today      deadlines due today, from the morning until midnight
-//   2 tomorrow   deadlines due tomorrow, from the evening before
+//   2 tomorrow   deadlines due tomorrow, from a chosen time the day before (8 PM)
 //   3 overdue    deadlines past their date, from the morning
 //   4 tasks      open high-priority tasks, from a chosen time   (off by default)
 // "Done" on a single deadline ticks it off (collected here with takeDone);
@@ -13,7 +13,7 @@
 // Settings (Store):
 //   __islandOn, __islandLead (30 | 60 | 90)
 //   __islandDl, __islandDlHour      deadlines due today, and from what hour (9)
-//   __islandEve, __islandEveHour    the evening before, and from what hour (20)
+//   __islandEve, __islandEveHour    the day before, and from what hour (9, 12, 15, 18 or 20)
 //   __islandOverdue                 overdue, from the same hour as today's
 //   __islandTasks, __islandTasksHour  high-priority tasks (off), and from what hour (10)
 //   __islandHideHours               3 | 4
@@ -143,7 +143,7 @@ function renderIslandCard(){
       <div class="seg">${ISLAND_LEADS.map(m => `<button class="${m === islandLead() ? 'on' : ''}" onclick="setIslandLead(${m})">${m} min</button>`).join('')}</div>
       ${!hasClasses ? '<div class="note">Classes need your timetable: connect Digiicampus first.</div>' : ''}
       ${islandRow('Dl', true, 'Deadlines due today', 'From this time until done or midnight. Tap Done on it to tick it off.', 'DlHour', 9, [7, 8, 9, 10])}
-      ${islandRow('Eve', true, 'The evening before', 'Deadlines due tomorrow, from this time.', 'EveHour', 20, [18, 19, 20, 21])}
+      ${islandRow('Eve', true, 'The day before', 'Deadlines due tomorrow, from this time today.', 'EveHour', 20, [9, 12, 15, 18, 20])}
       ${islandRow('Overdue', true, 'Overdue deadlines', 'In the morning, from the same time as today\'s deadlines.')}
       ${islandRow('Tasks', false, 'High-priority tasks', 'When nothing else is showing, from this time.', 'TasksHour', 10, [9, 10, 12, 15])}
       <div class="field-label">"Hide" puts it away for</div>

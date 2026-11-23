@@ -11,6 +11,14 @@ function todayStr(d){
 // Parse a stored YYYY-MM-DD as local midnight rather than UTC midnight.
 function parseLocalDate(s){ return new Date(s + 'T00:00'); }
 
+// Placeholder rows while something loads (see .skel in styles.css).
+//   round: an avatar circle instead of a rounded square (mail, people)
+function skeletonRows(n, round){
+  const widths = [68, 52, 74, 58, 63, 47];
+  return '<div class="skel-list">' + Array.from({ length: n }, (_, i) =>
+    `<div class="skel-row"><div class="skel skel-dot ${round ? 'round' : ''}"></div><div class="skel-lines"><div class="skel skel-line" style="width:${widths[i % widths.length]}%"></div><div class="skel skel-line sm"></div></div></div>`).join('') + '</div>';
+}
+
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');

@@ -59,7 +59,7 @@ function loadWeather(force){
   const city = state.settings.weatherCity;
   const wb = document.getElementById('weather-body');
   if(!city){ wb.innerHTML = '<div class="empty">Set a city in Settings.</div>'; return; }
-  if(force) wb.innerHTML = '<div class="empty">Loading weather&hellip;</div>';
+  if(force || !wb.textContent.trim()) wb.innerHTML = '<div class="skel skel-big"></div><div class="skel skel-line" style="width:55%; margin-top:10px;"></div>';
   
   fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`)
     .then(r => r.json())

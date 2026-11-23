@@ -36,6 +36,7 @@ async function loadSystemVitals(){
     const ramUsed = parseFloat(info.memory.usedGB) || 0;
     const ramPct = ramTotal ? (ramUsed / ramTotal * 100) : 0;
 
+    document.getElementById('card-vitals').classList.remove('is-loading');   // the first reading is in
     cpuHistory.push(cpuPct); if(cpuHistory.length > VITALS_HISTORY_MAX) cpuHistory.shift();
     ramHistory.push(ramPct); if(ramHistory.length > VITALS_HISTORY_MAX) ramHistory.shift();
 

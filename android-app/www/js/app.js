@@ -8,14 +8,32 @@ function go(next){
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.page === page));
   window.scrollTo({ top: 0 });
   if(next === 'mail') mailMaybeRefresh();
-  render();
+  render(true);   // a new page: always draw it
 }
 
-function render(){
+// Someone is typing in a box on the page. Pages rebuild their sections (boxes
+// included) when things change, which would take the keyboard away and wipe what
+// was typed, so while typing only the header and badges update; the rest waits
+// until the box is left. force: an action of the person's own, e.g. sending a message.
+function typing(){
+  const a = document.activeElement;
+  return !!(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && a.closest('#pages'));
+}
+let renderPending = false;
+document.addEventListener('focusout', () => setTimeout(() => { if(renderPending && !typing()) render(); }, 150));
+
+function render(force){
   const accent = data.settings.prefs.accent || '#C9F26C';
   document.documentElement.style.setProperty('--accent', accent);
   document.documentElement.style.setProperty('--accent-ink', inkFor(accent));
   renderHeader();
+  islandSoon();   // the island picks up new or finished deadlines and tasks
+  if(!force && typing()){
+    renderPending = true;
+    renderSyncDot(); renderMessagesBadge();
+    return;
+  }
+  renderPending = false;
   if(page === 'today') renderToday();
   else if(page === 'classes') renderClasses();
   else if(page === 'tasks') renderTasks();
@@ -108,6 +126,14 @@ function renderCampusStatus(){
 
 function renderAttendance(){
   const att = (Store.get('campus', null) || {}).attendance;
+  // First load from Digiicampus: the shape of the attendance card while it comes.
+  if(!att && campus.busy){
+    document.getElementById('attendance-head').hidden = false;
+    document.getElementById('attendance').hidden = false;
+    document.getElementById('attendance-side').textContent = '';
+    document.getElementById('attendance').innerHTML = '<div class="skel skel-big"></div>' + Array.from({ length: 4 }, () => '<div class="att-row"><div class="skel skel-line" style="width:55%"></div><div class="skel skel-bar"></div></div>').join('');
+    return;
+  }
   document.getElementById('attendance-head').hidden = !att;
   document.getElementById('attendance').hidden = !att;
   if(!att) return;
@@ -135,6 +161,7 @@ function renderClasses(){
   const row = (c) => `<div class="cls ${now >= c.end ? 'past' : now >= c.start ? 'now' : ''}"><div class="time">${timeText(c.start).replace(' ', ' ')}</div>
     <div class="txt"><div class="title">${esc(c.subject)}</div><div class="sub">${esc(c.room)}${now >= c.start && now < c.end ? ' · now' : ''}</div></div></div>`;
   const todayEvents = eventsOn(todayStr()).map(e => `<div class="day-event">${esc(e.name)}</div>`).join('');
+  if(!today.length && campus.busy && !Store.get('campus', null)){ document.getElementById('classes-today').innerHTML = skeletonRows(3); document.getElementById('classes-week').innerHTML = ''; return; }
   document.getElementById('classes-today').innerHTML = todayEvents + (today.length ? today.map(row).join('')
     : `<div class="empty">${connected ? 'No classes today.' : 'Connect Digiicampus above to see your classes.'}</div>`);
   const week = [];
@@ -249,8 +276,8 @@ campusMaybeSync();
 mailStatus().then(() => { render(); mailMaybeRefresh(); });
 checkForUpdate(false);
 // The island: ask for notifications the first time, then keep it fed with the coming classes.
-if(Store.get('__islandAsked', false)) islandUpdate().then(render);
+if(Store.get('__islandAsked', false)) islandCollectDone().then(() => islandUpdate(true)).then(render);
 else { Store.set('__islandAsked', true); islandAskPermission(); }
 // Keep countdowns and "now / next" fresh, and pick up changes when the app comes back to the front.
 setInterval(() => { if(document.visibilityState === 'visible') render(); }, 30000);
-document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible'){ if(sync.code){ syncListen(); syncFlush(); } msgListen(); campusMaybeSync(); mailMaybeRefresh(); islandUpdate(); render(); } });
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible'){ if(sync.code){ syncListen(); syncFlush(); } msgListen(); campusMaybeSync(); mailMaybeRefresh(); islandCollectDone().then(() => islandUpdate(true)).then(render); render(); } });

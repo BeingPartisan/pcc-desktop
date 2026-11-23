@@ -167,7 +167,7 @@ function openChannel(id){
   messages.open = id;
   const ids = new Set(messages.log.filter(m => m.channelId === id).map(m => m.id));
   messages.unread = messages.unread.filter(x => !ids.has(x)); Store.set('msgUnread', messages.unread);
-  render();
+  render(true);
   setTimeout(() => { const t = document.getElementById('thread'); if(t) t.scrollTop = t.scrollHeight; }, 30);
 }
 
@@ -206,7 +206,7 @@ function renderThread(el, c){
     <div class="thread" id="thread">${items.length ? items.map(m => `<div class="bubble ${m.mine ? 'mine' : ''} ${m.nudge ? 'nudge' : ''}">
       ${m.mine ? '' : `<div class="who">${esc(m.from)}</div>`}${esc(m.text)}<div class="when">${msgTime(m.ts)}</div></div>`).join('') : '<div class="empty" style="text-align:center;">Say hello.</div>'}</div>
     <div class="chips">${NUDGES.map(n => `<button onclick="msgSend('${c.id}', this.textContent, 'nudge')">${esc(n)}</button>`).join('')}</div>
-    <form class="add-row compose" onsubmit="event.preventDefault(); const i=document.getElementById('compose'); msgSend('${c.id}', i.value).then(ok => { if(ok){ i.value=''; openChannel('${c.id}'); } });">
+    <form class="add-row compose" onsubmit="event.preventDefault(); const i=document.getElementById('compose'); msgSend('${c.id}', i.value).then(ok => { if(ok){ openChannel('${c.id}'); const n=document.getElementById('compose'); if(n) n.focus(); } });">
       <input id="compose" type="text" placeholder="Message ${esc(c.name)}" autocomplete="off" enterkeyhint="send" />
       <button class="btn primary" type="submit">Send</button></form>
     <button class="link leave" onclick="msgLeave('${c.id}')">Leave this channel</button>`;

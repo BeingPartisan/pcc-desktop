@@ -24,6 +24,8 @@ function renderTodayClasses(){
   const el = document.getElementById('today-classes');
   const day = todayDayName();
   document.getElementById('today-day-label').textContent = day;
+  // The Digiicampus timetable is read a moment after startup; until then, placeholders (not the manual grid).
+  if(!campus.loaded && window.pcc && window.pcc.campusStatus){ el.innerHTML = skeletonRows(3); return; }
 
   // Real dated sessions from Digiicampus replace the weekly grid when synced.
   if(campusActive()) return renderTodayCampus(el);

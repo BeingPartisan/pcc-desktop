@@ -9,7 +9,7 @@
 //     sessions: [{ id, date, start, end, subject, room, teacher, cancelled, ... }],
 //     events:   [{ name, type, starts, ends }] }      // holidays etc.
 
-let campus = { connected: false, expiresAt: null, data: null };
+let campus = { connected: false, expiresAt: null, data: null, loaded: false };   // loaded: the saved data has been read at startup
 let campusWeekOffset = 0; // weeks away from the current week in the Study view
 let campusBusy = false;
 
@@ -41,6 +41,7 @@ async function loadCampus(){
   campus.connected = status.connected;
   campus.expiresAt = status.expiresAt;
   campus.data = data;
+  campus.loaded = true;
   refreshCampusViews();
   if(status.connected) syncCampus(false); // quiet refresh on startup
 }
@@ -83,7 +84,7 @@ async function connectCampus(){
 async function disconnectCampus(){
   if(!confirm('Disconnect Digiicampus?\n\nThis signs PCC out and removes the synced timetable. Your manual timetable comes back.')) return;
   await window.pcc.campusDisconnect();
-  campus = { connected: false, expiresAt: null, data: null };
+  campus = { connected: false, expiresAt: null, data: null, loaded: true };
   campusWeekOffset = 0;
   refreshCampusViews();
   showToast('Digiicampus disconnected');

@@ -33,6 +33,7 @@ let inboxTab = 'important';
 let inboxShowDone = false;
 let inboxError = null;       // last scan problem, shown at the top of the page
 let inboxScanning = false;
+let inboxChecked = false;   // a check has finished since PCC started (until then an empty inbox shows placeholders)
 let inboxAccount = { email: '', gmail: false }; // for "Open in Gmail" links
 
 function saveInbox(){ Store.set('inbox', inbox); }
@@ -242,6 +243,7 @@ async function scanMail(manual){
     inboxError = 'Mail scan failed: ' + (e.message || e);
     if(manual) showToast('Mail scan failed');
   } finally {
+    inboxChecked = true;
     inboxScanning = false;
     renderInbox();
   }
@@ -407,7 +409,8 @@ function renderInbox(){
       ignore: 'Nothing ignored.',
     }[inboxTab];
     if(inboxToMeOnly && !list.length) empty = 'Nothing here was sent to you personally.';
-    body.innerHTML = notice + hint + (list.length ? list.map(m => mailRowHtml(m, false)).join('') : (inboxError ? '' : `<div class="empty">${empty}</div>`));
+    const waiting = !list.length && !inboxError && !inboxChecked && !inbox.messages.length;
+    body.innerHTML = notice + hint + (list.length ? list.map(m => mailRowHtml(m, false)).join('') : waiting ? skeletonRows(4, true) : (inboxError ? '' : `<div class="empty">${empty}</div>`));
   }
   renderTodayMail(counts);
 }
@@ -429,7 +432,8 @@ function renderTodayMail(counts){
   const top = inbox.messages.filter(m => !m.done && mailCategory(m).category === 'important').slice(0, TODAY_MAIL_LIMIT);
   const more = counts.important - top.length;
   const nudge = counts.new ? `<a href="#" class="more-link" onclick="navigate('inbox'); showInboxTab('new'); return false;">${counts.new} email${counts.new === 1 ? '' : 's'} from senders you haven't sorted</a>` : '';
-  el.innerHTML = (top.length ? top.map(m => mailRowHtml(m, true)).join('') : '<div class="empty">Nothing important waiting.</div>')
+  const waiting = !top.length && !inboxError && !inboxChecked && !inbox.messages.length;
+  el.innerHTML = (top.length ? top.map(m => mailRowHtml(m, true)).join('') : waiting ? skeletonRows(2, true) : '<div class="empty">Nothing important waiting.</div>')
     + (more > 0 ? `<a href="#" class="more-link" onclick="navigate('inbox'); showInboxTab('important'); return false;">+ ${more} more</a>` : '')
     + nudge;
 }

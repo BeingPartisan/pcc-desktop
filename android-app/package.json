@@ -1,6 +1,6 @@
 {
   "name": "pcc-android",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "PCC for Android: classes, tasks, deadlines, countdowns, messages, mail, the island, and sync with PCC on your computer",
   "scripts": {

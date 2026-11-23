@@ -138,6 +138,12 @@ function renderMail(){
       <div class="note" id="mail-note"></div></div>`;
     return;
   }
+  // First load: the shape of the list while the mail comes.
+  if(mail.busy && !mailCache().fetchedAt){
+    el.innerHTML = `<div class="seg mail-seg"><button class="on">To you</button><button>Courses</button><button>All</button></div>
+      <div class="campus-status"><span>Checking your mail…</span></div><div class="card">${skeletonRows(5, true)}</div>`;
+    return;
+  }
   const list = mailList(mail.view);
   const counts = { you: mailList('you').length, courses: mailList('courses').length, all: mailList('all').length };
   el.innerHTML = `

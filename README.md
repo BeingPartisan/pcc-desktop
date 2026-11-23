@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.8.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest) · **PCC for Android** 0.1.0 is on the same release page (see [PCC for Android](#pcc-for-android)).
+**Current version:** 2.8.1 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest) · **PCC for Android** 0.1.1 is on the same release page (see [PCC for Android](#pcc-for-android)).
 
 ---
 
@@ -277,6 +277,11 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.8.1
+- **PCC for Android 0.1.1**: deadlines and tasks on the island. Deadlines due today show from the morning with a **Done** button, tomorrow's from the evening before, then overdue ones and (if you turn it on) high-priority tasks. Classes still come first. **Hide** puts the island away for 3 or 4 hours, then it comes back by itself. All of it is adjustable in More > Island.
+- **Android**: typing is no longer interrupted when something updates in the background.
+- **Loading placeholders**: on PC and Android, pages show a soft outline of what's coming while classes, attendance, mail and weather load, instead of empty space.
 
 ### 2.8.0
 - **PCC for Android 0.1.0** (on the same release): Today, classes and attendance from Digiicampus, tasks and deadlines, the island as an Android 16 Live Update, messages with notifications, read-only mail, sync with PCC on your computer, and update checks.

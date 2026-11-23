@@ -88,6 +88,7 @@ function shortTermName(name){
 }
 
 function academicsEmptyState(what){
+  if(!campus.loaded && window.pcc && window.pcc.campusStatus) return skeletonRows(3);   // still reading the saved data
   if(campusActive()) return `<div class="empty">No ${what} from Digiicampus yet. Try Sync on the Study page.</div>`;
   return `<div class="empty">Connect Digiicampus to see your ${what} here.</div>
     <div><button class="btn btn-primary" onclick="openSettingsAt('timetable')">Connect Digiicampus</button></div>`;

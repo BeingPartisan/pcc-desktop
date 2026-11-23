@@ -100,4 +100,11 @@ function toast(text){
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
+// Placeholder rows while something loads (see .skel in app.css). round: an avatar instead of a badge.
+function skeletonRows(n, round){
+  const widths = [68, 52, 74, 58, 63, 47];
+  return Array.from({ length: n }, (_, i) => `<div class="row skel-row"><div class="skel skel-badge ${round ? 'round' : ''}"></div>
+    <div class="txt"><div class="skel skel-line" style="width:${widths[i % widths.length]}%"></div><div class="skel skel-line sm"></div></div></div>`).join('');
+}
+
 const CHECK_SVG = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';

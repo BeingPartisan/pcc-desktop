@@ -10,4 +10,6 @@ contextBridge.exposeInMainWorld('viz', {
   onListen: (callback) => ipcRenderer.on('viz-listen', (event, on) => callback(on)),
   // true while the shapes can be seen: draw them
   onActive: (callback) => ipcRenderer.on('viz-active', (event, on) => callback(on)),
+  // the Performance profile (performance.js): frame rates and how many sparks; changes apply live
+  onPerf: (callback) => ipcRenderer.on('viz-perf', (event, profile) => callback(profile)),
 });

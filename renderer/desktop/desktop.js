@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 let state = null, media = null, cover = '', active = true, stats = null;
-const TASK_LIMIT = 4, DEADLINE_LIMIT = 3, INBOX_LIMIT = 3;
+const TASK_LIMIT = 5, DEADLINE_LIMIT = 5, INBOX_LIMIT = 3, CLASS_LIMIT = 3;
 const DAY_MS = 86400000;
 
 // ---------- layout: room for the island, the taskbar and the desktop icons ----------
@@ -31,7 +31,8 @@ function applyWallpaper(wp){
   img.onload = () => {
     const W = innerWidth, H = innerHeight;
     // Windows sizes "center" and "tile" in real pixels; this page works in scaled ones.
-    let iw = img.naturalWidth, ih = img.naturalHeight, w, h;
+    // The picture arrives as a small copy; wp.w / wp.h are the real one's size, which is what Windows fits.
+    let iw = wp.w || img.naturalWidth, ih = wp.h || img.naturalHeight, w, h;
     if(wp.fit === 'stretch'){ w = W; h = H; }
     else if(wp.fit === 'center' || wp.fit === 'tile'){ w = iw / devicePixelRatio; h = ih / devicePixelRatio; }
     else { const s = wp.fit === 'fit' ? Math.min(W / iw, H / ih) : Math.max(W / iw, H / ih); w = iw * s; h = ih * s; }
@@ -65,16 +66,11 @@ function fitColumns(){
     }
   });
 }
-// The timeline's line stops at the last class's dot.
-function endTimeline(){
-  const last = document.querySelector('.tl:last-child');
-  if(last) $('timeline').style.setProperty('--tail', (last.offsetHeight - 14) + 'px');
-}
 // After anything changes size: make room, then line the glass up again.
 let settleQueued = false;
 function settle(){
   if(settleQueued) return; settleQueued = true;
-  requestAnimationFrame(() => { settleQueued = false; fitColumns(); placeGlass(); endTimeline(); });
+  requestAnimationFrame(() => { settleQueued = false; fitColumns(); placeGlass(); });
 }
 window.addEventListener('resize', () => { if(wallpaper) applyWallpaper(wallpaper); settle(); });
 
@@ -126,26 +122,19 @@ function renderNext(){
 
 // ---------- left: today, tasks, coming up ----------
 function renderToday(){
+  // Small on purpose: only what's on now and still to come, one line each.
   const list = state.classes || [];
   $('p-today').hidden = !list.length;
   if(!list.length) return;
   const now = Date.now();
-  let nextMarked = false;
-  const left = list.filter(c => now < c.end).length;
-  $('today-label').textContent = 'Today';
-  $('today-side').textContent = left ? `${left} of ${list.length} to go` : 'all done';
-  $('timeline').innerHTML = list.map(c => {
-    let cls = '', meta = esc(c.room || ''), extra = '';
-    if(now >= c.end) cls = 'past';
-    else if(now >= c.start){
-      cls = 'now';
-      const pct = Math.round((now - c.start) / (c.end - c.start) * 100);
-      meta = `Now · ${minsText(Math.round((c.end - now) / 60000))} left${c.room ? ' · ' + esc(c.room) : ''}`;
-      extra = `<div class="tl-progress"><i style="width:${pct}%"></i></div>`;
-    } else if(!nextMarked){ nextMarked = true; cls = 'next'; meta = `In ${minsText(Math.round((c.start - now) / 60000))}${c.room ? ' · ' + esc(c.room) : ''}`; }
-    return `<div class="tl ${cls}"><div class="tl-time">${timeText(c.start, false)}</div><div class="tl-dot"></div>
-      <div class="tl-body"><div class="tl-subject">${esc(c.subject)}</div>${meta ? `<div class="tl-meta">${meta}</div>` : ''}${extra}</div></div>`;
-  }).join('');
+  const ahead = list.filter(c => now < c.end);
+  $('today-side').textContent = ahead.length ? `${ahead.length} of ${list.length} left` : '';
+  if(!ahead.length){ $('classes').innerHTML = '<div class="cls-done">All done for today</div>'; return; }
+  $('classes').innerHTML = ahead.slice(0, CLASS_LIMIT).map((c, i) => {
+    const on = now >= c.start;
+    const when = on ? 'now' : i === 0 ? `in ${minsText(Math.round((c.start - now) / 60000))}` : esc(c.room || '');
+    return `<div class="cls ${on ? 'now' : i === 0 ? 'next' : ''}"><span class="t">${timeText(c.start, false)}</span><span class="s">${esc(c.subject)}</span><span class="w">${when}</span></div>`;
+  }).join('') + (ahead.length > CLASS_LIMIT ? `<div class="more">and ${ahead.length - CLASS_LIMIT} more</div>` : '');
 }
 
 function renderTasks(){
@@ -158,16 +147,19 @@ function renderTasks(){
 }
 
 function renderDeadlines(){
-  const items = (state.deadlines || []).filter(a => daysAway(a.date) >= 0);
+  // Overdue ones (not marked done in the app) come first, in red, so they aren't forgotten.
+  const items = state.deadlines || [];
   $('p-deadlines').hidden = !items.length;
+  const late = items.filter(a => daysAway(a.date) < 0).length;
+  $('deadline-count').textContent = late ? `${late} overdue` : '';
   $('deadlines').innerHTML = items.slice(0, DEADLINE_LIMIT).map(a => {
     const n = daysAway(a.date);
     const date = new Date(a.date + 'T00:00');
-    const when = n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
-    const badge = n === 0 ? '<b>!</b><small>TODAY</small>' : `<b>${n}</b><small>${n === 1 ? 'DAY' : 'DAYS'}</small>`;
-    return `<div class="deadline"><div class="badge ${n === 0 ? 'today' : n <= 2 ? 'soon' : ''}">${badge}</div>
-      <div class="txt"><div class="title">${esc(a.title)}</div><div class="when">${when}</div></div></div>`;
-  }).join('');
+    const when = n < 0 ? `Was due ${n === -1 ? 'yesterday' : `${-n} days ago`}` : n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+    const badge = n < 0 ? `<b>${-n}</b><small>LATE</small>` : n === 0 ? '<b>!</b><small>TODAY</small>' : `<b>${n}</b><small>${n === 1 ? 'DAY' : 'DAYS'}</small>`;
+    return `<div class="deadline"><div class="badge ${n < 0 ? 'late' : n === 0 ? 'today' : n <= 2 ? 'soon' : ''}">${badge}</div>
+      <div class="txt"><div class="title">${esc(a.title)}</div><div class="when ${n < 0 ? 'late' : ''}">${when}</div></div></div>`;
+  }).join('') + (items.length > DEADLINE_LIMIT ? `<div class="more">and ${items.length - DEADLINE_LIMIT} more</div>` : '');
 }
 
 // ---------- middle: week, inbox, countdowns, quote ----------
@@ -248,12 +240,30 @@ function speed(bytes){
   const bits = bytes * 8;
   return bits >= 1e6 ? `${(bits / 1e6).toFixed(bits >= 1e7 ? 0 : 1)} Mbps` : `${Math.round(bits / 1e3)} kbps`;
 }
+// Battery straight from the browser engine: no helper process, and it says when it changes.
+let battery = null;
+let perfProfile = null;   // Settings > Performance, as main sends it
+function applyPerf(p){
+  perfProfile = p;
+  document.body.classList.toggle('glass-plain', p.glass === 'plain');
+  document.body.classList.toggle('glass-rich', p.glass === 'rich');
+  document.body.classList.toggle('calm', !p.idleAnims);
+  if(stats) renderStats(stats);
+}
+if(navigator.getBattery){
+  navigator.getBattery().then(b => {
+    const read = () => { battery = { percent: Math.round(b.level * 100), charging: b.charging, none: b.charging && b.level === 1 && b.chargingTime === 0 }; if(stats) renderStats(stats); };
+    read();
+    ['levelchange', 'chargingchange'].forEach(e => b.addEventListener(e, read));
+  }).catch(() => {});
+}
+
 function renderStats(s){
   stats = s;
-  const b = s.battery;
+  const b = s.battery || battery;
   $('gauges').innerHTML = gauge('CPU', s.cpu, `${s.cpu}%`, s.cpu > 85 ? 'hot' : '')
     + gauge('Memory', s.memory, `${s.memory}%`, s.memory > 90 ? 'hot' : '')
-    + (b && !b.none ? gauge(b.charging ? 'Charging' : 'Battery', b.percent, `${b.percent}%`, !b.charging && b.percent <= 20 ? 'low' : '')
+    + (b && !b.none ? gauge(b.charging ? 'Charging' : perfProfile && perfProfile.savingForBattery ? 'Battery saver' : 'Battery', b.percent, `${b.percent}%`, !b.charging && b.percent <= 20 ? 'low' : '')
       : gauge('Power', 100, '<small>plugged in</small>'));
   $('network').textContent = navigator.onLine ? `↓ ${speed(s.down)}  ↑ ${speed(s.up)}` : 'offline';
 }
@@ -328,6 +338,7 @@ if(window.deskBridge){
   window.deskBridge.onCover((c) => { cover = c || ''; renderMusic(); });
   window.deskBridge.onUpdate(renderUpdate);
   window.deskBridge.onStats(renderStats);
+  window.deskBridge.onPerf(applyPerf);
   window.deskBridge.onActive((on) => { active = on; document.body.classList.toggle('still', !on); if(on && state) renderAll(); renderMusic(); });
 } else {
   // Opened on its own (for design work): sample data, and ?wp=<file URL> for a wallpaper.

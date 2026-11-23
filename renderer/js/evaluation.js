@@ -15,6 +15,15 @@ let evaluations = Store.get('evaluations', {});
 let evalPasteCourse = null; // course whose "paste pattern" dialog is open
 
 function saveEvaluations(){ Store.set('evaluations', evaluations); }
+
+// Dated components first, soonest first (then by time), so what's coming next is at the top;
+// undated ones after, in the order they were added.
+function componentsByDate(components){
+  return components.map((c, i) => ({ c, i })).sort((a, b) => {
+    if(!a.c.date !== !b.c.date) return a.c.date ? -1 : 1;
+    return (a.c.date || '').localeCompare(b.c.date || '') || (a.c.time || '').localeCompare(b.c.time || '') || a.i - b.i;
+  }).map(x => x.c);
+}
 function evalCourses(){ return inboxCourses().map(c => c.name); }
 function evalFor(course){ return evaluations[course] || (evaluations[course] = { components: [] }); }
 
@@ -76,7 +85,7 @@ function evaluationDeadlines(){
   const items = [];
   for(const [course, entry] of Object.entries(evaluations)){
     if(!current.has(course)) continue;
-    for(const c of entry.components) if(c.date && c.got === null) items.push({ title: `${course}: ${c.name}${c.time ? ' · ' + c.time : ''}`, date: c.date, fromEvaluation: true });
+    for(const c of entry.components) if(c.date && c.got === null && !c.done) items.push({ title: `${course}: ${c.name}${c.time ? ' · ' + c.time : ''}`, date: c.date, fromEvaluation: true, key: 'e:' + encodeURIComponent(course) + ':' + c.id });
   }
   return items;
 }
@@ -152,6 +161,21 @@ function applyEvalPaste(){
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && evalPasteCourse) closeEvalPaste(); });
 
+/* ----- Export ----- */
+
+// Every current course's pattern as a Word document (built in the main process).
+async function exportEvaluationDocx(){
+  if(!window.pcc || !window.pcc.exportEvaluationDocx) return;
+  const courses = evalCourses().map(name => ({ name, components: componentsByDate(evalFor(name).components).map(c => ({ name: c.name, max: c.max, got: c.got, date: c.date || '', time: c.time || '' })) }))
+    .filter(c => c.components.length);
+  if(!courses.length) return showToast('Add an evaluation pattern to a course first');
+  const result = await window.pcc.exportEvaluationDocx({ name: state.settings.name || '', courses });
+  if(result.canceled) return;
+  if(!result.ok) return showToast("Couldn't save the document: " + (result.error || 'unknown error'));
+  showToast('Evaluation pattern saved');
+  window.pcc.openExportedFile(result.filePath);
+}
+
 /* ----- Drawing ----- */
 
 function renderEvaluation(){
@@ -174,7 +198,7 @@ function renderEvaluation(){
         </div>`;
     }
 
-    const rows = comps.map(c => `
+    const rows = componentsByDate(comps).map(c => `
       <tr>
         <td><input type="text" value="${esc(c.name)}" title="${esc(c.name)}" aria-label="Component name" onchange="updateEvalComponent(${i}, '${c.id}', 'name', this.value)" /></td>
         <td class="num"><input type="number" min="1" max="100" value="${c.max == null ? '' : c.max}" placeholder="?" class="${c.max == null ? 'unknown' : ''}" title="${c.max == null ? 'Marks not known yet' : ''}" aria-label="Marks available" onchange="updateEvalComponent(${i}, '${c.id}', 'max', this.value)" /></td>

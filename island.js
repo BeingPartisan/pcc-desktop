@@ -28,7 +28,7 @@ const EDGE_GAP = 6;
 const NUDGE_SHOWN_MS = 3 * 60 * 1000;   // how long a break nudge stays up if ignored
 const IDLE_RESET_SECONDS = 5 * 60;      // this long away from the keyboard counts as a break taken
 
-module.exports = function registerIsland({ logEvent, getMainWindow, showMainWindow, onUpdateAction, onSnoozeChange, desktop }) {
+module.exports = function registerIsland({ logEvent, getMainWindow, showMainWindow, onUpdateAction, onSnoozeChange, desktop, perf }) {
   let win = null;
   let helper = null;
   // hide: 'never' | 'fullscreen' (a window covering the whole screen) |
@@ -173,6 +173,7 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
         if (!line.trim().startsWith('{')) continue;
         try {
           const parsed = JSON.parse(line);
+          if ('net' in parsed) { if (desktop) desktop.setNet(parsed.net); continue; }   // network counters, for Desktop mode
           if ('cover' in parsed) { lastCover = String(parsed.cover || ''); vizSend('viz-cover', lastCover); if (desktop) desktop.setCover(lastCover); send('island-cover', config.media ? lastCover : ''); continue; }
           lastMedia = parsed;
           if (desktop) desktop.setMedia(lastMedia);
@@ -183,8 +184,11 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
       }
     });
     helper.stderr.on('data', () => {}); // PowerShell writes progress noise here
-    helper.on('error', (e) => { logEvent('warn', 'Island: media helper error', String(e)); helper = null; });
-    helper.on('exit', () => { helper = null; });
+    // Only clear it if it's still the current one (a restart may already have started a new one).
+    const proc = helper;
+    helper.on('error', (e) => { logEvent('warn', 'Island: media helper error', String(e)); if (helper === proc) helper = null; });
+    helper.on('exit', () => { if (helper === proc) helper = null; });
+    if (netWanted) { try { helper.stdin.write('net-on\n'); } catch (e) {} }
     logEvent('info', 'Island: media helper started');
   }
 
@@ -194,6 +198,14 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
     const proc = helper;
     setTimeout(() => { try { proc.kill(); } catch (e) {} }, 1500);
     helper = null;
+  }
+
+  // Desktop mode's dashboard shows live network speed; the helper reads the counters only while it's asked to.
+  let netWanted = false;
+  function setNetwork(on) {
+    if (on === netWanted) return;
+    netWanted = on;
+    if (helper) { try { helper.stdin.write(on ? 'net-on\n' : 'net-off\n'); } catch (e) {} }
   }
 
   function mediaCommand(command) {
@@ -222,6 +234,8 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
   let vizOverlay = false;      // this window floats over everything (made for visualizerLayer 'top')
   let vizListening = false;
   let vizStopTimer = null;
+  let vizRetries = 0, vizRetryTimer = null, wakeTimer = null;
+  const VIZ_RETRIES = 8, VIZ_RETRY_MS = 5000;   // right after sign-in Explorer may not be ready for it yet
   const vizAlive = () => viz && !viz.isDestroyed();
   const vizSend = (channel, payload) => { if (vizAlive()) viz.webContents.send(channel, payload); };
 
@@ -249,6 +263,7 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
     viz.loadFile(path.join(__dirname, 'renderer', 'visualizer', 'index.html'));
     viz.webContents.once('did-finish-load', () => {
       sendVizConfig();
+      if (perf) vizSend('viz-perf', perf.current());
       vizSend('viz-media', lastMedia);
       vizSend('viz-cover', lastCover);
       if (vizOverlay) { logEvent('info', 'Visualiser: over all windows'); applyVisualizer(); return; }
@@ -265,6 +280,15 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
     embedInWallpaper(viz, display, (result) => {
       if (!vizAlive()) return;
       vizEmbedded = !!result.ok;
+      if (vizEmbedded) vizRetries = 0;
+      else if (vizRetries < VIZ_RETRIES) {
+        vizRetries++;
+        logEvent('info', `Visualiser: the desktop isn't ready, trying again (${vizRetries})`);
+        viz.destroy(); viz = null; vizShown = false;
+        clearTimeout(vizRetryTimer);
+        vizRetryTimer = setTimeout(() => { vizRetryTimer = null; if (config.visualizer !== 'off' && !vizAlive()) createVisualizer(); }, VIZ_RETRY_MS);
+        return;
+      }
       logEvent(vizEmbedded ? 'info' : 'warn', vizEmbedded ? `Visualiser: on the wallpaper (${result.layout} desktop)` : `Visualiser: couldn't join the wallpaper, floating instead (${result.reason})`);
       if (!vizEmbedded) viz.hide();
       applyVisualizer();
@@ -287,8 +311,11 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
     const seen = vizOverlay ? front !== 'fullscreen'
       : vizEmbedded ? !['maximized', 'fullscreen'].includes(front) : front === 'desktop';
 
-    // Listening: start with the music, stop a little after it ends.
-    if (playing) { clearTimeout(vizStopTimer); vizStopTimer = null; if (!vizListening) { vizListening = true; vizSend('viz-listen', true); } }
+    // Listening: start with the music, stop a little after it ends. With "pause for full-screen apps",
+    // a game or video in front stops it too (and it starts again when that's gone).
+    const gaming = perf && perf.current().pauseGaming && front === 'fullscreen';
+    if (playing && !gaming) { clearTimeout(vizStopTimer); vizStopTimer = null; if (!vizListening) { vizListening = true; vizSend('viz-listen', true); } }
+    else if (gaming && vizListening) { clearTimeout(vizStopTimer); vizStopTimer = null; vizListening = false; vizSend('viz-listen', false); }
     else if (vizListening && !vizStopTimer) vizStopTimer = setTimeout(() => { vizStopTimer = null; vizListening = false; vizSend('viz-listen', false); }, 8000);
 
     // Floating (over everything, or the fallback): shown and hidden here.
@@ -303,11 +330,14 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
   }
 
   function configureVisualizer() {
-    if (config.visualizer === 'off') { if (vizAlive()) viz.destroy(); viz = null; vizShown = false; return; }
+    if (config.visualizer === 'off') { clearTimeout(vizRetryTimer); if (vizAlive()) viz.destroy(); viz = null; vizShown = false; return; }
     // Between the wallpaper and over everything is a different kind of window: start again.
     if (vizAlive() && vizOverlay !== (config.visualizerLayer === 'top')) { viz.destroy(); viz = null; vizShown = false; }
     if (!vizAlive()) createVisualizer(); else { sendVizConfig(); applyVisualizer(); }
   }
+
+  // Performance mode changed (or the laptop was plugged in / unplugged): tell the visualiser, without restarting it.
+  if (perf) perf.onChange((profile) => { vizSend('viz-perf', profile); applyVisualizer(); });
 
   // --- IPC ---
 
@@ -388,7 +418,27 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
 
   // Keep it in place when the screen resolution or taskbar changes. The
   // screen module can only be used once the app is ready.
-  app.whenReady().then(() => screen.on('display-metrics-changed', place));
+  app.whenReady().then(() => screen.on('display-metrics-changed', () => { place(); sendVizConfig(); }));
+
+  // Coming back from sleep or hibernate (or unlocking): Windows may have rebuilt the
+  // desktop, and the media reader can go quiet. Once things settle, start both afresh.
+  function rebuildAfterWake(why) {
+    clearTimeout(wakeTimer);
+    wakeTimer = setTimeout(() => {
+      if (helper) { stopHelper(); setTimeout(startHelper, 1600); }
+      if (config.visualizer !== 'off') {
+        logEvent('info', `Visualiser: rebuilding after ${why}`);
+        clearTimeout(vizRetryTimer); vizRetries = 0;
+        if (vizAlive()) viz.destroy();
+        viz = null; vizShown = false;
+        createVisualizer();
+      }
+    }, 3000);
+  }
+  app.whenReady().then(() => {
+    powerMonitor.on('resume', () => rebuildAfterWake('sleep'));
+    powerMonitor.on('unlock-screen', () => rebuildAfterWake('unlock'));
+  });
 
   return {
     stop: () => { stopHelper(); destroyWindow(); if (vizAlive()) viz.destroy(); },
@@ -398,6 +448,7 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
     // PCC's main window gained or lost the keyboard.
     setAppFocused: (focused) => { appFocused = !!focused; applyVisibility(); },
     // Called by the updater so an available update shows on the island too.
+    setNetwork,
     setUpdate: (status) => { lastUpdate = status; send('island-update', status); if (desktop) desktop.setUpdate(status); },
     // What's playing right now and which kind of window is in front (for Desktop mode as it starts).
     // For the tray menu: which visualiser is on and where it's drawn.

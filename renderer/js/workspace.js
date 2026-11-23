@@ -46,14 +46,46 @@ function addAgenda(){
   document.getElementById('agenda-title').value=''; document.getElementById('agenda-date').value='';
   Store.set('agenda', state.agenda); renderAgenda();
 }
+// Every deadline still to do: your own, and dated evaluation components without marks.
+// Ones marked done (the tick button) drop out everywhere: here, Today, the island and Desktop mode.
+function openDeadlines(){
+  return [...state.agenda.filter(a => !a.done).map(a => ({ ...a, key: 'a:' + a.id })), ...evaluationDeadlines()]
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// key: 'a:<agenda id>' or 'e:<course>:<component id>'
+function completeDeadline(key){
+  const [kind, ...rest] = String(key).split(':');
+  if(kind === 'a'){
+    const item = state.agenda.find(a => a.id === rest[0]);
+    if(!item) return;
+    item.done = true; item.doneAt = Date.now();
+    Store.set('agenda', state.agenda);
+    showToast(`Done: ${item.title}`);
+  } else if(kind === 'e'){
+    const course = decodeURIComponent(rest[0]);
+    const comp = ((evaluations[course] || {}).components || []).find(c => c.id === rest[1]);
+    if(!comp) return;
+    comp.done = true;
+    saveEvaluations();
+    showToast(`Done: ${comp.name}. Add the marks on the Academics page when they're out.`);
+  }
+  renderAgenda();
+}
+
+function deadlineDoneButton(a){
+  return `<button class="btn btn-icon deadline-done" title="Mark as done" aria-label="Mark as done" data-key="${esc(a.key)}" onclick="completeDeadline(this.dataset.key)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>`;
+}
+
 function renderAgenda(){
   const el = document.getElementById('agenda-list');
-  const items = [...state.agenda, ...evaluationDeadlines()].sort((a,b) => a.date.localeCompare(b.date));
+  const items = openDeadlines();
   if(!items.length) { el.innerHTML = '<div class="empty">No deadlines yet.</div>'; return; }
   el.innerHTML = items.map(a => `
     <div class="item-row">
       <span class="pill" style="background:var(--accent-soft); color:var(--accent-text);">${parseLocalDate(a.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
       <span class="txt">${esc(a.title)}</span>
+      ${deadlineDoneButton(a)}
       ${a.fromEvaluation
         ? `<button class="btn" style="padding:4px 10px; font-size:12px;" onclick="navigate('academics')" title="Set on the Academics page">Evaluation</button>`
         : `<button class="btn btn-icon btn-danger" onclick="state.agenda=state.agenda.filter(x=>x.id!=='${a.id}'); Store.set('agenda', state.agenda); renderAgenda();">&times;</button>`}

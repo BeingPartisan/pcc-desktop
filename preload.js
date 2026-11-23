@@ -59,6 +59,15 @@ contextBridge.exposeInMainWorld('pcc', {
   // Quotes
   fetchQuotes: () => ipcRenderer.invoke('fetch-quotes'),
 
+  // Evaluation pattern as a Word document; opening it afterwards
+  exportEvaluationDocx: (data) => ipcRenderer.invoke('export-evaluation-docx', data),
+  openExportedFile: (filePath) => ipcRenderer.invoke('open-path', filePath),
+  importWordTables: () => ipcRenderer.invoke('import-word-tables'),
+
+  // Settings > Performance
+  perfConfigure: (config) => ipcRenderer.invoke('perf-configure', config),
+  perfUsage: () => ipcRenderer.invoke('perf-usage'),
+
   // Floating island
   islandConfigure: (config) => ipcRenderer.invoke('island-configure', config),
   islandState: (state) => ipcRenderer.send('island-state', state),

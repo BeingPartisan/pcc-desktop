@@ -93,6 +93,7 @@ function refreshCampusViews(){
   renderTimetable(); // also refreshes Today's class list
   renderCampusSettings();
   renderAcademics();
+  renderAgenda();     // evaluation dates count only for synced courses, so the deadline lists (and Today's) depend on this data
   renderTodayStatus();
 }
 

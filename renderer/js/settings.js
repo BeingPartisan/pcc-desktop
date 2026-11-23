@@ -86,6 +86,7 @@ function closeSettings(){ document.getElementById('settings-overlay').classList.
 function showSettingsTab(tab){
   document.querySelectorAll('.settings-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.settings-pane').forEach(p => p.classList.toggle('active', p.dataset.tab === tab));
+  if(tab === 'performance') renderPerfUsage();
 }
 function openSettingsAt(tab){ openSettings(); showSettingsTab(tab); }
 

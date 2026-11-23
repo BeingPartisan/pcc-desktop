@@ -1,6 +1,6 @@
 {
   "name": "personal-command-center",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "Partisan's Personal Command Center — desktop shell",
   "main": "main.js",
   "author": "Ansh (Partisan)",
@@ -15,7 +15,9 @@
     "electron-builder": "^26.18.0"
   },
   "dependencies": {
+    "docx": "^9.16.0",
     "electron-updater": "^6.8.11",
+    "fflate": "^0.8.3",
     "imapflow": "^1.0.171",
     "mailparser": "^3.7.1",
     "systeminformation": "^5.22.11"
@@ -28,6 +30,9 @@
       "campus.js",
       "island.js",
       "desktop.js",
+      "performance.js",
+      "evaluation-docx.js",
+      "word-tables.js",
       "wallpaper.js",
       "messaging.js",
       "feedback.js",

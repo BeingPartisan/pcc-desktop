@@ -19,7 +19,10 @@
 const canvas = document.getElementById('c');
 const g = canvas.getContext('2d');
 const DPR = Math.min(window.devicePixelRatio || 1, 1.5);   // a sharper canvas than this costs more than it shows
-const FRAME_MS = 1000 / 40;
+// Frame rates come from Settings > Performance (see onPerf below). barsFps 0 means
+// every frame the screen shows; a couple of ms of slack keeps a 60 Hz screen at 60.
+let perf = { barsFps: 60, sceneFps: 40, particles: 1 };
+const gapFor = (fps) => (fps > 0 ? 1000 / fps - 2 : 0);
 
 let style = 'bars', accent = '#C9F26C', bottomInset = 48;
 let place = 'raised';                   // where bars and wave stand: 'raised' (just above the taskbar) or 'edge' (the screen's bottom edge)
@@ -173,8 +176,8 @@ function onBeat(strength = 1.5){
   // Sparks for energetic music, or for any really hard kick (so the first kicks of a drop get them too).
   if(!active || (mood.intensity < 0.45 && strength < 2.2)) return;
   const w = canvas.width, h = canvas.height;
-  const count = Math.round(lerp(4, 14, mood.intensity));
-  for(let i = 0; i < count && particles.length < 90; i++){
+  const count = Math.round(lerp(4, 14, mood.intensity) * perf.particles);
+  for(let i = 0; i < count && particles.length < 90 * perf.particles; i++){
     // Centred styles throw sparks out from their middle; the others from the floor.
     const centre = { ring: [0.5, 0.5, 0.2], nebula: [0.5, 0.46, 0.08], orbit: [0.5, 0.46, 0.06], album: [0.86, 0.72, 0.08] }[style];
     const ring = !!centre;
@@ -191,7 +194,7 @@ function onBeat(strength = 1.5){
 }
 function drawParticles(w, h){
   // calm motes
-  if(mood.intensity < 0.4 && particles.length < 24 && Math.random() < 0.06){
+  if(mood.intensity < 0.4 && particles.length < 24 * perf.particles && Math.random() < 0.06 * perf.particles){
     particles.push({ x: Math.random() * w, y: floorY(h) - Math.random() * h * 0.1, vx: (Math.random() - 0.5) * 0.3 * DPR, vy: -lerp(0.3, 0.8, Math.random()) * DPR,
       life: 1, decay: lerp(0.003, 0.006, Math.random()), size: lerp(1.5, 3, Math.random()) * DPR, spark: false });
   }
@@ -371,7 +374,7 @@ function drawRing(w, h){
 function frame(now){
   if(!running) return;
   requestAnimationFrame(frame);
-  const minGap = (style === 'bars' || style === 'wave') ? 0 : FRAME_MS;   // the sharp styles draw every frame
+  const minGap = gapFor((style === 'bars' || style === 'wave') ? perf.barsFps : perf.sceneFps);
   if(now - lastFrame < minGap) return;
   const dt = lastFrame ? Math.min(0.1, (now - lastFrame) / 1000) : 1 / 60;
   lastFrame = now;
@@ -414,6 +417,7 @@ window.viz.onMedia((media) => {
   document.getElementById('now').classList.toggle('on', active && media.status === 'playing' && !!(media.title || media.artist));
 });
 window.viz.onCover((url) => setCover(url || ''));
+window.viz.onPerf((profile) => { if(profile) perf = { barsFps: profile.barsFps, sceneFps: profile.sceneFps, particles: profile.particles }; });
 // Listening starts with the music and outlasts short pauses, so showing the desktop again is instant.
 window.viz.onListen((on) => { listening = on; if(on) PCCAudio.start(); else PCCAudio.stop(); });
 window.viz.onActive((on) => {

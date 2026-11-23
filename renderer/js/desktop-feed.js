@@ -40,7 +40,9 @@ function desktopSnapshot(){
   const rank = { high: 0, med: 1, low: 2 };
   const open = state.tasks.filter(t => !t.done).sort((a, b) => (rank[a.priority] ?? 1) - (rank[b.priority] ?? 1));
   const today = todayStr();
-  const deadlines = [...state.agenda, ...evaluationDeadlines()].filter(a => a.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  // Still to do: upcoming, plus overdue ones from the last month that haven't been ticked off.
+  const monthAgo = todayStr(new Date(Date.now() - 30 * 86400000));
+  const deadlines = openDeadlines().filter(a => a.date >= monthAgo);
   const important = inbox.messages.filter(m => !m.done && mailCategory(m).category === 'important');
   const att = campus.data && campus.data.attendance;
   const spent = state.finances.reduce((sum, f) => sum + f.amount, 0);
@@ -69,11 +71,19 @@ function desktopSnapshot(){
 
 // Many things can change at once (and the timer redraws every second), so send at most a couple of times a second.
 let desktopPushTimer = null;
+let lastDesktopSnapshot = '';
 function pushDesktop(){
   if(!window.pcc || !window.pcc.desktopState || !prefs().desktopMode || desktopPushTimer) return;
   desktopPushTimer = setTimeout(() => {
     desktopPushTimer = null;
-    try { window.pcc.desktopState(desktopSnapshot()); } catch(e){ console.error('Desktop mode update failed', e); }
+    try {
+      // Only when something changed: the timer redraws every second, but the dashboard counts down by itself.
+      const snapshot = desktopSnapshot();
+      const key = JSON.stringify(snapshot);
+      if(key === lastDesktopSnapshot) return;
+      lastDesktopSnapshot = key;
+      window.pcc.desktopState(snapshot);
+    } catch(e){ console.error('Desktop mode update failed', e); }
   }, 400);
 }
 
@@ -81,6 +91,7 @@ function pushDesktop(){
 function configureDesktop(){
   if(!window.pcc || !window.pcc.desktopConfigure) return;
   const p = prefs();
+  lastDesktopSnapshot = '';   // a new dashboard window needs everything again
   window.pcc.desktopConfigure({ enabled: !!p.desktopMode, icons: p.desktopIcons }).then(() => { pushDesktop(); refreshDesktopWeather(); });
   configureIsland();   // the media helper also runs for Desktop mode
 }

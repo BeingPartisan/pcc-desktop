@@ -42,12 +42,16 @@ require('./campus')({ logEvent, getMainWindow: () => mainWindow });
 const messaging = require('./messaging')({ logEvent, getMainWindow: () => mainWindow });
 require('./feedback')({ logEvent, getMainWindow: () => mainWindow, getLog: () => logBuffer, messaging, broadcastPublicKey: messaging.broadcastPublicKey });
 
+// Settings > Performance: how smooth the visualiser and dashboard are, and Battery saver on battery (performance.js).
+const perf = require('./performance')({ logEvent, onModeChange: () => buildTrayMenu() });
+
 // Desktop mode: a PCC dashboard drawn on the wallpaper (desktop.js); the island's media helper feeds it.
-const desktop = require('./desktop')({ logEvent });
+const desktop = require('./desktop')({ logEvent, perf, onNetworkWanted: (on) => island.setNetwork(on) });
 
 const island = require('./island')({
   logEvent,
   desktop,
+  perf,
   getMainWindow: () => mainWindow,
   // Download / Restart pressed on the island's update row
   onUpdateAction: (type) => (type === 'update-download' ? startUpdateDownload() : installDownloadedUpdate()),
@@ -445,10 +449,21 @@ function buildTrayMenu() {
       click: () => { if (mainWindow) mainWindow.webContents.send('island-action', { type: 'visualizer-layer' }); } },
     { type: 'separator' },
   ];
+  // Performance modes, as a quick switch. The choice is saved by the app, like the one in Settings.
+  const profile = perf.current();
+  const perfItems = [
+    { label: profile.savingForBattery ? 'Performance (Battery saver while on battery)' : 'Performance', enabled: false },
+    ...[['saver', 'Battery saver'], ['balanced', 'Balanced'], ['best', 'Best quality']].map(([mode, label]) => ({
+      label, type: 'radio', checked: profile.chosen === mode,
+      click: () => { if (mainWindow) mainWindow.webContents.send('island-action', { type: 'perf-mode', mode }); },
+    })),
+    { type: 'separator' },
+  ];
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Open PCC', click: () => { mainWindow.show(); mainWindow.focus(); } },
     { type: 'separator' },
     ...islandItems,
+    ...perfItems,
     ...visualizerItems,
     {
       label: 'Check for Updates',
@@ -520,9 +535,11 @@ function getSlowSysInfo(key) {
 }
 
 ipcMain.handle('get-system-info', async () => {
-  const [[cpu, osInfo], mem, currentLoad, battery, disk] = await Promise.all([
+  // Memory from Node's own counters: on Windows, si.mem() starts a PowerShell process every time.
+  const mem = { total: require('os').totalmem(), available: require('os').freemem() };
+  mem.active = mem.total - mem.available;
+  const [[cpu, osInfo], currentLoad, battery, disk] = await Promise.all([
     getStaticSysInfo(),
-    si.mem(),
     si.currentLoad(),
     getSlowSysInfo('battery'),
     getSlowSysInfo('disk'),
@@ -625,6 +642,48 @@ ipcMain.handle('export-data', async (event, rendererData) => {
     logEvent('error', 'Data export failed', String(e));
     return { ok: false, error: String(e.message || e) };
   }
+});
+
+// The evaluation pattern as a Word document (evaluation-docx.js builds it).
+ipcMain.handle('export-evaluation-docx', async (event, data) => {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export evaluation pattern',
+    defaultPath: path.join(app.getPath('documents'), `Evaluation pattern ${backupStamp().slice(0, 10)}.docx`),
+    filters: [{ name: 'Word document', extensions: ['docx'] }],
+  });
+  if (result.canceled || !result.filePath) return { ok: false, canceled: true };
+  try {
+    const { buildEvaluationDocx } = require('./evaluation-docx');
+    await fs.promises.writeFile(result.filePath, await buildEvaluationDocx(data || {}));
+    logEvent('info', `Evaluation pattern exported to ${result.filePath}`);
+    return { ok: true, filePath: result.filePath };
+  } catch (e) {
+    logEvent('error', 'Evaluation export failed', String(e));
+    return { ok: false, error: String(e.message || e) };
+  }
+});
+// A Word file's tables (word-tables.js), for importing an evaluation pattern or a schedule.
+ipcMain.handle('import-word-tables', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Import from a Word document',
+    defaultPath: app.getPath('documents'),
+    filters: [{ name: 'Word document', extensions: ['docx'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || !result.filePaths.length) return { ok: false, canceled: true };
+  try {
+    const { readWordTables } = require('./word-tables');
+    const tables = readWordTables(await fs.promises.readFile(result.filePaths[0]));
+    return { ok: true, name: path.basename(result.filePaths[0]), tables };
+  } catch (e) {
+    logEvent('warn', 'Word import failed', String(e));
+    return { ok: false, error: String(e.message || e) };
+  }
+});
+ipcMain.handle('open-path', async (event, filePath) => {
+  // Only files this app just wrote: a .docx in a folder the user chose.
+  if (typeof filePath !== 'string' || !/\.docx$/i.test(filePath)) return false;
+  return (await shell.openPath(filePath)) === '';
 });
 
 // Automatic safety copy, kept in the app's own data folder. Only the most

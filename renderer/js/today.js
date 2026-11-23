@@ -115,7 +115,7 @@ function describeDaysAway(dateStr){
 
 function renderTodayDeadlines(){
   const el = document.getElementById('today-deadlines');
-  const items = [...state.agenda, ...evaluationDeadlines()].sort((a, b) => a.date.localeCompare(b.date));
+  const items = openDeadlines();
   if(!items.length){
     el.innerHTML = '<div class="empty">No deadlines yet.</div>';
     return;
@@ -127,6 +127,7 @@ function renderTodayDeadlines(){
       <div class="item-row">
         <span class="txt">${esc(a.title)}</span>
         <span class="pill ${when.cls}" title="${esc(a.date)}">${when.text}</span>
+        ${deadlineDoneButton(a)}
       </div>`;
   }).join('')
     + (more > 0 ? `<a href="#" class="more-link" onclick="navigate('focus'); return false;">+ ${more} more</a>` : '');

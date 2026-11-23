@@ -32,6 +32,12 @@ svg{fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stro
   background:linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.03) 38%, rgba(0,0,0,.10)), rgba(10,11,16,.40);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.18), inset 0 0 0 1px rgba(255,255,255,.08);}
 body.no-wp .glass::after{background:linear-gradient(155deg, rgba(255,255,255,.10), rgba(255,255,255,.02) 40%), rgba(12,13,18,.62);}
+/* Performance: Battery saver draws plain dark cards (no blur to composite); Best quality a richer glass */
+body.glass-plain .glass::before{display:none;}
+body.glass-plain .glass::after{background:linear-gradient(155deg, rgba(255,255,255,.09), rgba(255,255,255,.02) 40%), rgba(14,15,20,.72);}
+body.glass-rich .glass::before{filter:blur(34px) saturate(1.9) brightness(.82);}
+body.glass-rich .glass::after{background:linear-gradient(155deg, rgba(255,255,255,.18), rgba(255,255,255,.04) 34%, rgba(0,0,0,.12)), rgba(10,11,16,.34);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24), inset 0 0 0 1px rgba(255,255,255,.10), inset 0 -18px 36px -24px rgba(255,255,255,.08);}
 
 /* ---------- layout ---------- */
 .desk{position:absolute; inset:var(--top) var(--right) var(--bottom) var(--left);
@@ -49,23 +55,16 @@ body.no-wp .glass::after{background:linear-gradient(155deg, rgba(255,255,255,.10
 .dim{color:var(--ink-3);}
 .more{font-size:12px; color:var(--ink-3); padding-top:6px;}
 
-/* ---------- today's timeline ---------- */
-/* one line down through the dots, from the first to the last */
-.timeline{position:relative;}
-.timeline::before{content:''; position:absolute; left:67px; top:14px; bottom:var(--tail, 14px); width:1.5px; background:rgba(255,255,255,.14);}
-.tl{display:grid; grid-template-columns:52px 16px minmax(0,1fr); align-items:start; column-gap:8px; padding:4px 0; position:relative;}
-.tl-time{font-family:var(--mono); font-size:12px; color:var(--ink-3); padding-top:2px; text-align:right;}
-.tl-dot{width:10px; height:10px; border-radius:50%; margin:4px 0 0 3px; background:rgba(20,22,28,.9); border:2px solid rgba(255,255,255,.35); position:relative; z-index:1;}
-.tl-body{min-width:0;}
-.tl-subject{font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.tl-meta{font-size:12px; color:var(--ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.tl.past .tl-subject{color:var(--ink-3);} .tl.past .tl-dot{border-color:rgba(255,255,255,.18);}
-.tl.next .tl-dot{border-color:var(--accent);}
-.tl.next .tl-meta{color:var(--accent);}
-.tl.now .tl-dot{background:var(--accent); border-color:var(--accent); box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);}
-.tl.now .tl-time{color:var(--accent);}
-.tl-progress{height:3px; border-radius:2px; background:rgba(255,255,255,.12); margin-top:6px; overflow:hidden;}
-.tl-progress i{display:block; height:100%; background:var(--accent); border-radius:2px;}
+/* ---------- classes, compact ---------- */
+.card.compact{padding:12px 16px;}
+.card.compact .label{margin-bottom:6px;}
+.cls{display:flex; align-items:center; gap:10px; padding:3px 0; font-size:13px; min-width:0;}
+.cls .t{font-family:var(--mono); font-size:11.5px; color:var(--ink-3); width:40px; flex-shrink:0; text-align:right;}
+.cls .s{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0;}
+.cls .w{font-size:11.5px; color:var(--ink-3); flex-shrink:0;}
+.cls.now .t, .cls.now .w{color:var(--accent);} .cls.now .s{color:var(--accent);}
+.cls.next .w{color:var(--accent);}
+.cls-done{font-size:13px; color:var(--ink-3);}
 
 /* ---------- tasks and deadlines ---------- */
 .task{display:flex; align-items:center; gap:11px; padding:5px 0; min-width:0;}
@@ -79,6 +78,8 @@ body.no-wp .glass::after{background:linear-gradient(155deg, rgba(255,255,255,.10
 .badge b{font-size:16px; font-weight:500;} .badge small{font-size:9.5px; color:var(--ink-3); margin-top:3px; letter-spacing:.04em;}
 .badge.soon{background:color-mix(in srgb, var(--warn) 22%, transparent);} .badge.soon b{color:var(--warn);}
 .badge.today{background:var(--warn);} .badge.today b, .badge.today small{color:#2A0F06;}
+.badge.late{background:var(--hot);} .badge.late b, .badge.late small{color:#2A0606;}
+.deadline .when.late{color:var(--hot);}
 .deadline .txt{min-width:0;} .deadline .title{font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .deadline .when{font-size:12px; color:var(--ink-3);}
 
@@ -94,8 +95,10 @@ body.no-wp .glass::after{background:linear-gradient(155deg, rgba(255,255,255,.10
 .greeting{font-size:26px; margin-top:4px; font-weight:400;}
 .greeting em{font-family:var(--serif); font-style:italic; color:var(--accent); font-size:1.2em;}
 .next{display:inline-flex; align-items:center; gap:10px; margin-top:14px; padding:8px 16px 8px 14px; border-radius:99px; font-size:13.5px; max-width:100%;}
-.next .pulse{width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0; animation:pulse 2s ease-out infinite;}
-@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent);} 100%{box-shadow:0 0 0 10px transparent;}}
+/* the ring grows and fades by transform and opacity only, which the GPU does without repainting */
+.next .pulse{width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0; position:relative;}
+.next .pulse::after{content:''; position:absolute; inset:0; border-radius:50%; background:var(--accent); animation:pulse 2s ease-out infinite; will-change:transform, opacity;}
+@keyframes pulse{0%{transform:scale(1); opacity:.6;} 100%{transform:scale(3.4); opacity:0;}}
 .next .k{color:var(--ink-3);} .next b{font-weight:500;} .next .t{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 
 /* ---------- week strip ---------- */
@@ -172,4 +175,6 @@ body.no-wp .glass::after{background:linear-gradient(155deg, rgba(255,255,255,.10
 .update svg{width:15px; height:15px; color:var(--accent);}
 
 /* while a window covers the desktop nothing moves */
-body.still *{animation-play-state:paused !important;}
+/* Only the looping animations: the one-off fade-in must finish, or the cards would stay invisible. */
+body.still .eq i, body.still .pulse::after, body.still .colon,
+body.calm .eq i, body.calm .pulse::after, body.calm .colon{animation-play-state:paused !important;}   /* calm: Battery saver */

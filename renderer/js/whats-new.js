@@ -10,6 +10,15 @@
 
 const RELEASE_NOTES = [
   {
+    version: '2.7.1',
+    items: [
+      { icon: 'star', title: 'Performance settings', text: 'Pick Battery saver, Balanced or Best quality for how smooth the visualiser and Desktop mode are. It switches to Battery saver by itself while you are unplugged, and shows what each part of PCC is using.', go: { label: 'Open Performance', run: () => openSettingsAt('performance') } },
+      { icon: 'calendar', title: 'Evaluation in Word', text: 'Export every course\'s evaluation pattern to a Word document, in date order, and import one back, even on a friend\'s PCC. Their marks never come with it.', go: { label: 'Open Academics', run: () => navigate('academics') } },
+      { icon: 'calendar', title: 'Tick off deadlines', text: 'Every deadline has a tick to mark it done. Overdue ones show in red on the desktop until you do.' },
+      { icon: 'island', title: 'Desktop mode, steadier', text: 'Deadlines and tasks come first, classes take less room, network speed is live, and it comes back by itself after sleep or hibernate.' },
+    ],
+  },
+  {
     version: '2.7.0',
     items: [
       { icon: 'star', title: 'Desktop mode', text: 'Your desktop becomes a PCC dashboard: a big clock, today\'s classes, tasks, deadlines, important mail and messages, CPU, memory, battery and weather, what\'s playing and more, drawn on the wallpaper. Your icons stay on top and clickable.', go: { label: 'Turn it on', run: () => openSettingsAt('desktop') } },

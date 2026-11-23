@@ -11,5 +11,6 @@ contextBridge.exposeInMainWorld('deskBridge', {
   onUpdate: on('desk-update'),   // an app update that's available / downloading / ready, or null
   onStats: on('desk-stats'),     // CPU, memory, battery, network
   onWallpaper: on('desk-wallpaper'), // { url, fit } of the wallpaper picture, or null
-  onActive: on('desk-active'),   // false while a maximised or full-screen window covers the desktop
+  onActive: on('desk-active'),
+  onPerf: on('desk-perf'),       // the Performance profile: glass style, idle animations, battery saver   // false while a maximised or full-screen window covers the desktop
 });

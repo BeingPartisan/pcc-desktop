@@ -48,6 +48,9 @@ const PREF_DEFAULTS = {
   breakMinutes: 5,
   quotesOnline: true,         // top up the quote pool from the internet (quotes.js)
   islandEnabled: true,        // the floating island (see island-feed.js)
+  perfMode: 'balanced',       // Settings > Performance: 'saver' | 'balanced' | 'best' (see performance.js)
+  perfBatterySaver: true,     // use Battery saver while on battery
+  perfPauseGaming: true,      // the visualiser stops listening while a full-screen app is in front
   desktopMode: false,         // a PCC dashboard drawn on the desktop wallpaper (see desktop-feed.js)
   desktopIcons: 'left',       // which side the desktop icons are on, so the dashboard leaves them room: 'left' | 'right' | 'both'
   islandMedia: true,          // show and control what's playing
@@ -108,7 +111,8 @@ function setPref(key, value){
   if(key === 'clock24'){ updateClock(); renderTimetable(); }
   if(key === 'quotesOnline') initQuotes();
   if(key === 'workspacesEnabled') workspacesSwitched();
-  if(key.startsWith('desktop')) configureDesktop();
+  if(key.startsWith('perf')) configurePerformance();
+  else if(key.startsWith('desktop')) configureDesktop();
   else if(key.startsWith('island') || key.startsWith('visualizer')) configureIsland();
   else pushIsland(); // accent and clock changes show on the island too
 }

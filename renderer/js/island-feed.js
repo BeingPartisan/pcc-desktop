@@ -86,6 +86,8 @@ if(window.pcc && window.pcc.onIslandAction){
     else if(action.type === 'message-read') markMessageRead(action.id);
     else if(action.type === 'open-workspace') openWorkspace(action.id);
     // the layers button on the island, and the tray menu: visualiser over windows, or back on the wallpaper
+    // the tray's Performance menu
+    else if(action.type === 'perf-mode' && ['saver', 'balanced', 'best'].includes(action.mode)) setPref('perfMode', action.mode);
     else if(action.type === 'visualizer-layer') setPref('visualizerLayer', prefs().visualizerLayer === 'top' ? 'wallpaper' : 'top');
     pushIsland();
   });

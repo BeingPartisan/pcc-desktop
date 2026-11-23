@@ -19,19 +19,20 @@
 <main class="desk" id="desk" hidden>
 
   <div class="col col-left">
-    <section class="card glass" id="p-today" hidden>
-      <div class="label"><span id="today-label">Today</span><span class="label-side" id="today-side"></span></div>
-      <div class="timeline" id="timeline"></div>
+    <section class="card glass" id="p-deadlines" hidden data-drop="4">
+      <div class="label"><span>Coming up</span><span class="label-side" id="deadline-count"></span></div>
+      <div id="deadlines"></div>
     </section>
 
-    <section class="card glass" id="p-tasks" hidden data-drop="4">
+    <section class="card glass" id="p-tasks" hidden data-drop="3">
       <div class="label"><span>Tasks</span><span class="label-side" id="task-count"></span></div>
       <div id="tasks"></div>
     </section>
 
-    <section class="card glass" id="p-deadlines" hidden data-drop="3">
-      <div class="label"><span>Coming up</span></div>
-      <div id="deadlines"></div>
+    <!-- classes: small, since the line under the clock already says what's on now / next -->
+    <section class="card glass compact" id="p-today" hidden data-drop="1">
+      <div class="label"><span>Classes today</span><span class="label-side" id="today-side"></span></div>
+      <div id="classes"></div>
     </section>
   </div>
 

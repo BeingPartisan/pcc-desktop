@@ -198,14 +198,71 @@ function readSchedule(){
   showImportStep('preview');
 }
 
+/* ----- From a Word file ----- */
+// An evaluation pattern exported by PCC (one table per course, under the
+// course's name, with columns # | Component | Marks | Date | Time and place)
+// is read course by course, marks out of included. Marks someone scored are
+// never brought in: a pattern shared by a friend carries only the pattern.
+// Any other Word file's tables are read like a pasted schedule.
+
+// "Wed, 2 Dec, 2026" (how the export writes dates) -> "2026-12-02"; anything else as loosely as a paste.
+function parseExportDate(text){
+  const m = String(text || '').match(/(\d{1,2})\s+([A-Za-z]{3,})\.?,?\s+(\d{4})/);
+  if(m){
+    const month = MONTHS.indexOf(m[2].slice(0, 3).toLowerCase());
+    if(month >= 0) return `${m[3]}-${String(month + 1).padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  }
+  return text ? parseLooseDate(text) : '';
+}
+
+// Rows from PCC's own export, or null if this isn't one.
+function rowsFromPccExport(tables){
+  const rows = [];
+  for(const t of tables){
+    const head = t.rows[0].map(c => c.toLowerCase());
+    const col = (name) => head.findIndex(h => h === name);
+    const iName = col('component'), iMarks = col('marks'), iDate = col('date'), iTime = col('time and place');
+    if(head[0] !== '#' || iName < 0 || iMarks < 0 || !t.heading) continue;   // the overview and "All dates" tables aren't per course
+    for(const cells of t.rows.slice(1)){
+      const name = (cells[iName] || '').trim();
+      if(!name || (!cells[0] && /^total$/i.test(name))) continue;
+      const marks = Number(cells[iMarks]);
+      rows.push({ courseText: t.heading, name: name.slice(0, 80), max: marks > 0 && marks <= 100 ? marks : null,
+        date: iDate >= 0 ? parseExportDate(cells[iDate]) : '', time: iTime >= 0 ? (cells[iTime] || '') : '' });
+    }
+  }
+  return rows.length ? rows : null;
+}
+
+async function importFromWord(){
+  if(!window.pcc || !window.pcc.importWordTables) return;
+  if(!evalCourses().length){ showToast('Connect Digiicampus first, so PCC knows your courses'); return; }
+  const result = await window.pcc.importWordTables();
+  if(result.canceled) return;
+  if(!result.ok){ showToast("Couldn't read that file: " + (result.error || 'unknown error')); return; }
+  if(!result.tables.length){ showToast('That document has no tables to import'); return; }
+  document.getElementById('import-overlay').classList.add('open');
+  const courses = evalCourses();
+  const pcc = rowsFromPccExport(result.tables);
+  if(pcc){
+    importRows = pcc.map(r => planRow({ ...r, course: courses.includes(r.courseText) ? r.courseText : (matchCourseName(r.courseText, courses) || IMPORT_SKIP) }));
+    renderImportPreview();
+    showImportStep('preview');
+    return;
+  }
+  // Someone's own calendar in Word: the same as pasting its tables.
+  document.getElementById('import-text').value = result.tables.map(t => t.rows.map(r => r.join('\t')).join('\n')).join('\n');
+  readSchedule();
+}
+
 function setImportCourse(i, course){ importRows[i] = planRow({ ...importRows[i], course }); renderImportPreview(); }
 function setImportField(i, field, value){ importRows[i] = planRow({ ...importRows[i], [field]: value }); renderImportPreview(); }
 
 function renderImportPreview(){
   const courses = evalCourses();
   const label = {
-    update: (r) => `Adds the date to “${esc(r.matchName)}”`,
-    add: () => 'New component, marks to fill in',
+    update: (r) => r.max != null ? `Updates “${esc(r.matchName)}”: out of ${r.max}${r.date ? ', with its date' : ''}` : `Adds the date to “${esc(r.matchName)}”`,
+    add: (r) => r.max != null ? `New component, out of ${r.max}` : 'New component, marks to fill in',
     deadline: () => 'Added to Deadlines',
     skip: () => 'Skipped',
   };
@@ -237,9 +294,9 @@ function applyScheduleImport(){
     if(!name) continue;
     if(r.action === 'update'){
       const comp = evalFor(r.course).components.find(c => c.id === r.matchId);
-      if(comp){ if(r.date) comp.date = r.date; if(r.time) comp.time = r.time; changed++; }
+      if(comp){ if(r.date) comp.date = r.date; if(r.time) comp.time = r.time; if(r.max != null) comp.max = r.max; changed++; }
     } else if(r.action === 'add'){
-      evalFor(r.course).components.push({ id: uid(), name, max: null, got: null, date: r.date || '', time: r.time || '' });
+      evalFor(r.course).components.push({ id: uid(), name, max: r.max ?? null, got: null, date: r.date || '', time: r.time || '' });
       changed++;
     } else if(r.action === 'deadline'){
       const title = `${r.courseText ? r.courseText + ': ' : ''}${name}${r.time ? ' · ' + r.time : ''}`;
@@ -249,7 +306,8 @@ function applyScheduleImport(){
   Store.set('agenda', state.agenda);
   closeScheduleImport();
   evalChanged();
-  showToast(changed ? `Imported ${changed} item${changed === 1 ? '' : 's'}. New components need their marks filled in.` : 'Nothing to import');
+  const needMarks = importRows.some(r => r.action === 'add' && r.max == null);
+  showToast(changed ? `Imported ${changed} item${changed === 1 ? '' : 's'}.${needMarks ? ' New components need their marks filled in.' : ''}` : 'Nothing to import');
 }
 
 document.addEventListener('keydown', e => {

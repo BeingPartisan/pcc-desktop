@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.7.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
+**Current version:** 2.7.1 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
 
 ---
 
@@ -64,7 +64,15 @@ It reads the feel of each song as it plays (loudness, how bass-heavy it is, and 
 
 ### Desktop mode
 
-Settings → Desktop. Turns the desktop into a PCC dashboard, drawn on the wallpaper under the desktop icons (which stay on top and clickable) and under all windows: a large clock with the weather, a "now / next" line, today's classes as a timeline, tasks, upcoming deadlines, this week, important mail and messages, countdowns, CPU / memory / battery gauges and network speed, attendance, budget and habits, what's playing, and a notice when an update is out. The cards are frosted glass: each shows a blurred copy of the wallpaper behind it (PCC reads the wallpaper picture from Windows' settings to do this). You tell it which side your icons are on (left, right or both) so it leaves them room. It stops updating while a maximised or full-screen window covers the desktop, and it works alongside the music visualiser, which plays behind it. For now it's for looking at; clicking things on it is planned.
+Settings → Desktop. Turns the desktop into a PCC dashboard, drawn on the wallpaper under the desktop icons (which stay on top and clickable) and under all windows: a large clock with the weather, a "now / next" line, upcoming and overdue deadlines, tasks, a small list of today's classes, this week, important mail and messages, countdowns, CPU / memory / battery gauges and network speed, attendance, budget and habits, what's playing, and a notice when an update is out. The cards are frosted glass: each shows a blurred copy of the wallpaper behind it (PCC reads the wallpaper picture from Windows' settings to do this). You tell it which side your icons are on (left, right or both) so it leaves them room. It stops updating while a maximised or full-screen window covers the desktop, and it works alongside the music visualiser, which plays behind it. For now it's for looking at; clicking things on it is planned. It comes back by itself after sleep, hibernate or unlocking, and keeps trying for a while at sign-in until the desktop is ready.
+
+### Performance
+
+Settings → Performance (also in the tray menu). **Battery saver**, **Balanced** (the default) or **Best quality** sets the visualiser's frame rate and sparks, how often the dashboard's stats update, and how rich its glass is. **Lighter on battery** switches to Battery saver while the laptop is unplugged. **Pause for full-screen apps** stops the visualiser listening while a game or video is full screen. The pane also shows what each part of PCC is using right now. None of the live stats start extra processes: CPU and memory come from Node's own counters, network from the media helper that's already running, battery from the browser engine.
+
+### Evaluation in Word
+
+On the Evaluation card, **Export to Word** saves every course's pattern (components in date order, marks, dates, time and place, and a page of all dates). **Import from Word** reads such a file back, in another PCC too, course by course, with a preview first; marks someone scored are never imported. Any other Word table (a calendar) goes through the schedule importer.
 
 ### Messages
 
@@ -201,6 +209,9 @@ pcc-desktop/
 ├── campus.js           # Digiicampus sign-in and sync (timetable, attendance, results)
 ├── island.js           # the floating island's window, break reminder, media helper, visualiser window
 ├── desktop.js          # Desktop mode: the dashboard window on the wallpaper, system stats, wallpaper picture
+├── performance.js      # Settings > Performance: profiles, battery switching, usage readout
+├── evaluation-docx.js  # the evaluation pattern as a Word document
+├── word-tables.js      # reads the tables out of a Word file (for importing)
 ├── desktop-preload.js  # bridge for the Desktop mode window
 ├── wallpaper.js        # joins a window to the wallpaper layer (visualiser and Desktop mode)
 ├── island-preload.js   # bridge for the island window
@@ -230,6 +241,15 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.7.1
+- **Performance** settings: Battery saver / Balanced / Best quality, Lighter on battery, Pause for full-screen apps, a live "what PCC is using" readout, and a tray quick switch. Live stats no longer start a PowerShell process for each reading.
+- Live network speed on the dashboard, from the media helper.
+- Desktop mode and the visualiser come back after sleep, hibernate and unlocking, and retry at sign-in.
+- The over-windows visualiser no longer disappears with an auto-hiding taskbar (maximised windows were taken for full-screen ones).
+- Dashboard: deadlines and tasks first, a compact class list, overdue deadlines in red; cards no longer stay invisible when it starts behind a window.
+- A tick to mark deadlines done; evaluation deadlines now appear in the app as soon as courses load.
+- Evaluation: components in date order, **Export to Word** and **Import from Word**.
 
 ### 2.7.0
 - **Desktop mode** (Settings → Desktop): a PCC dashboard on the wallpaper with frosted-glass cards, a class timeline, tasks, deadlines, a week strip, mail and messages, countdowns, system gauges, weather, at-a-glance stats and what's playing. Leaves room for desktop icons on the left, right or both sides.

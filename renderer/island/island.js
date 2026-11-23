@@ -178,7 +178,8 @@ function render(){
     $('media-label').textContent = playing ? 'Playing' : 'Paused';
     $('media-title').textContent = media.title || 'Unknown track';
     $('media-artist').textContent = media.artist || '';
-    $('media-toggle').innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+    const toggleIcon = playing ? PAUSE_ICON : PLAY_ICON;
+    if($('media-toggle').dataset.icon !== toggleIcon){ $('media-toggle').innerHTML = toggleIcon; $('media-toggle').dataset.icon = toggleIcon; }
     const over = state.visualizerLayer === 'top';
     $('viz-layer').hidden = !state.visualizer || state.visualizer === 'off';
     $('viz-layer').classList.toggle('on', over);

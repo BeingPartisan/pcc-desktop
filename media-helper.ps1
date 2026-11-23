@@ -89,8 +89,10 @@ function Get-Front {
   $r = New-Object Pcc.Win+RECT
   [Pcc.Win]::GetWindowRect($h, [ref]$r) | Out-Null
   $b = [System.Windows.Forms.Screen]::FromHandle($h).Bounds
-  if ($r.Left -le $b.Left -and $r.Top -le $b.Top -and $r.Right -ge $b.Right -and $r.Bottom -ge $b.Bottom) { return 'fullscreen' }
+  # Maximised first: with an auto-hiding taskbar a maximised window also covers
+  # the whole screen, and it isn't a full-screen game or video.
   if ([Pcc.Win]::IsZoomed($h)) { return 'maximized' }
+  if ($r.Left -le $b.Left -and $r.Top -le $b.Top -and $r.Right -ge $b.Right -and $r.Bottom -ge $b.Bottom) { return 'fullscreen' }
   return 'normal'
 }
 
@@ -100,12 +102,27 @@ $media = @{ status = 'none'; title = ''; artist = ''; app = '' }
 $last = ''
 $tick = 0
 $coverKey = $null   # the track whose cover was last sent
+$netOn = $false     # Desktop mode's dashboard wants network counters (commands net-on / net-off)
+
+# Bytes received and sent so far on every connected network adapter. The app
+# turns these into a speed. Reading them is a cheap .NET call, unlike asking WMI.
+function Get-NetBytes {
+  $rx = [int64]0; $tx = [int64]0
+  foreach ($n in [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces()) {
+    if ($n.OperationalStatus -ne 'Up') { continue }
+    $type = $n.NetworkInterfaceType.ToString()
+    if ($type -eq 'Loopback' -or $type -eq 'Tunnel') { continue }
+    try { $s = $n.GetIPStatistics(); $rx += $s.BytesReceived; $tx += $s.BytesSent } catch { }
+  }
+  return @{ rx = $rx; tx = $tx }
+}
 
 while ($true) {
   # Commands
   if ($pending.IsCompleted) {
     $command = $pending.Result
     if ($null -eq $command) { break }   # the app closed our input: stop
+    if ($command -eq 'net-on') { $netOn = $true } elseif ($command -eq 'net-off') { $netOn = $false }
     $session = $manager.GetCurrentSession()
     if ($session) {
       try {
@@ -146,6 +163,14 @@ while ($true) {
   try { $state.front = Get-Front } catch { }
   $json = $state | ConvertTo-Json -Compress
   if ($json -ne $last) { $last = $json; [Console]::Out.WriteLine($json); [Console]::Out.Flush() }
+
+  if ($netOn -and $tick % 2 -eq 0) {
+    try {
+      $b = Get-NetBytes
+      $line = @{ net = @{ rx = $b.rx; tx = $b.tx; t = [DateTimeOffset]::Now.ToUnixTimeMilliseconds() } } | ConvertTo-Json -Compress
+      [Console]::Out.WriteLine($line); [Console]::Out.Flush()
+    } catch { }
+  }
 
   $tick++
   Start-Sleep -Milliseconds 500

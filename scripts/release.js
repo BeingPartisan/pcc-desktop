@@ -16,7 +16,8 @@
 // android-app/android/keystore.properties, which stays on this computer) and
 // attaches it to the same release as PCC-Android-<version>.apk; the phone app
 // looks for that file to offer updates. Skipped, with a note, if the Android
-// tools or the key aren't on this computer. --skip-android skips it on purpose.
+// tools or the key aren't on this computer. --skip-android skips it on purpose;
+// --android-only does just that part, for a draft that already has the PC files.
 //
 // It also writes the release notes: this version's section of the README's
 // changelog, signed off. Without notes, GitHub shows the commit message
@@ -80,8 +81,10 @@ async function ensureDraft() {
 const ANDROID = path.join(__dirname, '..', 'android-app');
 const JAVA_HOME = process.env.PCC_JAVA_HOME || 'D:/Dev/jdk/jdk-21.0.13.1+2';
 
-function run(cmd, args, cwd) {
-  const r = spawnSync(cmd, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32', env: { ...process.env, JAVA_HOME } });
+// One command line, run in `cwd`. Programs are named by full path: Windows may be set
+// (NoDefaultCurrentDirectoryInExePath) not to look in the current folder for them.
+function run(commandLine, cwd) {
+  const r = spawnSync(commandLine, { cwd, stdio: 'inherit', shell: true, env: { ...process.env, JAVA_HOME, CAPACITOR_TELEMETRY: 'false' } });
   return r.status === 0;
 }
 
@@ -94,8 +97,10 @@ async function releaseAndroid(release) {
   }
   const androidPkg = JSON.parse(fs.readFileSync(path.join(ANDROID, 'package.json'), 'utf8'));
   console.log(`\nBuilding PCC for Android ${androidPkg.version}...`);
-  if (!run('node', [path.join('node_modules', '@capacitor', 'cli', 'bin', 'capacitor'), 'sync', 'android'], ANDROID)) stop('Capacitor could not prepare the Android app (see above).');
-  if (!run(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', ['assembleRelease', '--console=plain'], path.join(ANDROID, 'android'))) stop('the Android build failed (see above). The PC files are already on the draft.');
+  const capacitor = path.join(ANDROID, 'node_modules', '@capacitor', 'cli', 'bin', 'capacitor');
+  if (!run(`"${process.execPath}" "${capacitor}" sync android`, ANDROID)) stop('Capacitor could not prepare the Android app (see above).');
+  const gradlew = path.join(ANDROID, 'android', process.platform === 'win32' ? 'gradlew.bat' : 'gradlew');
+  if (!run(`"${gradlew}" assembleRelease --console=plain`, path.join(ANDROID, 'android'))) stop('the Android build failed (see above). The PC files are already on the draft.');
   const apk = path.join(ANDROID, 'android', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk');
   const name = `PCC-Android-${androidPkg.version}.apk`;
   // Replace an earlier upload of the same file (when running this again).
@@ -114,6 +119,12 @@ async function releaseAndroid(release) {
 async function main() {
   if (!token) stop('GH_TOKEN is not set. In PowerShell:  $env:GH_TOKEN="your token"');
   const release = await ensureDraft();
+  // --android-only: the PC files are already on the draft; just add (or replace) the APK.
+  if (process.argv.includes('--android-only')) {
+    await releaseAndroid(release);
+    console.log(`\nDone. Check the draft has PCC-Android-x.y.z.apk next to the PC files, then publish it:\nhttps://github.com/${owner}/${repo}/releases\n`);
+    return;
+  }
   const build = spawnSync(process.execPath, [require.resolve('electron-builder/cli.js'), '--publish', 'always'], { stdio: 'inherit' });
   if (build.status !== 0) stop('the build or upload failed (see above). The draft is still on GitHub; running this again reuses it.');
   await releaseAndroid(release);

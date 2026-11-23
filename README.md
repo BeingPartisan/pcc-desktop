@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.8.1 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest) · **PCC for Android** 0.1.1 is on the same release page (see [PCC for Android](#pcc-for-android)).
+**Current version:** 2.8.2 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest) · **PCC for Android** 0.1.2 is on the same release page (see [PCC for Android](#pcc-for-android)).
 
 ---
 
@@ -277,6 +277,10 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.8.2
+- **Bring back a ticked deadline**: under Deadlines (and on the phone's Tasks page), **Show done** lists the ones you've ticked off, with **Restore** to put one back. It syncs like any other change.
+- **PCC for Android 0.1.2**: deadlines due today show on the island from midnight by default (or 7 to 10 AM, your choice), so a late night still sees what's due.
 
 ### 2.8.1
 - **PCC for Android 0.1.1**: deadlines and tasks on the island. Deadlines due today show from the morning with a **Done** button, tomorrow's from the day before (from the morning or as late as 8 PM, your choice), then overdue ones and (if you turn it on) high-priority tasks. Classes still come first. **Hide** puts the island away for 3 or 4 hours, then it comes back by itself. All of it is adjustable in More > Island.

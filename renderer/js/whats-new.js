@@ -10,6 +10,13 @@
 
 const RELEASE_NOTES = [
   {
+    version: '2.8.2',
+    items: [
+      { icon: 'calendar', title: 'Bring back a ticked deadline', text: 'Ticked one off by mistake? Under Deadlines, Show done lists them with a Restore button. It works on the phone too, and syncs.', go: { label: 'Open Deadlines', run: () => navigate('focus') } },
+      { icon: 'island', title: 'Today\u2019s deadlines from midnight', text: 'On PCC for Android 0.1.2, deadlines due today show on the island from midnight by default, or from a time you choose.' },
+    ],
+  },
+  {
     version: '2.8.1',
     items: [
       { icon: 'island', title: 'Deadlines on your phone\'s island', text: 'PCC for Android 0.1.1 shows deadlines due today on the island with a Done button, tomorrow\'s the day before, and overdue ones in the morning. Hide it for a few hours and it comes back by itself. Get it from the same release page.' },

@@ -66,11 +66,55 @@ function completeDeadline(key){
     const course = decodeURIComponent(rest[0]);
     const comp = ((evaluations[course] || {}).components || []).find(c => c.id === rest[1]);
     if(!comp) return;
-    comp.done = true;
+    comp.done = true; comp.doneAt = Date.now();
     saveEvaluations();
     showToast(`Done: ${comp.name}. Add the marks on the Academics page when they're out.`);
   }
   renderAgenda();
+}
+
+// Deadlines ticked off, most recent first, so one ticked by mistake can be brought back.
+function doneDeadlines(){
+  const items = state.agenda.filter(a => a.done).map(a => ({ title: a.title, date: a.date, doneAt: a.doneAt || 0, key: 'a:' + a.id }));
+  const current = new Set(evalCourses());
+  for(const [course, entry] of Object.entries(evaluations)){
+    if(!current.has(course)) continue;
+    for(const c of entry.components) if(c.date && c.got === null && c.done)
+      items.push({ title: `${course}: ${c.name}`, date: c.date, doneAt: c.doneAt || 0, key: 'e:' + encodeURIComponent(course) + ':' + c.id });
+  }
+  return items.sort((a, b) => b.doneAt - a.doneAt || b.date.localeCompare(a.date));
+}
+
+function restoreDeadline(key){
+  const [kind, ...rest] = String(key).split(':');
+  if(kind === 'a'){
+    const item = state.agenda.find(a => a.id === rest[0]);
+    if(!item) return;
+    item.done = false; delete item.doneAt;
+    Store.set('agenda', state.agenda);
+    showToast(`Back on the list: ${item.title}`);
+  } else if(kind === 'e'){
+    const course = decodeURIComponent(rest[0]);
+    const comp = ((evaluations[course] || {}).components || []).find(c => c.id === rest[1]);
+    if(!comp) return;
+    comp.done = false; delete comp.doneAt;
+    saveEvaluations();
+    showToast(`Back on the list: ${comp.name}`);
+  }
+  renderAgenda();
+}
+
+let agendaShowDone = false;
+function doneDeadlinesHtml(){
+  const done = doneDeadlines().slice(0, 30);
+  if(!done.length) return '';
+  const rows = agendaShowDone ? done.map(a => `
+    <div class="item-row done">
+      <span class="pill">${parseLocalDate(a.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
+      <span class="txt">${esc(a.title)}</span>
+      <button class="btn" style="padding:4px 10px; font-size:12px;" data-key="${esc(a.key)}" onclick="restoreDeadline(this.dataset.key)" title="Put it back on the list">Restore</button>
+    </div>`).join('') : '';
+  return `<button class="btn" style="margin-top:10px; padding:4px 10px; font-size:12px;" onclick="agendaShowDone=!agendaShowDone; renderAgenda();">${agendaShowDone ? 'Hide done' : `Show done (${done.length})`}</button>${rows}`;
 }
 
 function deadlineDoneButton(a){
@@ -80,7 +124,7 @@ function deadlineDoneButton(a){
 function renderAgenda(){
   const el = document.getElementById('agenda-list');
   const items = openDeadlines();
-  if(!items.length) { el.innerHTML = '<div class="empty">No deadlines yet.</div>'; return; }
+  if(!items.length) { el.innerHTML = '<div class="empty">No deadlines yet.</div>' + doneDeadlinesHtml(); return; }
   el.innerHTML = items.map(a => `
     <div class="item-row">
       <span class="pill" style="background:var(--accent-soft); color:var(--accent-text);">${parseLocalDate(a.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
@@ -90,7 +134,7 @@ function renderAgenda(){
         ? `<button class="btn" style="padding:4px 10px; font-size:12px;" onclick="navigate('academics')" title="Set on the Academics page">Evaluation</button>`
         : `<button class="btn btn-icon btn-danger" onclick="state.agenda=state.agenda.filter(x=>x.id!=='${a.id}'); Store.set('agenda', state.agenda); renderAgenda();">&times;</button>`}
     </div>
-  `).join('');
+  `).join('') + doneDeadlinesHtml();
 }
 
 /* ---------- Pomodoro ---------- */

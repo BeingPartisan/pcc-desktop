@@ -1,6 +1,6 @@
 {
   "name": "personal-command-center",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "description": "Partisan's Personal Command Center — desktop shell",
   "main": "main.js",
   "author": "Ansh (Partisan)",

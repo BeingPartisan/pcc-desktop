@@ -204,8 +204,14 @@ function renderTasks(){
   const done = data.tasks.filter(t => t.done).slice(0, 8);
   document.getElementById('tasks-list').innerHTML = [...open, ...done].map(taskRow).join('') || '<div class="empty">No tasks yet. Add one above.</div>';
   const d = openDeadlines();
-  document.getElementById('deadlines-list').innerHTML = d.length ? d.map(deadlineRow).join('') : '<div class="empty">No deadlines.</div>';
+  const doneDl = doneDeadlines().slice(0, 30);
+  document.getElementById('deadlines-list').innerHTML = (d.length ? d.map(deadlineRow).join('') : '<div class="empty">No deadlines.</div>')
+    + (showDoneDeadlines ? doneDl.map(a => `<div class="row done"><div class="txt"><div class="title">${esc(a.title)}</div>
+        <div class="sub">Due ${parseLocalDate(a.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</div></div>
+        <button class="btn" style="padding:7px 12px; font-size:13px;" data-key="${esc(a.key)}" onclick="restoreDeadline(this.dataset.key)">Restore</button></div>`).join('') : '')
+    + (doneDl.length ? `<div style="padding:12px 0 4px;"><button class="link" onclick="showDoneDeadlines = !showDoneDeadlines; render(true)">${showDoneDeadlines ? 'Hide done' : `Show done (${doneDl.length})`}</button></div>` : '');
 }
+let showDoneDeadlines = false;
 
 
 /* ----- More ----- */

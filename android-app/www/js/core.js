@@ -64,9 +64,33 @@ function completeDeadline(key){
   } else if(kind === 'e'){
     const course = decodeURIComponent(rest[0]);
     const comp = ((data.evaluations[course] || {}).components || []).find(c => c.id === rest[1]);
-    if(comp){ comp.done = true; save('evaluations'); toast(`Done: ${comp.name}`); }
+    if(comp){ comp.done = true; comp.doneAt = Date.now(); save('evaluations'); toast(`Done: ${comp.name}`); }
   }
   render();
+}
+
+// Ticked-off deadlines, most recent first, so one ticked by mistake can be brought back.
+function doneDeadlines(){
+  const items = data.agenda.filter(a => a.done).map(a => ({ title: a.title, date: a.date, doneAt: a.doneAt || 0, key: 'a:' + a.id }));
+  for(const [course, entry] of Object.entries(data.evaluations || {})){
+    for(const c of (entry && entry.components) || []){
+      if(c.date && c.got == null && c.done) items.push({ title: `${course}: ${c.name}`, date: c.date, doneAt: c.doneAt || 0, key: 'e:' + encodeURIComponent(course) + ':' + c.id });
+    }
+  }
+  return items.sort((a, b) => b.doneAt - a.doneAt || b.date.localeCompare(a.date));
+}
+
+function restoreDeadline(key){
+  const [kind, ...rest] = String(key).split(':');
+  if(kind === 'a'){
+    const item = data.agenda.find(a => a.id === rest[0]);
+    if(item){ item.done = false; delete item.doneAt; save('agenda'); toast(`Back on the list: ${item.title}`); }
+  } else if(kind === 'e'){
+    const course = decodeURIComponent(rest[0]);
+    const comp = ((data.evaluations[course] || {}).components || []).find(c => c.id === rest[1]);
+    if(comp){ comp.done = false; delete comp.doneAt; save('evaluations'); toast(`Back on the list: ${comp.name}`); }
+  }
+  render(true);
 }
 
 /* ----- Countdowns ----- */

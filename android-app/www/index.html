@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<title>PCC</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- PCC for Android. One page at a time; the bar at the bottom switches. -->
+<header class="top">
+  <div>
+    <div class="greeting" id="greeting">Hello</div>
+    <div class="date" id="date"></div>
+  </div>
+  <button class="sync-dot" id="sync-dot" onclick="go('more')" aria-label="Sync status"></button>
+</header>
+
+<main id="pages">
+  <!-- Today -->
+  <section class="page" data-page="today">
+    <div class="card update-card" id="update-card" hidden></div>
+    <div class="next card glass" id="next-card" hidden></div>
+    <div class="section-head"><h2>Coming up</h2><span class="side" id="deadline-side"></span></div>
+    <div class="card" id="today-deadlines"></div>
+    <div class="section-head"><h2>Tasks</h2><button class="link" onclick="go('tasks')">All</button></div>
+    <div class="card" id="today-tasks"></div>
+    <div class="section-head" id="mail-head" hidden><h2>Mail to you</h2><button class="link" onclick="go('mail')">All mail</button></div>
+    <div class="card" id="today-mail" hidden></div>
+    <div class="section-head" id="countdowns-head" hidden><h2>Countdowns</h2></div>
+    <div class="tiles" id="today-countdowns"></div>
+  </section>
+
+  <!-- Classes -->
+  <section class="page" data-page="classes">
+    <div class="card connect-card" id="campus-connect" hidden>
+      <b>Bring in your timetable</b>
+      <div class="note">Sign in to Digiicampus on the university's own page. PCC never sees your password; it keeps the session the site gives it (about a week), then asks you to sign in again.</div>
+      <button class="btn primary" onclick="campusConnect()">Connect Digiicampus</button>
+    </div>
+    <div class="campus-status" id="campus-status" hidden></div>
+    <div class="section-head"><h2>Today</h2><span class="side" id="classes-side"></span></div>
+    <div class="card" id="classes-today"></div>
+    <div class="section-head" id="attendance-head" hidden><h2>Attendance</h2><span class="side" id="attendance-side"></span></div>
+    <div class="card" id="attendance" hidden></div>
+    <div class="section-head"><h2>This week</h2></div>
+    <div id="classes-week"></div>
+  </section>
+
+  <!-- Tasks -->
+  <section class="page" data-page="tasks">
+    <form class="add-row" onsubmit="addTask(event)">
+      <input id="task-input" type="text" placeholder="Add a task" autocomplete="off" enterkeyhint="done" />
+      <button class="btn primary" type="submit">Add</button>
+    </form>
+    <div class="card" id="tasks-list"></div>
+    <div class="section-head"><h2>Deadlines</h2></div>
+    <form class="add-row" onsubmit="addDeadline(event)">
+      <input id="deadline-input" type="text" placeholder="Add a deadline" autocomplete="off" />
+      <input id="deadline-date" type="date" />
+      <button class="btn" type="submit">Add</button>
+    </form>
+    <div class="card" id="deadlines-list"></div>
+  </section>
+
+  <!-- Messages -->
+  <section class="page" data-page="messages">
+    <div id="messages-body"></div>
+  </section>
+
+  <!-- Mail (not on the bar: from Today's card and More) -->
+  <section class="page" data-page="mail">
+    <div class="thread-head"><button class="link" onclick="go('today')">‹ Today</button><b>Mail</b><span></span></div>
+    <div id="mail-body"></div>
+  </section>
+
+  <!-- More -->
+  <section class="page" data-page="more">
+    <div class="section-head"><h2>You</h2></div>
+    <div class="card form-card">
+      <label>Your name<input id="set-name" type="text" maxlength="40" onchange="setProfile('name', this.value)" /></label>
+      <label>City (weather)<input id="set-city" type="text" maxlength="60" onchange="setProfile('weatherCity', this.value)" /></label>
+      <div class="field-label">Colour</div>
+      <div class="swatches" id="swatches"></div>
+    </div>
+
+    <div class="section-head"><h2>Mail</h2></div>
+    <div class="card form-card"><div class="switch-row"><div><b>Gmail</b><div class="note" id="more-mail-note"></div></div><button class="btn" onclick="go('mail')">Open</button></div></div>
+
+    <div class="section-head"><h2>Island</h2></div>
+    <div class="card form-card" id="island-card"></div>
+
+    <div class="section-head"><h2>Digiicampus</h2></div>
+    <div class="card form-card" id="campus-card"></div>
+
+    <div class="section-head"><h2>Sync with your computer</h2></div>
+    <div class="card form-card" id="sync-card"></div>
+
+    <div class="section-head"><h2>About</h2></div>
+    <div class="card about">
+      <img src="img/partisan.png" alt="" />
+      <div><b>PCC for Android</b><span>From Partisan's workshop, with Champ.</span><span class="muted" id="app-version"></span><button class="link" onclick="checkForUpdate(true)">Check for updates</button></div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" id="tabs">
+  <button data-page="today" onclick="go('today')"><svg viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg>Today</button>
+  <button data-page="classes" onclick="go('classes')"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Classes</button>
+  <button data-page="tasks" onclick="go('tasks')"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Tasks</button>
+  <button data-page="messages" onclick="go('messages')"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Messages</button>
+  <button data-page="more" onclick="go('more')"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>More</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/core.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/campus.js"></script>
+<script src="js/island.js"></script>
+<script src="js/messages.js"></script>
+<script src="js/mail.js"></script>
+<script src="js/updates.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

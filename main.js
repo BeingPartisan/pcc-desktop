@@ -40,6 +40,8 @@ require('./campus')({ logEvent, getMainWindow: () => mainWindow });
 
 // The floating island (its own always-on-top window) lives in island.js
 const messaging = require('./messaging')({ logEvent, getMainWindow: () => mainWindow });
+// Sync between your own devices, end-to-end encrypted over the same relay (sync.js).
+require('./sync')({ logEvent, getMainWindow: () => mainWindow, messaging });
 require('./feedback')({ logEvent, getMainWindow: () => mainWindow, getLog: () => logBuffer, messaging, broadcastPublicKey: messaging.broadcastPublicKey });
 
 // Settings > Performance: how smooth the visualiser and dashboard are, and Battery saver on battery (performance.js).

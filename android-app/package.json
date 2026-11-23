@@ -1,0 +1,22 @@
+{
+  "name": "pcc-android",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PCC for Android: classes, tasks, deadlines, countdowns, messages, mail, the island, and sync with PCC on your computer",
+  "scripts": {
+    "sync": "cap sync android",
+    "build": "cap sync android && cd android && gradlew.bat assembleDebug",
+    "install-phone": "cap sync android && cd android && gradlew.bat installDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/status-bar": "^8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2"
+  }
+}

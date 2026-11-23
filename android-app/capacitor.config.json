@@ -1,0 +1,11 @@
+{
+  "appId": "com.partisan.pcc",
+  "appName": "PCC",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0D0D0F"
+  },
+  "plugins": {
+    "StatusBar": { "style": "DARK", "backgroundColor": "#0D0D0F", "overlaysWebView": false }
+  }
+}

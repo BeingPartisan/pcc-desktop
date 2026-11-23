@@ -530,6 +530,7 @@
       <button class="settings-tab" data-tab="desktop" onclick="showSettingsTab('desktop')">Desktop</button>
       <button class="settings-tab" data-tab="performance" onclick="showSettingsTab('performance')">Performance</button>
       <button class="settings-tab" data-tab="messages" onclick="showSettingsTab('messages')">Messages</button>
+      <button class="settings-tab" data-tab="sync" onclick="showSettingsTab('sync')">Sync</button>
       <button class="settings-tab" data-tab="timetable" onclick="showSettingsTab('timetable')">Timetable</button>
       <button class="settings-tab" data-tab="mail" onclick="showSettingsTab('mail')">Mail</button>
       <button class="settings-tab" data-tab="data" onclick="showSettingsTab('data')">Data</button>
@@ -886,6 +887,57 @@
         <div class="field-note">For the weather, set your city in Settings &gt; General. Looking at the dashboard is all it does for now; clicking things on it is coming later.</div>
       </section>
 
+      <!-- Sync -->
+      <section class="settings-pane" data-tab="sync">
+        <h2 class="pane-title">Sync</h2>
+        <p class="pane-intro">Keep your own devices in step: tasks, deadlines (and their ticks), evaluation patterns and marks, countdowns, message channels, notes, and your name, city and colour. Changes are end-to-end encrypted with your sync code before they leave this device; the relay in between only sees scrambled data. Passwords, sign-ins and this computer's own settings stay on each device.</p>
+
+        <div id="sync-off">
+          <div class="setting-row">
+            <div class="setting-text">
+              <div class="setting-name">Start syncing</div>
+              <div class="setting-desc">Makes a sync code for your devices. Do this on one device, then enter the code on the others.</div>
+            </div>
+            <div class="setting-control"><button class="btn btn-primary" onclick="syncCreate()">Start syncing</button></div>
+          </div>
+          <div class="setting-block">
+            <label class="setting-name" for="sync-join-code">Have a code from your other device?</label>
+            <div class="setting-desc">What's already here is kept and combined with what the others have.</div>
+            <div class="row-form" style="margin-top:10px;"><input id="sync-join-code" type="text" placeholder="SYNC-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" onkeydown="if(event.key==='Enter')syncJoin()" /><button class="btn" onclick="syncJoin()">Join</button></div>
+            <div class="mail-test" id="sync-join-status"></div>
+          </div>
+        </div>
+
+        <div id="sync-on" hidden>
+          <div class="setting-block">
+            <div class="setting-name">Sync code</div>
+            <div class="setting-desc">Enter it on your other devices to add them. It's the key to everything synced, so keep it to your own devices.</div>
+            <div class="sync-code-row"><code id="sync-code"></code><button class="btn" onclick="syncRevealCode(false)">Show</button><button class="btn" onclick="syncRevealCode(true)">Copy</button></div>
+            <div class="field-note" id="sync-new-note" hidden>Syncing has started here. Now open Settings &gt; Sync on your other device and enter this code.</div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-text">
+              <label class="setting-name" for="sync-device-name">This device</label>
+              <div class="setting-desc">How it's named on your other devices.</div>
+            </div>
+            <div class="setting-control"><input id="sync-device-name" type="text" maxlength="40" onchange="syncRenameDevice(this.value)" /></div>
+          </div>
+          <div class="setting-block">
+            <div class="setting-name">Your other devices</div>
+            <div id="sync-devices"></div>
+            <div class="field-note" id="sync-last" style="margin-top:8px;"></div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-text"><div class="setting-name">Sync now</div><div class="setting-desc">Changes sync by themselves within seconds; this also asks the others for their latest.</div></div>
+            <div class="setting-control"><button class="btn" onclick="syncNow()">Sync now</button></div>
+          </div>
+          <div class="setting-row danger">
+            <div class="setting-text"><div class="setting-name">Stop syncing on this device</div><div class="setting-desc">Everything stays here; it just stops being shared.</div></div>
+            <div class="setting-control"><button class="btn" onclick="syncLeave()">Stop syncing</button></div>
+          </div>
+        </div>
+      </section>
+
       <!-- Messages -->
       <section class="settings-pane" data-tab="messages">
         <h2 class="pane-title">Messages</h2>
@@ -1230,7 +1282,7 @@
       <p class="wl-sub">Copies of PCC can send each other short messages, focus status and shared countdowns. If a friend gave you a channel code, paste it here.</p>
       <div class="wl-two">
         <div class="field"><label class="field-label" for="welcome-code">Channel code</label><input id="welcome-code" type="text" placeholder="PCC-XXXX-XXXX-XXXX-XXXX" /></div>
-        <div class="field"><label class="field-label" for="welcome-code-name">Call it</label><input id="welcome-code-name" type="text" maxlength="30" placeholder="Riya" /></div>
+        <div class="field"><label class="field-label" for="welcome-code-name">Call it</label><input id="welcome-code-name" type="text" maxlength="30" placeholder="Godfather" /></div>
       </div>
       <div class="wl-row-inline"><button class="btn" onclick="welcomeJoin()">Join</button><span class="wl-note" id="welcome-join-state"></span></div>
       <div class="wl-card wl-row">
@@ -1453,6 +1505,7 @@
 <script src="js/island-feed.js"></script>
 <script src="js/desktop-feed.js"></script>
 <script src="js/performance.js"></script>
+<script src="js/sync.js"></script>
 <script src="js/chats.js"></script>
 <script src="js/updates.js"></script>
 <script src="js/whats-new.js"></script>

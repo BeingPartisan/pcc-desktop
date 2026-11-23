@@ -350,14 +350,14 @@ if(window.deskBridge){
   applyLayout({ inset: { top: 0, left: 0, right: 0, bottom: 48 }, icons: 'left' });
   const now = new Date(); const hNow = now.getHours();
   state = {
-    accent: '#C9F26C', accentInk: '#151A07', name: 'Aarav',
+    accent: '#C9F26C', accentInk: '#151A07', name: 'Andy',
     classes: [{ subject: 'Law of torts', room: 'Hall 2', start: at(hNow - 2, 0), end: at(hNow - 1, 0) }, { subject: 'Contracts II', room: 'Hall 3', start: at(hNow, 0), end: at(hNow + 1, 0) }, { subject: 'Constitutional law', room: 'Hall 1', start: at(hNow + 1, 30), end: at(hNow + 2, 30) }, { subject: 'Legal methods', room: 'Hall 4', start: at(hNow + 3, 0), end: at(hNow + 4, 0) }],
     tasks: [{ text: 'Read Carlill notes', priority: 'high' }, { text: 'Draft moot memo', priority: 'med' }, { text: 'Return library books', priority: 'low' }, { text: 'Email the mess committee', priority: 'med' }], taskCount: 7,
     deadlines: [{ title: 'Torts project', date: inDays(0) }, { title: 'Contracts quiz', date: inDays(2) }, { title: 'Moot submission', date: inDays(5) }, { title: 'Family law essay', date: inDays(12) }],
     mail: [{ subject: 'Moot court allotment', from: 'Moot Court Society', toYou: true }],
-    messages: [{ from: 'Riya', text: 'are you coming to the library?', channel: 'Friends', at: Date.now() - 600000 }],
-    presence: [{ from: 'Arjun', state: 'focus', until: Date.now() + 3600000 }],
-    countdowns: [{ title: 'End-sem exams', days: 23, soon: false }, { title: 'Riya\'s birthday', days: 4, soon: true }],
+    messages: [{ from: 'Champ', text: 'are you coming to the library?', channel: 'Study group', at: Date.now() - 600000 }],
+    presence: [{ from: 'Godfather', state: 'focus', until: Date.now() + 3600000 }],
+    countdowns: [{ title: 'End-sem exams', days: 23, soon: false }, { title: 'TheLegendaryOne\'s birthday', days: 4, soon: true }],
     quote: 'The life of the law has not been logic; it has been experience.', quoteAuthor: 'Oliver Wendell Holmes',
     attendance: { pct: 86, target: 75 }, budget: { left: 2340 }, habits: { done: 1, total: 2, streak: 12 }, unread: 1, mailCount: 1,
     weather: { city: 'Bengaluru', temp: 24, text: 'partly cloudy', code: 2, day: true, wind: 11 },

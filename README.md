@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.7.1 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest)
+**Current version:** 2.8.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest) · **PCC for Android** 0.1.0 is on the same release page (see [PCC for Android](#pcc-for-android)).
 
 ---
 
@@ -70,6 +70,10 @@ Settings → Desktop. Turns the desktop into a PCC dashboard, drawn on the wallp
 
 Settings → Performance (also in the tray menu). **Battery saver**, **Balanced** (the default) or **Best quality** sets the visualiser's frame rate and sparks, how often the dashboard's stats update, and how rich its glass is. **Lighter on battery** switches to Battery saver while the laptop is unplugged. **Pause for full-screen apps** stops the visualiser listening while a game or video is full screen. The pane also shows what each part of PCC is using right now. None of the live stats start extra processes: CPU and memory come from Node's own counters, network from the media helper that's already running, battery from the browser engine.
 
+### Sync
+
+Settings → Sync. Start syncing on one device and enter its sync code on your others. Tasks, deadlines (and their ticks), evaluation patterns and marks, countdowns, message channels, notes, and your name, city and colour stay in step. Changes are encrypted on the device with a key made from the code (which never leaves your devices) and pass through the ntfy.sh relay as scrambled data. Each device keeps a full copy and works offline; the newest edit of each item wins, deletes included, and a device that was off catches up from the others when it starts. Passwords, sign-ins and each computer's own settings are never synced. The Android app will use the same sync.
+
 ### Evaluation in Word
 
 On the Evaluation card, **Export to Word** saves every course's pattern (components in date order, marks, dates, time and place, and a page of all dates). **Import from Word** reads such a file back, in another PCC too, course by course, with a preview first; marks someone scored are never imported. Any other Word table (a calendar) goes through the schedule importer.
@@ -85,6 +89,21 @@ Short messages between copies of PCC on different computers, set up in **Setting
 - **Announcements.** The developer can send an announcement to every running copy. Each one is signed, and PCC ignores any announcement whose signature doesn't check out.
 
 Messages travel through [ntfy.sh](https://ntfy.sh), a public relay, and are not encrypted beyond the connection itself. Treat a channel like a postcard: fine for "call me" or "class moved", not for anything private.
+
+### PCC for Android
+
+The academic side of PCC on your phone (Android 8 and later; built and tested on Android 16). Its source is in `android-app/`.
+
+- **Today:** the class on now or next, deadlines (overdue ones in red, with a tick to mark done), tasks, mail to you and countdowns.
+- **Classes:** today and the week from Digiicampus, with rooms, holidays and attendance per course (what you can still miss, or need to attend). Sign-in happens on the university's own page inside the app, Google sign-in included; PCC never sees the password.
+- **Tasks and deadlines:** add, tick and set priorities.
+- **The island:** your next class as an Android 16 Live Update, from 30, 60 or 90 minutes before it until it ends: "in 18m" or "50m left" in the status bar capsule (realme's Live Alerts and similar), room, end time and a progress bar in the notification. It keeps working with the app closed. On realme phones, turn on **Show Live Updates on Live Alerts** in PCC's notification settings.
+- **Messages:** the same channels as PCC on the computer: chats, one-tap nudges, focus status, shared countdowns; join with a `PCC-…` code or create a channel. With the app closed, Android checks for new messages about every 15 minutes and shows them as notifications.
+- **Mail:** read-only Gmail with an app password (encrypted with Android's keystore): To you, Courses and All. Mail read in Gmail, opened from PCC or ticked is cleared from PCC's lists; Gmail itself is never changed.
+- **Sync:** enter the sync code from PCC on your computer (Settings › Sync) under More; tasks, deadlines, evaluations, countdowns, channels, notes, your name and colour stay in step.
+- **Updates:** the app checks PCC's GitHub releases and offers a newer `PCC-Android-x.y.z.apk` on Today.
+
+**Installing:** download `PCC-Android-x.y.z.apk` from the [latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest) on your phone, open it, and allow your browser or files app to install apps when Android asks. Updates install over it the same way, keeping everything.
 
 ### Digiicampus sync (NLSIU only)
 
@@ -123,6 +142,7 @@ PCC has no account and no server of its own. These features contact other servic
 | --- | --- | --- |
 | Mail | Your mail provider (IMAP) | Your sign-in; mail is read, never changed, and stays on your computer |
 | Digiicampus sync | `nls.digiicampus.com` | Your session, to read timetable, attendance and results |
+| Sync | `ntfy.sh` | Your synced items, end-to-end encrypted with your sync code: the relay only sees scrambled data |
 | Messages | `ntfy.sh` | The messages you send, shared countdowns, your focus status if you share it, and the channel names you listen on |
 | Feedback | `ntfy.sh` | The report you write, encrypted; your PCC and Windows versions; the activity log only if you tick it |
 | Fresh quotes | `dummyjson.com` | Nothing about you; can be switched off in Settings |
@@ -186,8 +206,8 @@ Releases go to this repo's GitHub Releases. Installed copies of PCC check there 
 1. Make your changes.
 2. Bump `version` in `package.json` (for example `2.2.0` → `2.3.0`).
 3. Commit and push.
-4. Run `npm run release`. This creates one **draft** release, builds the installer and uploads three files to it: the `.exe`, the `.exe.blockmap` and `latest.yml`.
-5. On GitHub, open the draft under Releases, check all three files are there, and click **Publish release**. Drafts never reach users, so a bad build can't go live by accident.
+4. Run `npm run release`. This creates one **draft** release, builds the installer and uploads three files to it: the `.exe`, the `.exe.blockmap` and `latest.yml`. It then builds PCC for Android (when its tools and signing key are on this computer, see below) and attaches `PCC-Android-x.y.z.apk`. The release notes are taken from this version's section of the changelog below.
+5. On GitHub, open the draft under Releases, check the files are there, and click **Publish release**. Drafts never reach users, so a bad build can't go live by accident.
 
 The `.blockmap` file is what keeps updates small. With it on both the old and the new release, an installed copy downloads only the parts of the installer that changed (usually 1–3 MB) instead of all ~117 MB. `scripts/release.js` exists to make sure it lands on the same release as the installer.
 
@@ -197,6 +217,18 @@ Running copies of PCC will offer the update within 30 minutes, or straight away 
 
 > **Note:** anyone who installed PCC from this repo receives every release you publish. Test a build before you publish its draft.
 
+### Building PCC for Android
+
+Needs Java 21 (Eclipse Temurin) and the Android SDK (command-line tools, `platforms;android-36`, `build-tools;36.0.0`, `platform-tools`); Android Studio isn't required. On the developer's computer they're in `D:\Dev`, and `android-app/android/local.properties` points at the SDK (`sdk.dir=D:/Dev/android-sdk`).
+
+```bash
+cd android-app
+npm install
+npm run install-phone     # build a test version and install it on a phone connected by USB (USB debugging on)
+```
+
+The version is `version` in `android-app/package.json`; bump it for a new Android release. Release builds are signed with a key kept outside the repository: `android-app/android/keystore.properties` (not committed) names the keystore and its password. **Back up the keystore and its password.** Android installs an update only if it's signed with the same key, so without them phones would have to uninstall PCC (losing what's on them) to get a new version.
+
 ---
 
 ## Project structure
@@ -204,12 +236,16 @@ Running copies of PCC will offer the update within 30 minutes, or straight away 
 ```
 pcc-desktop/
 ├── package.json        # dependencies, electron-builder and publish config
+├── android-app/        # PCC for Android (Capacitor): www/ is the app's pages,
+│                       #   android/ the Android project with PCC's native parts
+│                       #   (Digiicampus sign-in, island, messages check, mail)
 ├── main.js             # main process: window, tray, hotkey, IPC, mail, games,
 │                       #   system info, backups, autostart, auto-updater
 ├── campus.js           # Digiicampus sign-in and sync (timetable, attendance, results)
 ├── island.js           # the floating island's window, break reminder, media helper, visualiser window
 ├── desktop.js          # Desktop mode: the dashboard window on the wallpaper, system stats, wallpaper picture
 ├── performance.js      # Settings > Performance: profiles, battery switching, usage readout
+├── sync.js             # sync between your own devices: pairing code, encryption, the relay
 ├── evaluation-docx.js  # the evaluation pattern as a Word document
 ├── word-tables.js      # reads the tables out of a Word file (for importing)
 ├── desktop-preload.js  # bridge for the Desktop mode window
@@ -241,6 +277,10 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.8.0
+- **PCC for Android 0.1.0** (on the same release): Today, classes and attendance from Digiicampus, tasks and deadlines, the island as an Android 16 Live Update, messages with notifications, read-only mail, sync with PCC on your computer, and update checks.
+- **Sync between your own devices** (Settings > Sync): tasks, deadlines and their ticks, evaluation patterns and marks, countdowns, message channels, notes, and your name, city and colour, end-to-end encrypted with a sync code.
 
 ### 2.7.1
 - **A new welcome** for new computers: eight short steps (restore a backup from another computer, you, your colour, classes, mail, your desktop, friends and start-up) and a 20-second tour. New installs start with an empty task list.

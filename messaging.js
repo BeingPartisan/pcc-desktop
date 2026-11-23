@@ -50,7 +50,7 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
   let retryDelay = 5000;
   let lastEventTime = 0;     // seconds; where to resume from after a dropped connection
   const seen = new Set();    // event ids already delivered
-  let extra = null;          // more channels on the same connection, handled elsewhere (feedback.js)
+  const extras = [];         // more channels on the same connection, handled elsewhere (feedback.js, sync.js)
   let configured = false;    // the renderer has said which channels to listen on
 
   const deliver = (message) => {
@@ -75,7 +75,8 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
     seen.add(event.id);
     if (seen.size > 500) seen.delete(seen.values().next().value);
     lastEventTime = Math.max(lastEventTime, event.time || 0);
-    if (extra && extra.handles(event.topic)) return extra.handle(event);
+    const owner = extras.find((x) => x.handles(event.topic));
+    if (owner) return owner.handle(event);
 
     let payload;
     try { payload = JSON.parse(event.message); } catch (e) { return; }
@@ -100,7 +101,7 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
   // waiting a little longer each time, and resumes where it left off.
   async function listen() {
     stopListening();
-    const all = [BROADCAST_TOPIC, ...topics, ...(extra ? extra.topics() : [])];
+    const all = [BROADCAST_TOPIC, ...topics, ...extras.flatMap((x) => x.topics())];
     const since = lastEventTime ? lastEventTime : Math.floor(Date.now() / 1000) - CATCH_UP_SECONDS;
     controller = new AbortController();
     const mine = controller;
@@ -211,7 +212,8 @@ module.exports = function registerMessaging({ logEvent, getMainWindow }) {
     stop: stopListening,
     publish,
     poll,
-    setExtra: (next) => { extra = next; },
+    // Another module's channels on this connection: { topics(), handles(topic), handle(event) }
+    setExtra: (next) => { extras.push(next); },
     // Reconnect because the set of channels changed.
     refresh: () => { if (configured) listen(); },
     broadcastPublicKey: BROADCAST_PUBLIC_KEY,

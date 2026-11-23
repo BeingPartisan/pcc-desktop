@@ -10,6 +10,13 @@
 
 const RELEASE_NOTES = [
   {
+    version: '2.8.0',
+    items: [
+      { icon: 'star', title: 'PCC on your phone', text: 'PCC for Android is here: your classes, attendance, deadlines, tasks, messages and mail, with your next class on the phone\'s island. Get it from the same release page, then enter your sync code to keep both in step.', go: { label: 'Set up sync', run: () => openSettingsAt('sync') } },
+      { icon: 'stack', title: 'Sync between your devices', text: 'Tasks, deadlines, evaluations, countdowns, channels and notes stay the same on all your computers and your phone, end-to-end encrypted with your sync code.', go: { label: 'Open Sync', run: () => openSettingsAt('sync') } },
+    ],
+  },
+  {
     version: '2.7.1',
     items: [
       { icon: 'star', title: 'Performance settings', text: 'Pick Battery saver, Balanced or Best quality for how smooth the visualiser and Desktop mode are. It switches to Battery saver by itself while you are unplugged, and shows what each part of PCC is using.', go: { label: 'Open Performance', run: () => openSettingsAt('performance') } },

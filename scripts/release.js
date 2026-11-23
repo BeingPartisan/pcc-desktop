@@ -12,6 +12,12 @@
 // So this script makes sure a single draft release exists first.
 // electron-builder then finds it and uploads every file to it.
 //
+// Then it builds PCC for Android (android-app/, signed with the key named in
+// android-app/android/keystore.properties, which stays on this computer) and
+// attaches it to the same release as PCC-Android-<version>.apk; the phone app
+// looks for that file to offer updates. Skipped, with a note, if the Android
+// tools or the key aren't on this computer. --skip-android skips it on purpose.
+//
 // It also writes the release notes: this version's section of the README's
 // changelog, signed off. Without notes, GitHub shows the commit message
 // instead, and that is what installed copies show in their update dialog.
@@ -63,18 +69,55 @@ async function ensureDraft() {
   if (matching.length === 1) {
     await github(`${api}/${matching[0].id}`, { method: 'PATCH', body: JSON.stringify({ body }) });
     console.log(`Using the existing draft for ${tag} (release notes updated)`);
+    return matching[0];
+  }
+  const created = await github(api, { method: 'POST', body: JSON.stringify({ tag_name: tag, name: pkg.version, draft: true, body }) });
+  console.log(`Created a draft release for ${tag}`);
+  return created;
+}
+
+// --- PCC for Android ---
+const ANDROID = path.join(__dirname, '..', 'android-app');
+const JAVA_HOME = process.env.PCC_JAVA_HOME || 'D:/Dev/jdk/jdk-21.0.13.1+2';
+
+function run(cmd, args, cwd) {
+  const r = spawnSync(cmd, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32', env: { ...process.env, JAVA_HOME } });
+  return r.status === 0;
+}
+
+async function releaseAndroid(release) {
+  if (process.argv.includes('--skip-android')) { console.log('Skipped PCC for Android (--skip-android).'); return; }
+  const props = path.join(ANDROID, 'android', 'keystore.properties');
+  if (!fs.existsSync(path.join(ANDROID, 'node_modules')) || !fs.existsSync(props) || !fs.existsSync(JAVA_HOME)) {
+    console.log("\nPCC for Android not built: the Android tools or its signing key (android-app/android/keystore.properties) aren't on this computer.");
     return;
   }
-  await github(api, { method: 'POST', body: JSON.stringify({ tag_name: tag, name: pkg.version, draft: true, body }) });
-  console.log(`Created a draft release for ${tag}`);
+  const androidPkg = JSON.parse(fs.readFileSync(path.join(ANDROID, 'package.json'), 'utf8'));
+  console.log(`\nBuilding PCC for Android ${androidPkg.version}...`);
+  if (!run('node', [path.join('node_modules', '@capacitor', 'cli', 'bin', 'capacitor'), 'sync', 'android'], ANDROID)) stop('Capacitor could not prepare the Android app (see above).');
+  if (!run(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', ['assembleRelease', '--console=plain'], path.join(ANDROID, 'android'))) stop('the Android build failed (see above). The PC files are already on the draft.');
+  const apk = path.join(ANDROID, 'android', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk');
+  const name = `PCC-Android-${androidPkg.version}.apk`;
+  // Replace an earlier upload of the same file (when running this again).
+  for (const asset of release.assets || []) {
+    if (asset.name === name) await fetch(`${api}/assets/${asset.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'pcc-release-script' } });
+  }
+  const res = await fetch(`https://uploads.github.com/repos/${owner}/${repo}/releases/${release.id}/assets?name=${encodeURIComponent(name)}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'User-Agent': 'pcc-release-script', 'Content-Type': 'application/vnd.android.package-archive' },
+    body: fs.readFileSync(apk),
+  });
+  if (!res.ok) stop(`GitHub answered ${res.status} when uploading ${name}`);
+  console.log(`Attached ${name} to the draft.`);
 }
 
 async function main() {
   if (!token) stop('GH_TOKEN is not set. In PowerShell:  $env:GH_TOKEN="your token"');
-  await ensureDraft();
+  const release = await ensureDraft();
   const build = spawnSync(process.execPath, [require.resolve('electron-builder/cli.js'), '--publish', 'always'], { stdio: 'inherit' });
   if (build.status !== 0) stop('the build or upload failed (see above). The draft is still on GitHub; running this again reuses it.');
-  console.log(`\nDone. Open the draft on GitHub, check it has three files (the .exe, the .exe.blockmap and latest.yml),\nread over the release notes (taken from the README), and publish it:\nhttps://github.com/${owner}/${repo}/releases\n`);
+  await releaseAndroid(release);
+  console.log(`\nDone. Open the draft on GitHub, check it has its files (the .exe, the .exe.blockmap, latest.yml and PCC-Android-x.y.z.apk),\nread over the release notes (taken from the README), and publish it:\nhttps://github.com/${owner}/${repo}/releases\n`);
 }
 
 main().catch((e) => stop(String(e.message || e)));

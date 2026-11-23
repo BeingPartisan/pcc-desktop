@@ -64,6 +64,18 @@ contextBridge.exposeInMainWorld('pcc', {
   openExportedFile: (filePath) => ipcRenderer.invoke('open-path', filePath),
   importWordTables: () => ipcRenderer.invoke('import-word-tables'),
 
+  // Sync between your own devices (sync.js)
+  syncStatus: () => ipcRenderer.invoke('sync-status'),
+  syncStart: () => ipcRenderer.invoke('sync-start'),
+  syncSend: (message) => ipcRenderer.invoke('sync-send', message),
+  syncCreate: () => ipcRenderer.invoke('sync-create'),
+  syncJoin: (code) => ipcRenderer.invoke('sync-join', code),
+  syncLeave: () => ipcRenderer.invoke('sync-leave'),
+  syncShowCode: () => ipcRenderer.invoke('sync-show-code'),
+  syncRename: (name) => ipcRenderer.invoke('sync-rename', name),
+  onSyncReceived: (callback) => ipcRenderer.on('sync-received', (event, message) => callback(message)),
+  onSyncDevices: (callback) => ipcRenderer.on('sync-devices', (event, devices) => callback(devices)),
+
   // Settings > Performance
   perfConfigure: (config) => ipcRenderer.invoke('perf-configure', config),
   perfUsage: () => ipcRenderer.invoke('perf-usage'),

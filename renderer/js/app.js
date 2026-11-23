@@ -9,6 +9,7 @@ initQuotes();             // first quote, and a top-up from the internet if need
 configurePerformance();    // Settings > Performance, before the parts it governs start
 configureIsland();         // creates the floating island if it's switched on
 configureDesktop();       // draws the dashboard on the desktop if Desktop mode is on
+initSync();                // Settings > Sync: catch up with your other devices
 configureMessages().then(() => setTimeout(syncAllCountdowns, 4000)); // listens on the message channels, then shares countdowns
 renderCountdowns();
 initFeedback();

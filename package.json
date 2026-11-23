@@ -1,6 +1,6 @@
 {
   "name": "personal-command-center",
-  "version": "2.7.1",
+  "version": "2.8.0",
   "description": "Partisan's Personal Command Center — desktop shell",
   "main": "main.js",
   "author": "Ansh (Partisan)",
@@ -31,6 +31,7 @@
       "island.js",
       "desktop.js",
       "performance.js",
+      "sync.js",
       "evaluation-docx.js",
       "word-tables.js",
       "wallpaper.js",

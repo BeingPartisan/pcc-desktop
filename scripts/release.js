@@ -11,9 +11,28 @@
 //
 // So this script makes sure a single draft release exists first.
 // electron-builder then finds it and uploads every file to it.
+//
+// It also writes the release notes: this version's section of the README's
+// changelog, signed off. Without notes, GitHub shows the commit message
+// instead, and that is what installed copies show in their update dialog.
 
 const { spawnSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 const pkg = require('../package.json');
+
+const SIGN_OFF = "From Partisan's workshop, with Champ.";   // Champ: Partisan's name for Claude, the co-builder
+
+// "### 2.7.1" up to the next "### " heading in the README's changelog.
+function releaseNotes() {
+  const readme = fs.readFileSync(path.join(__dirname, '..', 'README.md'), 'utf8').replace(/\r\n/g, '\n');
+  const start = readme.indexOf(`\n### ${pkg.version}\n`);
+  if (start < 0) stop(`the README's changelog has no "### ${pkg.version}" section. Add one, then run this again.`);
+  const rest = readme.slice(start + 1);
+  const end = rest.indexOf('\n### ', 4);
+  const section = (end < 0 ? rest : rest.slice(0, end)).split('\n').slice(1).join('\n').trim();
+  return `${section}\n\n---\n${SIGN_OFF}`;
+}
 
 const { owner, repo } = pkg.build.publish[0];
 const tag = `v${pkg.version}`;
@@ -40,8 +59,13 @@ async function ensureDraft() {
   const matching = releases.filter((r) => r.tag_name === tag);
   if (matching.some((r) => !r.draft)) stop(`${tag} is already published. Bump "version" in package.json before releasing again.`);
   if (matching.length > 1) stop(`there are ${matching.length} drafts for ${tag} on GitHub. Delete them on the Releases page and run this again.`);
-  if (matching.length === 1) { console.log(`Using the existing draft for ${tag}`); return; }
-  await github(api, { method: 'POST', body: JSON.stringify({ tag_name: tag, name: pkg.version, draft: true }) });
+  const body = releaseNotes();
+  if (matching.length === 1) {
+    await github(`${api}/${matching[0].id}`, { method: 'PATCH', body: JSON.stringify({ body }) });
+    console.log(`Using the existing draft for ${tag} (release notes updated)`);
+    return;
+  }
+  await github(api, { method: 'POST', body: JSON.stringify({ tag_name: tag, name: pkg.version, draft: true, body }) });
   console.log(`Created a draft release for ${tag}`);
 }
 
@@ -50,7 +74,7 @@ async function main() {
   await ensureDraft();
   const build = spawnSync(process.execPath, [require.resolve('electron-builder/cli.js'), '--publish', 'always'], { stdio: 'inherit' });
   if (build.status !== 0) stop('the build or upload failed (see above). The draft is still on GitHub; running this again reuses it.');
-  console.log(`\nDone. Open the draft on GitHub, check it has three files (the .exe, the .exe.blockmap and latest.yml),\nwrite the release notes, and publish it:\nhttps://github.com/${owner}/${repo}/releases\n`);
+  console.log(`\nDone. Open the draft on GitHub, check it has three files (the .exe, the .exe.blockmap and latest.yml),\nread over the release notes (taken from the README), and publish it:\nhttps://github.com/${owner}/${repo}/releases\n`);
 }
 
 main().catch((e) => stop(String(e.message || e)));

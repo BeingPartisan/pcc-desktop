@@ -243,6 +243,8 @@ pcc-desktop/
 ## Changelog
 
 ### 2.7.1
+- **A new welcome** for new computers: eight short steps (restore a backup from another computer, you, your colour, classes, mail, your desktop, friends and start-up) and a 20-second tour. New installs start with an empty task list.
+- About now says who made PCC.
 - **Performance** settings: Battery saver / Balanced / Best quality, Lighter on battery, Pause for full-screen apps, a live "what PCC is using" readout, and a tray quick switch. Live stats no longer start a PowerShell process for each reading.
 - Live network speed on the dashboard, from the media helper.
 - Desktop mode and the visualiser come back after sleep, hibernate and unlocking, and retry at sign-in.

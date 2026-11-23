@@ -1081,6 +1081,15 @@
         <h2 class="pane-title">About</h2>
         <p class="pane-intro">A personal dashboard for classes, tasks, money and habits.</p>
 
+        <div class="about-maker">
+          <img src="../assets/partisan.png" alt="" />
+          <div>
+            <div class="about-maker-name">Made by Partisan</div>
+            <div class="setting-desc">From Partisan's workshop, with Champ (Claude, the co-builder). Ideas and bug reports from friends shaped every version.</div>
+          </div>
+          <a class="btn" href="https://github.com/BeingPartisan" target="_blank">GitHub</a>
+        </div>
+
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name" id="about-version">Version</div>
@@ -1117,48 +1126,149 @@
 </div>
 
 <div id="welcome-overlay">
-  <div id="welcome-modal" role="dialog" aria-labelledby="welcome-title">
-    <div class="welcome-step">
-      <div class="settings-title" id="welcome-title">Welcome to PCC</div>
-      <div class="update-text">One place for your classes, tasks, mail, money and notes. Everything you add stays on this computer. Two quick questions first; both are optional.</div>
-      <div class="field">
-        <label class="field-label" for="welcome-name">What should it call you?</label>
-        <input id="welcome-name" type="text" maxlength="40" placeholder="Your name" onkeydown="if(event.key==='Enter')welcomeNext()" />
-      </div>
-      <div class="field">
-        <label class="field-label" for="welcome-city">Your city, for the weather</label>
-        <input id="welcome-city" type="text" maxlength="60" placeholder="City" onkeydown="if(event.key==='Enter')welcomeNext()" />
-      </div>
-    </div>
+  <div id="welcome-stage" role="dialog" aria-labelledby="welcome-title">
+    <div class="wl-progress" id="welcome-progress"></div>
 
-    <div class="welcome-step">
-      <div class="settings-title">Your timetable</div>
-      <div class="update-text">Sign in to Digiicampus once and PCC keeps your classes, attendance and results up to date. You sign in on Digiicampus's own page; PCC never sees your password and only reads.</div>
-      <div class="row-form">
-        <button class="btn btn-primary" id="welcome-campus-btn" onclick="welcomeConnectCampus()">Connect Digiicampus</button>
-        <span class="welcome-done" id="welcome-campus-done">Connected. Your classes are in.</span>
-        <button class="btn" onclick="welcomeManualTimetable()">I'll type my timetable in</button>
+    <!-- 1. Hello -->
+    <section class="wl-step wl-hello" data-step="hello">
+      <img class="wl-logo" src="../assets/icon.png" alt="" />
+      <h1 class="wl-title" id="welcome-title">Welcome to <em>PCC</em></h1>
+      <div class="wl-by"><img src="../assets/partisan.png" alt="" />by Partisan</div>
+      <p class="wl-lead">Your classes, tasks, mail, music and more, in one place. Let's set things up: it takes about two minutes, and every step can be skipped.</p>
+      <button class="btn btn-primary wl-big" onclick="welcomeNext()">Get started</button>
+      <div class="wl-card wl-restore">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+        <div><b>Coming from another computer?</b><span>Restore the backup you exported from PCC there (Settings &gt; Data &gt; Export), and everything comes across.</span></div>
+        <button class="btn" onclick="welcomeRestore()">Restore</button>
       </div>
-      <div class="field-note">Not now is fine too: it's in Settings &gt; Timetable whenever you want it.</div>
-    </div>
+    </section>
 
-    <div class="welcome-step">
-      <div class="settings-title">The island</div>
-      <div class="update-text">A small bar at the top of your screen that shows your timer, next class and what's playing, even when PCC is hidden. Point at it to open it.</div>
-      <div class="setting-row" style="border-top:none; padding:4px 0;">
-        <div class="setting-text"><label class="setting-name" for="welcome-island">Show the island</label></div>
-        <div class="setting-control"><input id="welcome-island" type="checkbox" class="switch" onchange="setPref('islandEnabled', this.checked)" /></div>
+    <!-- 2. You -->
+    <section class="wl-step" data-step="you">
+      <h2 class="wl-h">First, a little about you</h2>
+      <p class="wl-sub">For the greeting and the weather on Today, the island and your desktop.</p>
+      <div class="field"><label class="field-label" for="welcome-name">What should PCC call you?</label>
+        <input id="welcome-name" type="text" maxlength="40" placeholder="Your name" onkeydown="if(event.key==='Enter')welcomeNext()" /></div>
+      <div class="field"><label class="field-label" for="welcome-city">Your city, for the weather</label>
+        <input id="welcome-city" type="text" maxlength="60" placeholder="Bengaluru" oninput="welcomeWeatherSoon()" onkeydown="if(event.key==='Enter')welcomeNext()" />
+        <div class="wl-weather" id="welcome-weather"></div></div>
+      <div class="field"><div class="field-label">Clock</div>
+        <div class="segmented" id="welcome-clock"><button data-value="12" onclick="welcomeClock(false)">2:30 PM</button><button data-value="24" onclick="welcomeClock(true)">14:30</button></div></div>
+    </section>
+
+    <!-- 3. Your look -->
+    <section class="wl-step" data-step="look">
+      <h2 class="wl-h">Pick your colour</h2>
+      <p class="wl-sub">It's used across PCC, the island and your desktop. Watch the window change as you pick.</p>
+      <div class="wl-swatches" id="welcome-swatches"></div>
+      <div class="field"><div class="field-label">Theme</div>
+        <div class="segmented" id="welcome-theme"><button data-value="dark" onclick="welcomeTheme('dark')">Dark</button><button data-value="light" onclick="welcomeTheme('light')">Light</button><button data-value="system" onclick="welcomeTheme('system')">Match Windows</button></div></div>
+    </section>
+
+    <!-- 4. Classes -->
+    <section class="wl-step" data-step="classes">
+      <h2 class="wl-h">Your classes</h2>
+      <p class="wl-sub">At NLSIU, PCC can bring in your timetable, attendance and results from Digiicampus. You sign in on the university's own page; PCC never sees your password.</p>
+      <div class="wl-card wl-row">
+        <div><b>Digiicampus</b><span id="welcome-campus-state">Not connected</span></div>
+        <button class="btn btn-primary" id="welcome-campus-btn" onclick="welcomeConnectCampus()">Connect</button>
       </div>
-      <div class="field-note">Good to know: closing the window keeps PCC running in the tray, and Ctrl+K searches everything. Mail, colours and the rest live in Settings (the gear, bottom left).</div>
-    </div>
+      <div class="wl-card wl-row">
+        <div><b>Evaluation pattern from a friend?</b><span id="welcome-eval-state">If someone exported theirs from PCC to Word, import it here (after connecting, so PCC knows your courses).</span></div>
+        <button class="btn" onclick="welcomeImportEvaluation()">Import from Word</button>
+      </div>
+      <button class="btn wl-link" onclick="welcomeLater('timetable')">Not at NLSIU? Type your timetable in later</button>
+    </section>
 
-    <div class="welcome-foot">
-      <div class="welcome-dots"><span class="welcome-dot"></span><span class="welcome-dot"></span><span class="welcome-dot"></span></div>
-      <div class="row-form">
-        <button class="btn" id="welcome-back-btn" onclick="welcomeBack()">Back</button>
+    <!-- 5. Mail -->
+    <section class="wl-step" data-step="mail">
+      <h2 class="wl-h">Mail <span class="wl-optional">optional</span></h2>
+      <p class="wl-sub">PCC reads your mail (never sends or changes it) and picks out what matters: professors, deadlines, mail sent to you personally. It signs in with an app password, not your normal one.</p>
+      <ol class="wl-steps-list">
+        <li>Turn on 2-Step Verification for your Google account, if it isn't already.</li>
+        <li>Open <a href="https://myaccount.google.com/apppasswords" target="_blank">Google app passwords</a>, create one called "PCC", and copy it.</li>
+        <li>Paste it below.</li>
+      </ol>
+      <div class="wl-two">
+        <div class="field"><label class="field-label" for="welcome-mail">Email</label><input id="welcome-mail" type="email" placeholder="you@nls.ac.in" /></div>
+        <div class="field"><label class="field-label" for="welcome-mail-pass">App password</label><input id="welcome-mail-pass" type="password" placeholder="16 letters" /></div>
+      </div>
+      <div class="wl-row-inline"><button class="btn btn-primary" onclick="welcomeSaveMail()">Check and save</button><span class="wl-note" id="welcome-mail-state"></span></div>
+    </section>
+
+    <!-- 6. Your desktop -->
+    <section class="wl-step" data-step="desktop">
+      <h2 class="wl-h">Make the desktop yours</h2>
+      <p class="wl-sub">Turn on what you like. Everything can be changed later in Settings.</p>
+      <div class="wl-features">
+        <div class="wl-card wl-feature">
+          <div class="wl-preview pv-island"><div class="pv-pill"><i></i><span>Contracts II in 18 min</span></div></div>
+          <div class="wl-feature-head"><b>Island</b><input type="checkbox" class="switch" id="welcome-island" onchange="setPref('islandEnabled', this.checked)" /></div>
+          <span>Your next class, the timer, music and messages at the top of the screen.</span>
+        </div>
+        <div class="wl-card wl-feature">
+          <div class="wl-preview pv-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="wl-feature-head"><b>Music visualiser</b><input type="checkbox" class="switch" id="welcome-viz" onchange="welcomeVisualizer(this.checked)" /></div>
+          <div class="wl-chips" id="welcome-viz-styles"></div>
+        </div>
+        <div class="wl-card wl-feature">
+          <div class="wl-preview pv-desk"><div></div><b>10:42</b><div></div></div>
+          <div class="wl-feature-head"><b>Desktop mode</b><input type="checkbox" class="switch" id="welcome-desk" onchange="setPref('desktopMode', this.checked); renderWelcome()" /></div>
+          <span id="welcome-desk-note">A dashboard on your wallpaper, under your icons.</span>
+          <div class="segmented wl-mini" id="welcome-desk-icons" data-pref="desktopIcons"><button data-value="left" onclick="setPref('desktopIcons', 'left')">Icons left</button><button data-value="right" onclick="setPref('desktopIcons', 'right')">Right</button><button data-value="both" onclick="setPref('desktopIcons', 'both')">Both</button></div>
+        </div>
+      </div>
+      <div class="wl-card wl-row wl-perf">
+        <div><b id="welcome-perf-title">Performance: Balanced</b><span id="welcome-perf-note">Smooth, and lighter whenever you're on battery.</span></div>
+        <div class="segmented" data-pref="perfMode"><button data-value="saver" onclick="setPref('perfMode', 'saver'); renderWelcome()">Battery saver</button><button data-value="balanced" onclick="setPref('perfMode', 'balanced'); renderWelcome()">Balanced</button><button data-value="best" onclick="setPref('perfMode', 'best'); renderWelcome()">Best quality</button></div>
+      </div>
+    </section>
+
+    <!-- 7. Friends -->
+    <section class="wl-step" data-step="friends">
+      <h2 class="wl-h">Friends and start-up</h2>
+      <p class="wl-sub">Copies of PCC can send each other short messages, focus status and shared countdowns. If a friend gave you a channel code, paste it here.</p>
+      <div class="wl-two">
+        <div class="field"><label class="field-label" for="welcome-code">Channel code</label><input id="welcome-code" type="text" placeholder="PCC-XXXX-XXXX-XXXX-XXXX" /></div>
+        <div class="field"><label class="field-label" for="welcome-code-name">Call it</label><input id="welcome-code-name" type="text" maxlength="30" placeholder="Riya" /></div>
+      </div>
+      <div class="wl-row-inline"><button class="btn" onclick="welcomeJoin()">Join</button><span class="wl-note" id="welcome-join-state"></span></div>
+      <div class="wl-card wl-row">
+        <div><b>Start PCC with Windows</b><span id="welcome-autostart-note">It opens quietly in the tray, so the island and your desktop are ready when you are.</span></div>
+        <input type="checkbox" class="switch" id="welcome-autostart" onchange="welcomeAutostart(this.checked)" />
+      </div>
+    </section>
+
+    <!-- 8. Done -->
+    <section class="wl-step" data-step="done">
+      <h2 class="wl-h wl-done-title" id="welcome-done-title">You're all set</h2>
+      <p class="wl-sub">Here's what's ready. Anything you skipped is one click away.</p>
+      <div class="wl-checklist" id="welcome-checklist"></div>
+      <div class="wl-row-inline wl-done-actions">
+        <button class="btn btn-primary wl-big" onclick="finishWelcome(); startTour()">Take the 20-second tour</button>
+        <button class="btn wl-big" onclick="finishWelcome()">Start using PCC</button>
+      </div>
+      <div class="wl-by wl-by-foot"><img src="../assets/partisan.png" alt="" />PCC by Partisan</div>
+    </section>
+
+    <div class="wl-foot" id="welcome-foot">
+      <button class="btn" id="welcome-back-btn" onclick="welcomeBack()">Back</button>
+      <div class="wl-foot-right">
+        <button class="btn wl-skip" onclick="welcomeSkip()">Skip</button>
         <button class="btn btn-primary" id="welcome-next-btn" onclick="welcomeNext()">Continue</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- The tour after the welcome: a spotlight on a few things worth knowing -->
+<div id="tour-overlay" onclick="if(event.target===this)endTour()">
+  <div class="tour-spot" id="tour-spot"></div>
+  <div class="tour-card" id="tour-card">
+    <div class="tour-count" id="tour-count"></div>
+    <div class="tour-title" id="tour-title"></div>
+    <div class="tour-text" id="tour-text"></div>
+    <div class="tour-actions"><button class="btn" onclick="endTour()">Skip</button><button class="btn btn-primary" id="tour-next" onclick="tourNext()">Next</button></div>
   </div>
 </div>
 

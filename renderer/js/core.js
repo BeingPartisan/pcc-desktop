@@ -32,11 +32,8 @@ const Store = {
 /* ---------- Seed Data ---------- */
 // Shown the first time the app runs, so the pages aren't empty. Deliberately
 // generic: this file is public, so nothing personal belongs here.
-const SEED_TASKS = [
-  {id:uid(), text:'Add your first task', done:false, priority:'high'},
-  {id:uid(), text:'Press Ctrl+K to try the command palette', done:false, priority:'med'},
-  {id:uid(), text:'Connect your timetable in Settings', done:false, priority:'low'}
-];
+// Tasks start empty: the welcome and its tour cover what sample tasks used to teach.
+const SEED_TASKS = [];
 
 const SEED_NOTES = [
   { id:uid(), title:'Welcome', body:'Notes save as you type. Use /note in the command palette (Ctrl+K) to capture one from anywhere.', updatedAt:Date.now() },

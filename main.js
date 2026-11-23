@@ -1220,9 +1220,15 @@ function sendUpdateStatus(status) {
 // Release notes arrive as HTML, or as a list of them; the dialog wants plain text.
 function plainReleaseNotes(notes) {
   const raw = Array.isArray(notes) ? notes.map((n) => n.note || '').join('\n') : String(notes || '');
-  return raw.replace(/<li>/gi, '• ').replace(/<\/(p|li|h\d|div)>|<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
+  const text = raw.replace(/<li>/gi, '• ').replace(/<\/(p|li|h\d|div)>|<br\s*\/?>|<hr\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .replace(/\n{3,}/g, '\n\n').trim().slice(0, 1200);
+    // A release published without notes shows its commit message instead; leave out the commit's sign-off lines.
+    .replace(/^\s*(Co-Authored-By|Signed-off-by):.*$/gim, '')
+    .replace(/\n{3,}/g, '\n\n').trim();
+  if (text.length <= 1200) return text;
+  // Too long for the dialog: shorten the notes but keep the last line (the sign-off).
+  const lines = text.split('\n'), last = lines.pop();
+  return lines.join('\n').slice(0, 1150).replace(/\s+\S*$/, '') + '…\n\n' + last;
 }
 
 autoUpdater.on('update-available', (info) => {

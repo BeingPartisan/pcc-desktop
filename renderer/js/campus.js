@@ -144,7 +144,7 @@ function renderTodayCampus(el){
   const top = campusNoticeHtml() + campusEventChips(date);
 
   if(!sessions.length){
-    el.innerHTML = top + '<div class="empty">No classes today.</div>';
+    el.innerHTML = top + `<div class="empty">${noClassesText()}</div>`;
     return;
   }
 

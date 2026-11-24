@@ -33,6 +33,7 @@ const TODAY_CARDS = {
 
 const PREF_DEFAULTS = {
   theme: 'dark',              // 'dark' | 'light' | 'system'
+  keepSimple: false,          // plain words instead of PCC's jokes (voice.js)
   palette: 'partisan',        // colour theme (themes.js): a theme id, 'wallpaper' or 'custom' (just `accent`)
   accent: '#C9F26C',
   accentFromWindows: false,   // use the Windows accent colour instead of `accent`
@@ -119,6 +120,7 @@ function setPref(key, value){
   applyAppearance();
   renderAppearanceSettings();
   if(key === 'clock24'){ updateClock(); renderTimetable(); }
+  if(key === 'keepSimple'){ renderGreeting(); renderTodayAll(); renderInbox && renderInbox(); }
   if(key === 'quotesOnline') initQuotes();
   if(key === 'workspacesEnabled') workspacesSwitched();
   if(key.startsWith('perf')) configurePerformance();

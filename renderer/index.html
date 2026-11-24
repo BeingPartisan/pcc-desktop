@@ -77,6 +77,7 @@
     <div id="hero">
       <div id="hero-greeting"></div>
       <div id="hero-clockline"><span id="hero-clock"></span></div>
+      <div id="hero-quip"></div>
     </div>
 
     <div class="status-row" id="today-status"></div>
@@ -691,6 +692,15 @@
             <div class="setting-desc">Shown in the window title and the tray. The name in the Start menu and taskbar is set when the app is built.</div>
           </div>
           <div class="setting-control"><input id="pref-app-name" type="text" maxlength="60" onchange="setPref('appName', this.value.trim() || PREF_DEFAULTS.appName)" /></div>
+        </div>
+      
+        <h3 class="pane-subtitle">How PCC talks</h3>
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="pref-keep-simple">Keep it simple</label>
+            <div class="setting-desc">Swaps PCC's jokes and roasts for plain, boring words. For parents, teachers and anyone with no sense of humour.</div>
+          </div>
+          <div class="setting-control"><input id="pref-keep-simple" type="checkbox" class="switch" data-pref="keepSimple" onchange="setPref('keepSimple', this.checked)" /></div>
         </div>
       </section>
 
@@ -1548,6 +1558,7 @@
 
 <!-- Plain scripts sharing one global scope; the order matters. app.js starts the app. -->
 <script src="js/core.js"></script>
+<script src="js/voice.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/themes.js"></script>
 <script src="js/appearance.js"></script>

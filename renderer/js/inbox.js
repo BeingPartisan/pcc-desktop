@@ -433,7 +433,7 @@ function renderTodayMail(counts){
   const more = counts.important - top.length;
   const nudge = counts.new ? `<a href="#" class="more-link" onclick="navigate('inbox'); showInboxTab('new'); return false;">${counts.new} email${counts.new === 1 ? '' : 's'} from senders you haven't sorted</a>` : '';
   const waiting = !top.length && !inboxError && !inboxChecked && !inbox.messages.length;
-  el.innerHTML = (top.length ? top.map(m => mailRowHtml(m, true)).join('') : waiting ? skeletonRows(2, true) : '<div class="empty">Nothing important waiting.</div>')
+  el.innerHTML = (top.length ? top.map(m => mailRowHtml(m, true)).join('') : waiting ? skeletonRows(2, true) : `<div class="empty">${say('Nothing important waiting.', 'Nothing important in your mail. Professors are quiet, for now.', 'No important mail. Inbox peace achieved.')}</div>`)
     + (more > 0 ? `<a href="#" class="more-link" onclick="navigate('inbox'); showInboxTab('important'); return false;">+ ${more} more</a>` : '')
     + nudge;
 }

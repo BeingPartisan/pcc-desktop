@@ -20,6 +20,11 @@ function parseSlotTimes(label){
   return { start, end };
 }
 
+// Said when there are no classes today, from the manual timetable or Digiicampus.
+function noClassesText(){
+  return say('No classes today.', 'No classes today. Holiday energy.', 'Zero classes. Don’t waste it all on reels.', 'No classes. The bed is calling, but so are your deadlines.');
+}
+
 function renderTodayClasses(){
   const el = document.getElementById('today-classes');
   const day = todayDayName();
@@ -43,7 +48,7 @@ function renderTodayClasses(){
     .filter(Boolean);
 
   if(!classes.length){
-    el.innerHTML = overrideHtml + '<div class="empty">No classes today.</div>';
+    el.innerHTML = overrideHtml + `<div class="empty">${noClassesText()}</div>`;
     return;
   }
 
@@ -92,9 +97,12 @@ function renderTodayTasks(){
   const rank = { high: 0, med: 1, low: 2 };
   const open = state.tasks.filter(t => !t.done).sort((a, b) => (rank[a.priority] ?? 1) - (rank[b.priority] ?? 1));
   document.getElementById('today-task-count').textContent = open.length;
+  document.getElementById('today-task-input').placeholder = say('Add a task, then press enter', 'What are we procrastinating on next?', 'Add a task (and actually do it this time)', 'Type a task, hit enter, feel productive');
+  renderHeroQuip();
 
   if(!open.length){
-    el.innerHTML = '<div class="empty">All clear. Nothing open.</div>';
+    el.innerHTML = `<div class="empty">${state.tasks.length ? say('All clear. Nothing open.', 'Zero tasks open. Damn bro, look at you.', 'Nothing left to do. Suspicious, but okay.', 'All done. Go touch some grass.') : say('No tasks yet.', 'No tasks. Either you’re a legend or you forgot to add them.', 'Task list emptier than the class on a Monday morning.')}</div>`;
+    renderHeroQuip();
     return;
   }
   const more = open.length - TODAY_TASK_LIMIT;
@@ -119,9 +127,11 @@ function renderTodayDeadlines(){
   const el = document.getElementById('today-deadlines');
   const items = openDeadlines();
   if(!items.length){
-    el.innerHTML = '<div class="empty">No deadlines yet.</div>';
+    el.innerHTML = `<div class="empty">${say('No deadlines yet.', 'No deadlines. Professors must be on vacation.', 'Zero deadlines. Enjoy the peace before the storm.', 'Nothing due. Don’t jinx it.')}</div>`;
+    renderHeroQuip();
     return;
   }
+  renderHeroQuip();
   const more = items.length - TODAY_DEADLINE_LIMIT;
   el.innerHTML = items.slice(0, TODAY_DEADLINE_LIMIT).map(a => {
     const when = describeDaysAway(a.date);
@@ -138,7 +148,7 @@ function renderTodayDeadlines(){
 function renderTodayPomo(){
   const m = Math.floor(pomo.remaining / 60), s = pomo.remaining % 60;
   document.getElementById('today-pomo-display').textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-  document.getElementById('today-pomo-mode').textContent = pomo.mode;
+  document.getElementById('today-pomo-mode').textContent = pomo.mode === 'break' ? say('break', 'break time, breathe') : say('focus', 'locked in');
   document.getElementById('today-pomo-bar').style.width = Math.round(((pomo.total - pomo.remaining) / pomo.total) * 100) + '%';
   document.getElementById('today-pomo-toggle').textContent = pomo.running ? 'Pause' : 'Start';
 }

@@ -1173,3 +1173,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.7);}
 .theme-swatch i{flex:1;}
 .theme-rainbow{background:conic-gradient(from 90deg, #E5484D, #F4B860, #9CCB8A, #5CC8C2, #8B8CF6, #F4A6C6, #E5484D);}
 .setting-row[hidden], .setting-block[hidden]{display:none;}
+
+/* The line under the date on Today (voice.js) */
+#hero-quip{font-size:14px; color:var(--ink-dim); margin-top:4px; font-style:italic;}
+#hero-quip:empty{display:none;}

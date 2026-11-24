@@ -160,7 +160,8 @@ function updateClock(){
 }
 function renderGreeting(){
   const h = new Date().getHours();
-  const g = h<5 ? 'Still up' : h<12 ? 'Good morning' : h<17 ? 'Good afternoon' : h<21 ? 'Good evening' : 'Good night';
+  const g = greetingLead(h);   // voice.js: plain or cheeky, by the hour
   // The name is set in italic accent type by the stylesheet (#hero-greeting em)
   document.getElementById('hero-greeting').innerHTML = esc(g) + (state.settings.name ? ', <em>' + esc(state.settings.name) + '</em>' : '');
+  renderHeroQuip();
 }

@@ -30,6 +30,28 @@ function sayAny(plain, ...funny){
   return funny[Math.floor(Math.random() * funny.length)];
 }
 
+/* ----- Fixed text in the page (index.html) ----- */
+// Text written straight into the page gets its funny version from an attribute:
+//   <p data-fun="Cheeky version">Plain version</p>            (the element's HTML)
+//   <input placeholder="Plain" data-fun-placeholder="Cheeky">  (a placeholder)
+//   <button title="Plain" data-fun-title="Cheeky">             (a tooltip)
+// applyVoice() puts in whichever fits the Keep it simple switch; it runs at
+// startup and whenever the switch changes.
+function applyVoice(root = document){
+  const simple = keepSimple();
+  root.querySelectorAll('[data-fun]').forEach(el => {
+    if(el.dataset.plain === undefined) el.dataset.plain = el.innerHTML;
+    el.innerHTML = simple ? el.dataset.plain : el.dataset.fun;
+  });
+  for(const attr of ['placeholder', 'title']){
+    root.querySelectorAll(`[data-fun-${attr}]`).forEach(el => {
+      const key = 'plain' + attr[0].toUpperCase() + attr.slice(1);
+      if(el.dataset[key] === undefined) el.dataset[key] = el.getAttribute(attr) || '';
+      el.setAttribute(attr, simple ? el.dataset[key] : el.getAttribute(`data-fun-${attr}`));
+    });
+  }
+}
+
 /* ----- Today: the greeting and the line under it ----- */
 
 function greetingLead(hour){

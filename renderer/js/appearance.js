@@ -120,7 +120,7 @@ function setPref(key, value){
   applyAppearance();
   renderAppearanceSettings();
   if(key === 'clock24'){ updateClock(); renderTimetable(); }
-  if(key === 'keepSimple'){ renderGreeting(); renderTodayAll(); renderInbox && renderInbox(); }
+  if(key === 'keepSimple'){ applyVoice(); renderGreeting(); renderTodayAll(); renderInbox && renderInbox(); }
   if(key === 'quotesOnline') initQuotes();
   if(key === 'workspacesEnabled') workspacesSwitched();
   if(key.startsWith('perf')) configurePerformance();

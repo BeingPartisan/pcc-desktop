@@ -1,6 +1,7 @@
 // A first run is one with nothing saved yet; it gets the welcome (welcome.js).
 if(!localStorage.getItem('settings') && !localStorage.getItem('tasks')) localStorage.setItem('__welcomePending', '1');
 init();
+applyVoice();             // the cheeky or plain version of the fixed text (voice.js)
 renderTodayAll();
 if(prefs().startPage !== 'today') navigate(prefs().startPage); // chosen in Settings > Layout
 loadAppearanceExtras(); // Windows accent colour and any custom logo / background image

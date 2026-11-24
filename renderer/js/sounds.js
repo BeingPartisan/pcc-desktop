@@ -121,22 +121,9 @@ function soundEvent(trigger, detail){
 // Whether any rule would make a sound for this trigger (a surprise uses its own sound only if not).
 function soundRuleFor(trigger){ return prefs().soundsOn && soundRules().some(r => r.on && r.trigger === trigger && r.sound); }
 
-// The charger and the battery, from the system (laptops; a desktop PC simply never reports a change).
-(async () => {
-  if(!navigator.getBattery) return;
-  try {
-    const battery = await navigator.getBattery();
-    let lowSaid = false, fullSaid = battery.charging && battery.level >= 1;
-    battery.addEventListener('chargingchange', () => soundEvent(battery.charging ? 'charger-in' : 'charger-out'));
-    battery.addEventListener('levelchange', () => {
-      const pct = Math.round(battery.level * 100);
-      if(!battery.charging && pct <= 20 && !lowSaid){ lowSaid = true; soundEvent('battery-low', `Battery is at ${pct}%`); }
-      if(battery.charging || pct > 25) lowSaid = false;
-      if(battery.charging && pct >= 100 && !fullSaid){ fullSaid = true; soundEvent('battery-full', 'Battery full'); }
-      if(pct < 95) fullSaid = false;
-    });
-  } catch(e){ /* no battery information */ }
-})();
+// The charger and the battery: the main process watches them (Windows tells it whatever
+// window is in front) and passes each moment on.
+if(window.pcc && window.pcc.onPowerMoment) window.pcc.onPowerMoment(({ type, detail }) => soundEvent(type, detail));
 
 // A class in five minutes, and the first open of the day.
 const soundClassesSaid = new Set();

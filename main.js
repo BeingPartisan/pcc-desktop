@@ -1476,6 +1476,33 @@ ipcMain.handle('pick-sound-file', async () => {
 ipcMain.handle('sound-file-url', (event, id) => { const f = findSoundFile(id); return f ? pathToFileURL(f).href : null; });
 ipcMain.handle('remove-sound-file', (event, id) => { const f = findSoundFile(id); if (f) fs.unlinkSync(f); return { ok: true }; });
 
+// Charger and battery moments for Sounds and actions. Watched here rather than in
+// the page, because Windows tells the app about them whatever window is in front
+// (the page only hears about them while PCC itself is focused).
+function sendPowerMoment(type, detail) {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('power-moment', { type, detail });
+}
+app.whenReady().then(() => {
+  const { powerMonitor } = require('electron');
+  powerMonitor.on('on-ac', () => sendPowerMoment('charger-in'));
+  powerMonitor.on('on-battery', () => sendPowerMoment('charger-out'));
+  let lowSaid = false, fullSaid = null;
+  const checkBattery = async () => {
+    try {
+      const b = await si.battery();
+      if (!b || !b.hasBattery) return;
+      const pct = Math.round(b.percent);
+      if (fullSaid === null) fullSaid = b.isCharging && pct >= 100;     // don't announce what was already true at start
+      if (!b.isCharging && pct <= 20 && !lowSaid) { lowSaid = true; sendPowerMoment('battery-low', `Battery is at ${pct}%`); }
+      if (b.isCharging || pct > 25) lowSaid = false;
+      if (b.isCharging && pct >= 100 && !fullSaid) { fullSaid = true; sendPowerMoment('battery-full', 'Battery full'); }
+      if (pct < 95) fullSaid = false;
+    } catch (e) { /* no battery information */ }
+  };
+  setTimeout(checkBattery, 15000);
+  setInterval(checkBattery, 60 * 1000);
+});
+
 // The developer's own PC: the one holding the private signing key used for announcements
 // (never shipped, never committed). A few developer-only screens appear only there.
 ipcMain.handle('is-dev-device', () => fs.existsSync(path.join(app.getPath('userData'), 'pcc-broadcast-key.pem')));

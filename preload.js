@@ -47,6 +47,7 @@ contextBridge.exposeInMainWorld('pcc', {
   soundFileUrl: (id) => ipcRenderer.invoke('sound-file-url', id),
   removeSoundFile: (id) => ipcRenderer.invoke('remove-sound-file', id),
   isDevDevice: () => ipcRenderer.invoke('is-dev-device'),
+  onPowerMoment: (callback) => ipcRenderer.on('power-moment', (event, moment) => callback(moment)),
   islandCelebrate: (kind) => ipcRenderer.send('island-celebrate', kind),
 
   // Messages between devices

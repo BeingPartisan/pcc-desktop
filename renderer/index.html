@@ -523,18 +523,23 @@
   <div id="settings-modal" role="dialog" aria-label="Settings">
     <aside class="settings-nav">
       <div class="settings-title">Settings</div>
+      <div class="settings-group">You</div>
       <button class="settings-tab active" data-tab="general" onclick="showSettingsTab('general')">General</button>
       <button class="settings-tab" data-tab="appearance" onclick="showSettingsTab('appearance')">Appearance</button>
-      <button class="settings-tab" data-tab="layout" onclick="showSettingsTab('layout')">Layout</button>
+      <button class="settings-tab" data-tab="layout" onclick="showSettingsTab('layout')">Pages and cards</button>
+      <div class="settings-group">On your screen</div>
       <button class="settings-tab" data-tab="island" onclick="showSettingsTab('island')">Island</button>
-      <button class="settings-tab" data-tab="sounds" onclick="showSettingsTab('sounds')">Sounds</button>
-      <button class="settings-tab" data-tab="desktop" onclick="showSettingsTab('desktop')">Desktop</button>
-      <button class="settings-tab" data-tab="performance" onclick="showSettingsTab('performance')">Performance</button>
-      <button class="settings-tab" data-tab="messages" onclick="showSettingsTab('messages')">Messages</button>
-      <button class="settings-tab" data-tab="sync" onclick="showSettingsTab('sync')">Sync</button>
-      <button class="settings-tab" data-tab="timetable" onclick="showSettingsTab('timetable')">Timetable</button>
+      <button class="settings-tab" data-tab="desktop" onclick="showSettingsTab('desktop')">Desktop mode</button>
+      <button class="settings-tab" data-tab="sounds" onclick="showSettingsTab('sounds')">Sounds and actions</button>
+      <div class="settings-group">Connected</div>
+      <button class="settings-tab" data-tab="timetable" onclick="showSettingsTab('timetable')">Digiicampus</button>
       <button class="settings-tab" data-tab="mail" onclick="showSettingsTab('mail')">Mail</button>
-      <button class="settings-tab" data-tab="data" onclick="showSettingsTab('data')">Data</button>
+      <button class="settings-tab" data-tab="messages" onclick="showSettingsTab('messages')">Messages</button>
+      <button class="settings-tab" data-tab="sync" onclick="showSettingsTab('sync')">Sync devices</button>
+      <div class="settings-group">This PC</div>
+      <button class="settings-tab" data-tab="performance" onclick="showSettingsTab('performance')">Performance</button>
+      <button class="settings-tab" data-tab="data" onclick="showSettingsTab('data')">Data and backups</button>
+      <div class="settings-group">Help</div>
       <button class="settings-tab" data-tab="feedback" id="feedback-tab" style="display:none;" onclick="showSettingsTab('feedback')">Feedback</button>
       <button class="settings-tab" data-tab="about" onclick="showSettingsTab('about')">About</button>
       <button class="settings-tab" data-tab="dev" id="dev-tab" style="display:none;" onclick="showSettingsTab('dev')">Developer</button>
@@ -685,7 +690,7 @@
 
       <!-- Layout -->
       <section class="settings-pane" data-tab="layout">
-        <h2 class="pane-title">Layout</h2>
+        <h2 class="pane-title">Pages and cards</h2>
         <p class="pane-intro">What appears where. Use the arrows to reorder and the switches to show or hide.</p>
 
         <div class="setting-row">
@@ -926,7 +931,7 @@
 
       <!-- Desktop mode -->
       <section class="settings-pane" data-tab="desktop">
-        <h2 class="pane-title">Desktop</h2>
+        <h2 class="pane-title">Desktop mode</h2>
         <p class="pane-intro">Turn your desktop into a PCC dashboard: a big clock, today's classes, tasks, deadlines, important mail and messages, your stats, what's playing and more, drawn on the wallpaper itself. Your desktop icons stay on top and clickable, and your windows cover it as usual.</p>
 
         <div class="setting-row">
@@ -949,7 +954,7 @@
 
       <!-- Sync -->
       <section class="settings-pane" data-tab="sync">
-        <h2 class="pane-title">Sync</h2>
+        <h2 class="pane-title">Sync devices</h2>
         <p class="pane-intro">Keep your own devices in step: tasks, deadlines (and their ticks), evaluation patterns and marks, countdowns, message channels, notes, and your name, city and colour. Changes are end-to-end encrypted with your sync code before they leave this device; the relay in between only sees scrambled data. Passwords, sign-ins and this computer's own settings stay on each device.</p>
 
         <div id="sync-off">
@@ -1072,7 +1077,7 @@
 
       <!-- Timetable -->
       <section class="settings-pane" data-tab="timetable">
-        <h2 class="pane-title">Timetable</h2>
+        <h2 class="pane-title">Digiicampus</h2>
         <p class="pane-intro">Connect Digiicampus to show your real classes, rooms, cancellations and holidays instead of the manual timetable.</p>
 
         <div class="setting-row">
@@ -1142,7 +1147,7 @@
 
       <!-- Data -->
       <section class="settings-pane" data-tab="data">
-        <h2 class="pane-title">Data</h2>
+        <h2 class="pane-title">Data and backups</h2>
         <p class="pane-intro">Everything you enter stays on this computer. A backup is saved automatically once a day.</p>
 
         <div class="setting-row">

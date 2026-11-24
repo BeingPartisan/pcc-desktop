@@ -54,7 +54,7 @@ const settingsIcon = (tab) => `<svg viewBox="0 0 24 24" fill="none" stroke="curr
   // Long pages are split into named cards: [card title, the first setting in it].
   const SECTIONS = {
     general: [['About you', 'Your name'], ['Handy stuff', 'Global shortcut'], ['Starting up', 'Start when I sign in']],
-    appearance: [['Colours', 'Theme'], ['Size and motion', 'Density'], ['Make it yours', 'Logo']],
+    appearance: [['Colours', 'Colour theme'], ['Size and motion', 'Density'], ['Make it yours', 'Logo']],
     layout: [['Today', 'Start page'], ['Pages', 'Pages']],
     island: [['Basics', 'Show the island'], ['Extras', 'Quick capture'], ['Desktop visualiser', 'Desktop visualiser']],
     performance: [['Right now', 'What PCC is using']],

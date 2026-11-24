@@ -33,6 +33,7 @@ const TODAY_CARDS = {
 
 const PREF_DEFAULTS = {
   theme: 'dark',              // 'dark' | 'light' | 'system'
+  palette: 'partisan',        // colour theme (themes.js): a theme id, 'wallpaper' or 'custom' (just `accent`)
   accent: '#C9F26C',
   accentFromWindows: false,   // use the Windows accent colour instead of `accent`
   background: 'blur',         // 'blur' | 'solid' | 'image'
@@ -106,7 +107,10 @@ function initPrefs(){
   if(saved.logoText === 'P') p.logoText = '';
   // Before the three-way islandHide there was an on/off switch.
   if('islandHideFullscreen' in saved){ if(!('islandHide' in saved)) p.islandHide = saved.islandHideFullscreen ? 'fullscreen' : 'never'; delete p.islandHideFullscreen; }
+  // Before colour themes there was only the accent colour: keep it for anyone who already had PCC.
+  if(Object.keys(saved).length && !('palette' in saved)) p.palette = 'custom';
   state.settings.prefs = p;
+  if(p.palette === 'wallpaper') loadWallpaperTheme().then(() => { applyAppearance(); renderAppearanceSettings(); pushIsland(); });
 }
 
 function setPref(key, value){
@@ -139,6 +143,10 @@ function inkForAccent(hex){
 
 function currentAccent(){
   const p = prefs();
+  if(p.palette && p.palette !== 'custom'){
+    const dark = p.theme === 'dark' || (p.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return themeColours(dark)[4];
+  }
   const hex = p.accentFromWindows && systemAccent ? systemAccent : p.accent;
   return /^#[0-9a-f]{6}$/i.test(hex) ? hex : PREF_DEFAULTS.accent;
 }
@@ -153,6 +161,7 @@ function applyAppearance(){
   const accent = currentAccent();
   root.style.setProperty('--accent', accent);
   root.style.setProperty('--accent-ink', inkForAccent(accent));
+  applyThemeColours(root, dark, accent);   // the rest of the theme's colours (themes.js)
 
   // An image background needs an image; fall back to the blur until one is chosen.
   root.dataset.background = p.background === 'image' && !customImages.wallpaper ? 'blur' : p.background;
@@ -240,6 +249,7 @@ function setLogoText(value){
 
 function setAccent(hex){
   prefs().accentFromWindows = false;
+  prefs().palette = 'custom';   // picking a colour dot means a colour of your own
   setPref('accent', hex);
 }
 
@@ -292,10 +302,11 @@ function renderAppearanceSettings(){
   document.getElementById('accent-swatches').innerHTML =
     ACCENT_PRESETS.map(a => `<button class="swatch ${!p.accentFromWindows && a.value.toLowerCase() === p.accent.toLowerCase() ? 'active' : ''}"
       style="background:${a.value}" onclick="setAccent('${a.value}')" title="${a.name}" aria-label="${a.name} accent"></button>`).join('')
-    + (systemAccent ? `<button class="swatch windows ${p.accentFromWindows ? 'active' : ''}" onclick="setPref('accentFromWindows', true)" title="Use my Windows accent colour" aria-label="Windows accent colour"></button>` : '')
+    + (systemAccent ? `<button class="swatch windows ${p.accentFromWindows ? 'active' : ''}" onclick="prefs().palette = 'custom'; setPref('accentFromWindows', true)" title="Use my Windows accent colour" aria-label="Windows accent colour"></button>` : '')
     // Any other colour: a rainbow dot that opens the colour picker, shown filled once a custom colour is in use
     + `<label class="swatch custom ${!p.accentFromWindows && !usingPreset ? 'active' : ''}" ${!p.accentFromWindows && !usingPreset ? `style="background:${accent}"` : ''} title="Pick any colour"><input type="color" value="${accent}" onchange="setAccent(this.value)" aria-label="Custom accent colour" /></label>`;
 
+  renderThemePicker();
   document.getElementById('pref-app-name').value = p.appName;
   document.getElementById('pref-logo-text').value = p.logoText;
   document.getElementById('logo-remove-btn').style.display = customImages.logo ? '' : 'none';

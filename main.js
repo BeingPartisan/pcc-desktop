@@ -1503,6 +1503,20 @@ app.whenReady().then(() => {
   setInterval(checkBattery, 60 * 1000);
 });
 
+// "Match my wallpaper" (themes.js): the current Windows wallpaper, as a file URL.
+ipcMain.handle('get-windows-wallpaper', async () => {
+  try {
+    const { execFile } = require('child_process');
+    const out = await new Promise((resolve) => execFile('reg', ['query', 'HKCU\\Control Panel\\Desktop', '/v', 'WallPaper'], { windowsHide: true }, (err, stdout) => resolve(err ? '' : stdout)));
+    const m = /WallPaper\s+REG_SZ\s+(.+)/i.exec(out);
+    const file = m && m[1].trim();
+    if (file && fs.existsSync(file)) return pathToFileURL(file).href;
+    const cached = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Themes', 'TranscodedWallpaper');
+    if (fs.existsSync(cached)) return pathToFileURL(cached).href;
+  } catch (e) { /* no wallpaper to read */ }
+  return null;
+});
+
 // The developer's own PC: the one holding the private signing key used for announcements
 // (never shipped, never committed). A few developer-only screens appear only there.
 ipcMain.handle('is-dev-device', () => fs.existsSync(path.join(app.getPath('userData'), 'pcc-broadcast-key.pem')));

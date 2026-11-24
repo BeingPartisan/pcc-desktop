@@ -613,9 +613,15 @@
         <h2 class="pane-title">Appearance</h2>
         <p class="pane-intro">How the app looks. Changes apply as you make them.</p>
 
+        <div class="setting-block">
+          <div class="setting-name">Colour theme</div>
+          <div class="setting-desc">The whole look: page, cards, the main colour and its sidekick. Warnings always stay easy to spot.</div>
+          <div class="theme-picker" id="theme-picker"></div>
+        </div>
+
         <div class="setting-row">
           <div class="setting-text">
-            <div class="setting-name">Theme</div>
+            <div class="setting-name">Light or dark</div>
             <div class="setting-desc">System follows your Windows light or dark setting.</div>
           </div>
           <div class="setting-control"><div class="segmented" data-pref="theme"><button data-value="system" onclick="setPref('theme', 'system')">System</button><button data-value="light" onclick="setPref('theme', 'light')">Light</button><button data-value="dark" onclick="setPref('theme', 'dark')">Dark</button></div></div>
@@ -623,8 +629,8 @@
 
         <div class="setting-row">
           <div class="setting-text">
-            <div class="setting-name">Accent colour</div>
-            <div class="setting-desc">Used for buttons, the active page and anything marked done.</div>
+            <div class="setting-name">Your colour</div>
+            <div class="setting-desc">For the Custom theme: buttons, the active page and anything marked done.</div>
           </div>
           <div class="setting-control"><div class="swatches" id="accent-swatches"></div></div>
         </div>
@@ -1543,6 +1549,7 @@
 <!-- Plain scripts sharing one global scope; the order matters. app.js starts the app. -->
 <script src="js/core.js"></script>
 <script src="js/nav.js"></script>
+<script src="js/themes.js"></script>
 <script src="js/appearance.js"></script>
 <script src="js/palette.js"></script>
 <script src="js/flashcards.js"></script>

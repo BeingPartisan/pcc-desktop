@@ -34,6 +34,7 @@
   --accent-ink:#151A07;                 /* text on an accent-filled surface */
   --accent-text:var(--accent);          /* accent used as text; darkened in the light theme */
   --accent-soft:color-mix(in srgb, var(--accent) 13%, transparent);
+  --accent2:var(--cyan);                /* the theme's second colour (themes.js) */
   --cyan:#86C6FF;   --cyan-soft:color-mix(in srgb, var(--cyan) 13%, transparent);
   --amber:#F4B860;  --amber-soft:color-mix(in srgb, var(--amber) 14%, transparent);
   --red:#FF7A85;    --red-soft:color-mix(in srgb, var(--red) 14%, transparent);
@@ -73,7 +74,8 @@ body{
   margin:0;
   /* Semi-transparent so the Windows 11 backdrop blur shows through */
   background-color:var(--body-bg);
-  background-image:radial-gradient(900px 520px at 88% -12%, color-mix(in srgb, var(--accent) 7.000000000000001%, transparent), transparent 62%);
+  background-image:radial-gradient(900px 520px at 88% -12%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%),
+    radial-gradient(760px 480px at -8% 108%, color-mix(in srgb, var(--accent2) 7%, transparent), transparent 62%);
   color:var(--ink);
   font-family:var(--sans);
   font-size:14px;
@@ -1159,3 +1161,15 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.7);}
 #settings-search-empty b{color:var(--ink); font-size:15px; font-weight:600;}
 #settings-search-empty[hidden]{display:none;}
 .settings-body:not(.searching) #settings-search-empty{display:none;}
+
+/* ---------- Colour theme picker (themes.js) ---------- */
+.theme-picker{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; margin-top:12px;}
+.theme-card{display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:10px; border-radius:14px; border:1px solid var(--line); background:rgba(var(--tint),.03); color:var(--ink); text-align:left; cursor:pointer; transition:border-color .15s, background .15s, transform .15s;}
+.theme-card:hover{border-color:var(--line-strong); transform:translateY(-1px);}
+.theme-card.active{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+.theme-card b{font-size:13px; font-weight:600;}
+.theme-card small{font-size:11.5px; color:var(--ink-dim);}
+.theme-swatch{display:flex; width:100%; height:38px; border-radius:9px; overflow:hidden; margin-bottom:6px; border:1px solid var(--line);}
+.theme-swatch i{flex:1;}
+.theme-rainbow{background:conic-gradient(from 90deg, #E5484D, #F4B860, #9CCB8A, #5CC8C2, #8B8CF6, #F4A6C6, #E5484D);}
+.setting-row[hidden], .setting-block[hidden]{display:none;}

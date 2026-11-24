@@ -279,6 +279,7 @@ pcc-desktop/
 ## Changelog
 
 ### 2.9.0
+- **Settings, redone**: a bigger window with a search box that finds any setting on any page, icons and groups in the list (You, On your screen, Connected, This PC, Help), and each page split into tidy cards. Clearer names too: Pages and cards, Desktop mode, Digiicampus, Sync devices, Data and backups.
 - **Sounds and actions** (Settings > Sounds): make PCC react when things happen. Pick a moment (charger plugged in or out, battery low or full, a task or all tasks done, a deadline ticked, the focus timer ending, a habit streak reaching 7, 10 or 30 days, a new message, a class in 5 minutes, the first open of the day) and what happens: one of seven built-in sounds or any audio file of your own, confetti, the island celebrating, or a notification. With volume and quiet hours.
 - **The island moves with the music**: while something plays, a look moves softly behind the track name on the island, and when the island has shrunk to its small handle (over a maximised window), the handle itself becomes the visualiser, with no black behind it. Three looks: **Wave** (the default), **Bars** and **Glow** (coloured light breathing out like smoke). Colours come from each song's album art (or your accent colour, or a slow rainbow), and it gets a little bigger when the song drops. The new wave button in the island's music row turns it on and off; the look and colours are in Settings > Island > Music.
 

@@ -12,6 +12,7 @@ const RELEASE_NOTES = [
   {
     version: '2.9.0',
     items: [
+      { icon: 'star', title: 'Settings got a glow-up', text: 'Bigger, tidier and searchable: type what you\'re after ("music", "theme", "battery") and it shows up, from whichever page it lives on.', go: { label: 'Have a look', run: () => openSettings() } },
       { icon: 'star', title: 'Sounds and actions', text: 'Make PCC react when things happen: plug in the charger, finish all your tasks or keep a streak going, and hear a sound (built in, or any clip of your own), see confetti or watch the island celebrate.', go: { label: 'Set it up', run: () => openSettingsAt('sounds') } },
       { icon: 'music', title: 'The island moves with the music', text: 'While something plays, the island moves with it in the colours of the album art: a wave, bars, or a glow like coloured smoke behind the song name. When the island shrinks over a maximised window, the little handle itself turns into the visualiser. Tap the wave button on the island to turn it on or off.', go: { label: 'Pick a look', run: () => openSettingsAt('island') } },
     ],

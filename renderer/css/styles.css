@@ -1101,3 +1101,61 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.7);}
 .egg-trophy{display:flex; align-items:center; gap:12px; padding:12px 14px; margin-top:12px; border-radius:12px; background:var(--accent-soft); color:var(--accent-text); font-weight:600;}
 .setting-control .dim{color:var(--ink-dim); font-size:13px;}
 #sounds-volume{accent-color:var(--accent);}
+
+/* ---------- Settings, newer look (settings-layout.js) ----------
+   A roomy window over PCC: a list with icons, search and you at the bottom on the
+   left; on the right each page has a header and its settings grouped in cards. */
+#settings-modal{width:min(1080px, calc(100vw - 48px)); height:min(780px, calc(100vh - 48px)); border-radius:22px;}
+.settings-nav{width:236px; padding:22px 12px 14px;}
+.settings-nav .settings-title{padding:0 10px 14px; font-size:28px;}
+.settings-search{display:flex; align-items:center; gap:8px; margin:0 4px 6px; padding:0 10px; height:36px; border-radius:11px; background:var(--panel-alt); border:1px solid var(--line); color:var(--ink-dim); flex-shrink:0; cursor:text;}
+.settings-search:focus-within{border-color:color-mix(in srgb, var(--accent) 55%, transparent); box-shadow:0 0 0 3px var(--accent-soft);}
+.settings-search svg{width:15px; height:15px; flex-shrink:0;}
+.settings-search input{all:unset; flex:1; min-width:0; font-size:13px; color:var(--ink);}
+.settings-search input::placeholder{color:var(--ink-dim);}
+.settings-tab{display:flex; align-items:center; gap:10px; padding:6px 10px;}
+.settings-tab-icon{width:26px; height:26px; border-radius:8px; display:grid; place-items:center; background:rgba(var(--tint),.06); color:var(--ink-dim); flex-shrink:0; transition:background .15s, color .15s;}
+.settings-tab-icon svg{width:15px; height:15px;}
+.settings-tab:hover .settings-tab-icon{color:var(--ink);}
+.settings-tab.active .settings-tab-icon{background:var(--accent); color:var(--accent-ink);}
+.settings-tab-label{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.settings-me{margin-top:auto; display:flex; align-items:center; gap:10px; padding:10px; border:none; border-top:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); text-align:left; flex-shrink:0;}
+.settings-me:hover{background:rgba(var(--tint),.04); border-radius:10px;}
+.settings-me-avatar{width:32px; height:32px; border-radius:50%; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font-weight:600; font-size:14px; flex-shrink:0;}
+.settings-me-text{display:flex; flex-direction:column; min-width:0;}
+.settings-me-text b{font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.settings-me .settings-nav-foot{margin:0; padding:0; font-size:11.5px;}
+
+.settings-pane{padding:30px 40px 36px;}
+.settings-pane > *{max-width:760px;}
+.pane-head{display:flex; align-items:center; gap:16px; margin-bottom:22px;}
+.pane-head-icon{width:50px; height:50px; border-radius:15px; display:grid; place-items:center; flex-shrink:0; background:var(--accent-soft); color:var(--accent-text);}
+.pane-head-icon svg{width:24px; height:24px;}
+.pane-head .pane-title{font-size:22px; margin:0;}
+.pane-head .pane-intro{margin:3px 0 0; max-width:62ch;}
+
+.settings-card{background:rgba(var(--tint),.025); border:1px solid var(--line); border-radius:16px; padding:2px 18px; margin-bottom:14px;}
+.settings-card .settings-card-title{margin:14px 0 2px; font-size:11px;}
+.settings-card > .setting-row:first-child, .settings-card > .setting-block:first-child,
+.settings-card > .settings-card-title + .setting-row, .settings-card > .settings-card-title + .setting-block,
+.settings-card > div:first-child > .setting-row:first-child{border-top:none;}
+.settings-card .setting-row{padding:14px 0;}
+.settings-card > .field-note, .settings-card > .btn, .settings-card > .sound-rules{margin:12px 0;}
+.settings-card > .btn + .field-note{margin-top:0;}
+
+/* Search: matching settings from every page, one after another */
+.settings-body.searching{overflow-y:auto;}
+.settings-body.searching .settings-pane{display:none; animation:none;}
+.settings-body.searching .settings-pane.search-hit{display:block; overflow:visible; flex:none; padding-bottom:4px;}
+.settings-body.searching .settings-pane.search-hit + .settings-pane.search-hit{padding-top:6px;}
+.settings-body.searching .pane-head{margin-bottom:10px; cursor:pointer;}
+.settings-body.searching .pane-head-icon{width:30px; height:30px; border-radius:9px;}
+.settings-body.searching .pane-head-icon svg{width:16px; height:16px;}
+.settings-body.searching .pane-head .pane-title{font-size:15px;}
+.settings-body.searching .pane-intro{display:none;}
+.settings-body.searching .search-miss{display:none !important;}
+.settings-body.searching .settings-card > .setting-row:not(.search-miss), .settings-body.searching .settings-card > .setting-block:not(.search-miss){border-top:1px solid var(--line);}
+#settings-search-empty{padding:60px 40px; display:flex; flex-direction:column; gap:6px; color:var(--ink-dim);}
+#settings-search-empty b{color:var(--ink); font-size:15px; font-weight:600;}
+#settings-search-empty[hidden]{display:none;}
+.settings-body:not(.searching) #settings-search-empty{display:none;}

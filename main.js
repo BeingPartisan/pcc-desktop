@@ -1443,6 +1443,43 @@ ipcMain.handle('remove-custom-image', (event, kind) => {
   return { ok: true };
 });
 
+// Sounds and actions (renderer/js/sounds.js): audio files of your own for a rule,
+// copied into the app's data folder like a custom image, so they keep working
+// if the original is moved. Each is saved as sounds/<id><ext>.
+const SOUND_DIR = () => path.join(app.getPath('userData'), 'sounds');
+const SOUND_ID = /^s[a-z0-9]{6,20}$/;
+function findSoundFile(id) {
+  if (!SOUND_ID.test(String(id))) return null;
+  try { const f = fs.readdirSync(SOUND_DIR()).find((x) => x.startsWith(id + '.')); return f ? path.join(SOUND_DIR(), f) : null; } catch (e) { return null; }
+}
+ipcMain.handle('pick-sound-file', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Choose a sound',
+    properties: ['openFile'],
+    filters: [{ name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'opus', 'webm'] }],
+  });
+  if (result.canceled || !result.filePaths.length) return { ok: false, canceled: true };
+  try {
+    const source = result.filePaths[0];
+    if ((await fs.promises.stat(source)).size > 15 * 1024 * 1024) return { ok: false, error: 'That file is over 15 MB. Pick a shorter clip.' };
+    const id = 's' + Math.random().toString(36).slice(2, 12);
+    await fs.promises.mkdir(SOUND_DIR(), { recursive: true });
+    const dest = path.join(SOUND_DIR(), id + path.extname(source).toLowerCase());
+    await fs.promises.copyFile(source, dest);
+    logEvent('info', 'Sound file added');
+    return { ok: true, id, name: path.basename(source, path.extname(source)), url: pathToFileURL(dest).href };
+  } catch (e) {
+    logEvent('error', 'Could not add a sound file', String(e));
+    return { ok: false, error: String(e.message || e) };
+  }
+});
+ipcMain.handle('sound-file-url', (event, id) => { const f = findSoundFile(id); return f ? pathToFileURL(f).href : null; });
+ipcMain.handle('remove-sound-file', (event, id) => { const f = findSoundFile(id); if (f) fs.unlinkSync(f); return { ok: true }; });
+
+// The developer's own PC: the one holding the private signing key used for announcements
+// (never shipped, never committed). A few developer-only screens appear only there.
+ipcMain.handle('is-dev-device', () => fs.existsSync(path.join(app.getPath('userData'), 'pcc-broadcast-key.pem')));
+
 // --- App lifecycle ---
 
 app.whenReady().then(() => {

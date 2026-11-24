@@ -28,6 +28,21 @@ function habitStreaks(habitId){
   return { current, best };
 }
 
+// Tick (or untick) a habit for a day. Reaching 7, 10 or 30 days in a row is a moment
+// for Sounds and actions (sounds.js) and, at 10, a surprise (eggs.js).
+function toggleHabitDay(ds, habitId){
+  if(!state.habits.log[ds]) state.habits.log[ds] = {};
+  const on = state.habits.log[ds][habitId] = !state.habits.log[ds][habitId];
+  Store.set('habits', state.habits); renderHabits();
+  if(!on) return;
+  const { current } = habitStreaks(habitId);
+  const habit = state.habits.list.find(h => h.id === habitId);
+  if([7, 10, 30].includes(current)){
+    soundEvent('streak-' + current, `${habit ? habit.name : 'A habit'}: ${current} days in a row`);
+    if(current === 10 && typeof eggStreak === 'function') eggStreak(habit);
+  }
+}
+
 function habitStreakCell(habitId){
   const { current, best } = habitStreaks(habitId);
   return `<td class="habit-streak ${current >= 3 ? 'hot' : ''}"><b>${current}</b> ${current === 1 ? 'day' : 'days'}${best > current ? `<span>best ${best}</span>` : ''}</td>`;
@@ -44,7 +59,7 @@ function renderHabits(){
     const cells = days.map(d => {
       const ds = todayStr(d);
       const on = state.habits.log[ds] && state.habits.log[ds][h.id];
-      return `<td><span class="hcell ${on?'on':''}" onclick="if(!state.habits.log['${ds}'])state.habits.log['${ds}']={}; state.habits.log['${ds}']['${h.id}']=!state.habits.log['${ds}']['${h.id}']; Store.set('habits', state.habits); renderHabits();"></span></td>`;
+      return `<td><span class="hcell ${on?'on':''}" onclick="toggleHabitDay('${ds}', '${h.id}')"></span></td>`;
     }).join('');
     return `<tr>
       <td class="habit-name">${esc(h.name)} <button class="btn-icon" style="background:transparent; border:none; padding:0 4px;" onclick="state.habits.list=state.habits.list.filter(x=>x.id!=='${h.id}'); Store.set('habits', state.habits); renderHabits();">&times;</button></td>

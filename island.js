@@ -374,6 +374,9 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
   });
 
   // From the island: pointer is over (or has left) the island itself.
+  // From the main window: a celebration on the island (Sounds and actions, and a few surprises).
+  ipcMain.on('island-celebrate', (event, kind) => { if (typeof kind === 'string' && kind.length < 20) send('island-celebrate', kind); });
+
   ipcMain.on('island-hover', (event, inside) => {
     if (alive()) win.setIgnoreMouseEvents(!inside, { forward: true });
   });

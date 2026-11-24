@@ -49,6 +49,16 @@ function featuredClass(){
   return next ? { ...next, on: false, minutes: Math.ceil((next.start - now) / 60000) } : null;
 }
 
+// 11:11, morning or night: the island has a little something to say for that minute.
+let wishTold = '';
+function wishMinute(){
+  const d = new Date();
+  if(d.getHours() % 12 !== 11 || d.getMinutes() !== 11) return false;
+  const stamp = d.toDateString() + d.getHours();
+  if(wishTold !== stamp){ wishTold = stamp; window.island.action({ type: 'egg', id: 'wish' }); }
+  return true;
+}
+
 function awayText(minutes){
   return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`;
 }
@@ -88,6 +98,8 @@ function render(){
     text = `${message.from}: ${message.text}`; side = more; pulse = true;
   } else if(state.timer.running){
     text = state.timer.mode === 'break' ? 'Break' : 'Focus'; side = mmss(seconds); pulse = true;
+  } else if(wishMinute()){
+    text = 'Make a wish'; side = '11:11'; pulse = true;
   } else if(nudge){
     text = 'Time for a short break';
   } else if(cls && cls.on){
@@ -276,6 +288,16 @@ window.island.onNudge((next) => { nudge = next; render(); });
 window.island.onMini((next) => { mini = next; render(); });
 window.island.onCover((url) => { const img = $('media-cover'); img.hidden = !url; if(url) img.src = url; else img.removeAttribute('src'); IslandLook.cover(url); });
 if(window.island.onPerf) window.island.onPerf((profile) => IslandLook.perf(profile));
+// Celebrations from the app: 'confetti' (falls from the island), 'party' (it lights up in colours,
+// with confetti), 'dance' (it wiggles for a few seconds, a surprise of its own).
+window.island.onCelebrate((kind) => {
+  const el = $('island'), r = el.getBoundingClientRect();
+  PCCConfetti.burst({ x: (r.left + r.width / 2) / innerWidth, y: (r.top + r.height / 2) / innerHeight, count: kind === 'dance' ? 180 : 120, spread: 0.85 });
+  const cls = kind === 'dance' ? 'dance' : kind === 'party' ? 'party' : '';
+  if(!cls) return;
+  el.classList.remove('party', 'dance'); void el.offsetWidth; el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), cls === 'dance' ? 6200 : 2500);
+});
 window.island.onPosition((position) => { document.body.dataset.position = position; });
 setInterval(render, 500); // keeps countdowns and the clock moving between snapshots
 

@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.8.3 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest) · **PCC for Android** 0.1.2 is on the same release page (see [PCC for Android](#pcc-for-android)).
+**Current version:** 2.9.0 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest) · **PCC for Android** 0.1.2 is on the same release page (see [PCC for Android](#pcc-for-android)).
 
 ---
 
@@ -278,7 +278,8 @@ pcc-desktop/
 
 ## Changelog
 
-### 2.8.3
+### 2.9.0
+- **Sounds and actions** (Settings > Sounds): make PCC react when things happen. Pick a moment (charger plugged in or out, battery low or full, a task or all tasks done, a deadline ticked, the focus timer ending, a habit streak reaching 7, 10 or 30 days, a new message, a class in 5 minutes, the first open of the day) and what happens: one of seven built-in sounds or any audio file of your own, confetti, the island celebrating, or a notification. With volume and quiet hours.
 - **The island moves with the music**: while something plays, a look moves softly behind the track name on the island, and when the island has shrunk to its small handle (over a maximised window), the handle itself becomes the visualiser, with no black behind it. Three looks: **Wave** (the default), **Bars** and **Glow** (coloured light breathing out like smoke). Colours come from each song's album art (or your accent colour, or a slow rainbow), and it gets a little bigger when the song drops. The new wave button in the island's music row turns it on and off; the look and colours are in Settings > Island > Music.
 
 ### 2.8.2

@@ -59,6 +59,9 @@ const PREF_DEFAULTS = {
                               // 'shrink' (that, and become a small handle over maximised windows) | 'maximized' (hide for both)
   islandCapture: true,
   musicBars: true,            // little bars that move to the music in the island's line
+  soundsOn: true,             // Settings > Sounds: rules that play a sound or celebrate when something happens (sounds.js)
+  soundsVolume: 70,
+  soundsQuiet: true,          // no sounds 11 PM to 7 AM
   islandMusicLookOn: true,    // the island itself moves with the music (the wave button on the island)
   islandMusicLook: 'wave',    // 'wave' | 'bars' | 'glow'
   islandMusicColors: 'album', // 'album' (from the cover) | 'accent' | 'rainbow'

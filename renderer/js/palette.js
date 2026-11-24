@@ -79,6 +79,7 @@ function filterPalette() {
     filteredCommands = [{ id: 'yt', title: `Search YouTube for "${query.substring(3).trim()}"`, cat: 'Web', action: () => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query.substring(3).trim())}`, '_blank') }];
   } else {
     filteredCommands = paletteCommands().filter(c => c.title.toLowerCase().includes(lowerQuery) || c.cat.toLowerCase().includes(lowerQuery));
+    if (typeof eggPaletteCommand === 'function') { const extra = eggPaletteCommand(lowerQuery); if (extra) filteredCommands.unshift(extra); }
     if (query.length > 0) {
       filteredCommands.push({ id: 'search', title: `Search the web for "${query}"`, cat: 'Web', action: () => window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank') });
     }

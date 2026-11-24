@@ -42,6 +42,13 @@ contextBridge.exposeInMainWorld('pcc', {
   pickCustomImage: (kind) => ipcRenderer.invoke('pick-custom-image', kind),
   removeCustomImage: (kind) => ipcRenderer.invoke('remove-custom-image', kind),
 
+  // Sounds and actions (sounds.js)
+  pickSoundFile: () => ipcRenderer.invoke('pick-sound-file'),
+  soundFileUrl: (id) => ipcRenderer.invoke('sound-file-url', id),
+  removeSoundFile: (id) => ipcRenderer.invoke('remove-sound-file', id),
+  isDevDevice: () => ipcRenderer.invoke('is-dev-device'),
+  islandCelebrate: (kind) => ipcRenderer.send('island-celebrate', kind),
+
   // Messages between devices
   messagesConfigure: (config) => ipcRenderer.invoke('messages-configure', config),
   messagesSend: (message) => ipcRenderer.invoke('messages-send', message),

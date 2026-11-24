@@ -165,6 +165,7 @@ function receiveMessage(message){
   logMessage(entry);
   addUnread(entry);
   showToast(`${entry.from}: ${entry.text}`);
+  soundEvent('message', `${entry.from}: ${entry.text}`);
   // With the island off there's nothing on screen while PCC is hidden, so use a Windows notification.
   if(prefs().msgNotify && !prefs().islandEnabled){
     try { new Notification(`${entry.from} · ${entry.channel}`, { body: entry.text }); } catch(e){ /* notifications unavailable */ }

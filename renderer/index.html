@@ -527,6 +527,7 @@
       <button class="settings-tab" data-tab="appearance" onclick="showSettingsTab('appearance')">Appearance</button>
       <button class="settings-tab" data-tab="layout" onclick="showSettingsTab('layout')">Layout</button>
       <button class="settings-tab" data-tab="island" onclick="showSettingsTab('island')">Island</button>
+      <button class="settings-tab" data-tab="sounds" onclick="showSettingsTab('sounds')">Sounds</button>
       <button class="settings-tab" data-tab="desktop" onclick="showSettingsTab('desktop')">Desktop</button>
       <button class="settings-tab" data-tab="performance" onclick="showSettingsTab('performance')">Performance</button>
       <button class="settings-tab" data-tab="messages" onclick="showSettingsTab('messages')">Messages</button>
@@ -536,6 +537,7 @@
       <button class="settings-tab" data-tab="data" onclick="showSettingsTab('data')">Data</button>
       <button class="settings-tab" data-tab="feedback" id="feedback-tab" style="display:none;" onclick="showSettingsTab('feedback')">Feedback</button>
       <button class="settings-tab" data-tab="about" onclick="showSettingsTab('about')">About</button>
+      <button class="settings-tab" data-tab="dev" id="dev-tab" style="display:none;" onclick="showSettingsTab('dev')">Developer</button>
       <div class="settings-nav-foot" id="about-version-short"></div>
     </aside>
 
@@ -849,6 +851,42 @@
       </section>
 
       <!-- Performance -->
+      <section class="settings-pane" data-tab="sounds">
+        <h2 class="pane-title">Sounds and actions</h2>
+        <p class="pane-intro">Make PCC react when things happen: a sound, confetti, or the island celebrating. Use the built-in sounds or any audio file of your own.</p>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="pref-sounds-on">Sounds and actions</label>
+            <div class="setting-desc">Turn all the rules below on or off at once.</div>
+          </div>
+          <div class="setting-control"><input id="pref-sounds-on" type="checkbox" class="switch" data-pref="soundsOn" onchange="setPref('soundsOn', this.checked)" /></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-text"><label class="setting-name" for="sounds-volume">Volume</label></div>
+          <div class="setting-control"><input id="sounds-volume" type="range" min="0" max="100" step="5" oninput="prefs().soundsVolume = +this.value; document.getElementById('sounds-volume-out').textContent = this.value + '%';" onchange="setPref('soundsVolume', +this.value); playSound('pop');" style="width:160px;" /><span id="sounds-volume-out" class="dim" style="width:40px; text-align:right;"></span></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-text">
+            <label class="setting-name" for="pref-sounds-quiet">Quiet hours</label>
+            <div class="setting-desc">No sounds from 11 PM to 7 AM. Confetti and the island still celebrate.</div>
+          </div>
+          <div class="setting-control"><input id="pref-sounds-quiet" type="checkbox" class="switch" data-pref="soundsQuiet" onchange="setPref('soundsQuiet', this.checked)" /></div>
+        </div>
+
+        <h3 class="pane-subtitle">Your rules</h3>
+        <div id="sound-rules" class="sound-rules"></div>
+        <button class="btn" style="margin-top:10px;" onclick="addSoundRule()">Add a rule</button>
+        <div class="field-note">Built-in sounds: Chime, Pop, Power up, Level up, Tada, Whoosh, Uh-oh. A file of your own is copied into PCC, so it keeps working if you move the original.</div>
+      </section>
+
+      <!-- Only on the developer's own PC (see eggs.js) -->
+      <section class="settings-pane" data-tab="dev">
+        <h2 class="pane-title">Developer</h2>
+        <p class="pane-intro">Only on your PC. Nobody else's PCC shows this page.</p>
+        <div id="dev-eggs"></div>
+      </section>
+
       <section class="settings-pane" data-tab="performance">
         <h2 class="pane-title">Performance</h2>
         <p class="pane-intro">How smooth PCC's moving parts are (the visualiser, and Desktop mode with its live stats) and how much of your computer they use. Changes apply straight away.</p>
@@ -1531,6 +1569,9 @@
 <script src="js/chats.js"></script>
 <script src="js/updates.js"></script>
 <script src="js/whats-new.js"></script>
+<script src="js/confetti.js"></script>
+<script src="js/sounds.js"></script>
+<script src="js/eggs.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

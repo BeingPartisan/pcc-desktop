@@ -91,6 +91,7 @@ if(window.pcc && window.pcc.onIslandAction){
     // the tray's Performance menu
     else if(action.type === 'perf-mode' && ['saver', 'balanced', 'best'].includes(action.mode)) setPref('perfMode', action.mode);
     // the wave button on the island: its music look on or off
+    else if(action.type === 'egg' && typeof eggFound === 'function') eggFound(action.id);
     else if(action.type === 'music-look') setPref('islandMusicLookOn', !prefs().islandMusicLookOn);
     else if(action.type === 'visualizer-layer') setPref('visualizerLayer', prefs().visualizerLayer === 'top' ? 'wallpaper' : 'top');
     pushIsland();

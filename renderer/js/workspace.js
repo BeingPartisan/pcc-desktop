@@ -8,7 +8,13 @@ function addTask(){
 }
 function toggleTask(id){
   const t = state.tasks.find(x => x.id===id);
-  if(t){ t.done = !t.done; Store.set('tasks', state.tasks); renderTasks(); }
+  if(!t) return;
+  t.done = !t.done; Store.set('tasks', state.tasks); renderTasks();
+  if(t.done){
+    // Sounds and actions (sounds.js), and a surprise for the 100th (eggs.js)
+    if(state.tasks.every(x => x.done)) soundEvent('all-tasks-done', 'All tasks done'); else soundEvent('task-done', `Done: ${t.text}`);
+    if(typeof eggTaskDone === 'function') eggTaskDone();
+  }
 }
 function deleteTask(id){
   state.tasks = state.tasks.filter(x => x.id!==id);
@@ -62,6 +68,7 @@ function completeDeadline(key){
     item.done = true; item.doneAt = Date.now();
     Store.set('agenda', state.agenda);
     showToast(`Done: ${item.title}`);
+    soundEvent('deadline-done', `Done: ${item.title}`);
   } else if(kind === 'e'){
     const course = decodeURIComponent(rest[0]);
     const comp = ((evaluations[course] || {}).components || []).find(c => c.id === rest[1]);
@@ -69,6 +76,7 @@ function completeDeadline(key){
     comp.done = true; comp.doneAt = Date.now();
     saveEvaluations();
     showToast(`Done: ${comp.name}. Add the marks on the Academics page when they're out.`);
+    soundEvent('deadline-done', `Done: ${comp.name}`);
   }
   renderAgenda();
 }
@@ -181,7 +189,7 @@ function pomoTick(){
       ? `Focus session done. Take a ${POMO_MINUTES.break}-minute break.`
       : `Break over. Back to a ${POMO_MINUTES.focus}-minute focus session.`;
     showToast(`Timer switched to ${pomo.mode}`);
-    if(pomo.mode === 'break') showNextQuote(); // a fresh quote to mark the finished session
+    if(pomo.mode === 'break'){ showNextQuote(); soundEvent('focus-done', 'Focus session done'); } // a fresh quote to mark the finished session
     // Native notification so it's noticed even when PCC is in the tray.
     if(window.pcc && window.pcc.showNotification) window.pcc.showNotification('Deep Work Timer', msg);
   }

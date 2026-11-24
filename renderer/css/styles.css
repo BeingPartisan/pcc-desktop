@@ -1065,3 +1065,32 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.7);}
 .perf-row.total span{color:var(--ink) !important;}
 .setting-block .setting-desc{margin-bottom:10px;}
 .segmented[data-pref="visualizer"]{flex-wrap:wrap; max-width:340px; justify-content:flex-end;}
+
+/* ---------- Settings > Sounds (sounds.js) ---------- */
+.sound-rules{display:flex; flex-direction:column; gap:8px; margin-top:8px;}
+.sound-rule{display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:rgba(var(--tint),.03);}
+.sound-rule.off{opacity:.55;}
+.sound-rule select{width:auto; padding:6px 8px; font-size:13px;}
+.sound-rule .dim{color:var(--ink-dim); font-size:13px;}
+.sound-rule-end{margin-left:auto; display:flex; align-items:center; gap:8px;}
+.sound-chip{font-size:12px; padding:5px 9px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--ink-dim); cursor:pointer;}
+.sound-chip.on{background:var(--accent-soft); color:var(--accent-text); border-color:color-mix(in srgb, var(--accent) 40%, transparent);}
+
+/* ---------- Developer page and a few surprises (eggs.js) ---------- */
+.dev-egg{display:flex; gap:12px; align-items:flex-start; padding:12px 0; border-top:1px solid var(--line);}
+.dev-egg b{display:block; font-weight:600;}
+.dev-egg .how{font-size:13px; color:var(--ink-dim); margin-top:2px;}
+.dev-egg .state{margin-left:auto; font-size:12px; padding:4px 9px; border-radius:8px; background:rgba(var(--tint),.06); color:var(--ink-dim); white-space:nowrap;}
+.dev-egg .state.found{background:var(--accent-soft); color:var(--accent-text);}
+#credits-overlay{position:fixed; inset:0; z-index:9000; background:rgba(6,6,9,.92); display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; animation:credits-in .5s ease;}
+@keyframes credits-in{from{opacity:0;} to{opacity:1;}}
+#credits-overlay .roll{text-align:center; color:#F3F2EE; animation:credits-roll 16s linear forwards;}
+@keyframes credits-roll{from{transform:translateY(60vh);} to{transform:translateY(-110%);}}
+#credits-overlay img{width:96px; height:96px; border-radius:22px; margin-bottom:18px;}
+#credits-overlay h1{font-family:var(--serif); font-weight:400; font-size:46px; margin:0 0 6px;}
+#credits-overlay .role{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#8F8E97; margin-top:34px;}
+#credits-overlay .name{font-size:22px; margin-top:4px;}
+#credits-overlay .hint{position:absolute; bottom:22px; left:0; right:0; text-align:center; font-size:12px; color:#6f6e77;}
+.egg-trophy{display:flex; align-items:center; gap:12px; padding:12px 14px; margin-top:12px; border-radius:12px; background:var(--accent-soft); color:var(--accent-text); font-weight:600;}
+.setting-control .dim{color:var(--ink-dim); font-size:13px;}
+#sounds-volume{accent-color:var(--accent);}

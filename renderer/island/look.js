@@ -133,7 +133,8 @@ const IslandLook = (() => {
   }
   // Light breathing out around the full-size island: three colours drifting like smoke, and a wide haze on the bass.
   function glowShadow(p, t, bass, boost){
-    if(opts.look !== 'glow' || opts.handle || fade <= 0 || opts.nudging) return '';
+    // Only around the closed island: opened into its panel, it's a plain panel again.
+    if(opts.look !== 'glow' || opts.handle || fade <= 0 || opts.nudging || island.classList.contains('open')) return '';
     const alpha = (v) => Math.round(Math.max(0, Math.min(1, v * fade)) * 255).toString(16).padStart(2, '0');
     const a = alpha(0.6 + bass * 0.4), soft = alpha(0.35 + bass * 0.45), haze = alpha(0.18 + bass * 0.3);
     const blur = 14 + bass * 26 * boost, spread = bass * 5 * boost;
@@ -185,11 +186,13 @@ const IslandLook = (() => {
     const p = palette(t);
     // As the handle it's the whole thing, full strength, with a soft halo of its own colour so it stands
     // out over light and dark windows alike. At full size it stays soft enough to read the line over it.
-    ctx.globalAlpha = fade * (opts.handle ? 1 : opts.open ? 0.35 : opts.look === 'glow' ? 1 : opts.look === 'bars' ? 0.55 : 0.8);
-    ctx.shadowColor = p[1]; ctx.shadowBlur = opts.handle && opts.look !== 'glow' ? 4 + bass * 4 : 0;
+    const open = island.classList.contains('open');   // checked every frame, so opening never catches it mid-look
+    const handle = opts.handle && !open;
+    ctx.globalAlpha = fade * (handle ? 1 : open ? 0.35 : opts.look === 'glow' ? 1 : opts.look === 'bars' ? 0.55 : 0.8);
+    ctx.shadowColor = p[1]; ctx.shadowBlur = handle && opts.look !== 'glow' ? 4 + bass * 4 : 0;
     if(opts.look === 'wave') drawWave(w, h, p, t, boost);
     else if(opts.look === 'bars') drawBars(w, h, p, boost);
-    else if(opts.look === 'glow') opts.handle ? drawGlow(w, h, p, t, bass, boost) : drawGlowWash(w, h, p, t, bass);
+    else if(opts.look === 'glow') handle ? drawGlow(w, h, p, t, bass, boost) : drawGlowWash(w, h, p, t, bass);
     ctx.globalAlpha = 1; ctx.shadowBlur = 0;
     island.style.boxShadow = glowShadow(p, t, bass, boost);
 

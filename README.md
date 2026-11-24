@@ -279,7 +279,7 @@ pcc-desktop/
 ## Changelog
 
 ### 2.8.3
-- **The island moves with the music**: while something plays, the whole island turns into a small visualiser (the track name is there when you hover). When something else has the island, like a class or a message, the look stays softly behind it. Three looks: **Wave** (the default), **Bars** and **Glow**, which breathes coloured light out around the island like smoke. Colours come from each song's album art (or your accent colour, or a slow rainbow), and it gets a little bigger when the song drops. The new wave button in the island's music row turns it on and off; the look and colours are in Settings > Island > Music.
+- **The island moves with the music**: while something plays, a look moves softly behind the track name on the island, and when the island has shrunk to its small handle (over a maximised window), the handle itself becomes the visualiser, with no black behind it. Three looks: **Wave** (the default), **Bars** and **Glow** (coloured light breathing out like smoke). Colours come from each song's album art (or your accent colour, or a slow rainbow), and it gets a little bigger when the song drops. The new wave button in the island's music row turns it on and off; the look and colours are in Settings > Island > Music.
 
 ### 2.8.2
 - **Bring back a ticked deadline**: under Deadlines (and on the phone's Tasks page), **Show done** lists the ones you've ticked off, with **Restore** to put one back. It syncs like any other change.

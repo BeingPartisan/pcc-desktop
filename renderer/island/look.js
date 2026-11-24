@@ -1,23 +1,24 @@
-// The island's music look: while something plays, the island itself moves
-// with the music, in one of three looks:
-//   wave  - glowing lines that swell with the sound, behind the track name
-//   bars  - small bars mirrored from the middle, with falling peak caps
-//   glow  - the island's edge breathes light out around it, like coloured smoke
-// It fills the line at normal size and the whole handle when the island is
-// shrunk; with the panel open it stays faint behind the top line. Colours come
-// from the album cover (or the accent colour, or a slow rainbow).
+// The island's music look, while something plays:
+//   wave  - glowing lines that swell with the sound
+//   bars  - small bars mirrored from the middle
+//   glow  - light breathing out around the island like coloured smoke
+// At full size it sits softly behind the track name (fainter with the panel
+// open). When the island has shrunk to its small handle (another app's
+// maximised window is in front), the handle itself becomes the look, with no
+// black behind it. Colours come from the album cover (or the accent colour,
+// or a slow rainbow).
 //
-// island.js calls IslandLook.update({ look, colors, accent, active, open, mini, nudging })
+// island.js calls IslandLook.update({ look, colors, accent, active, handle, open, nudging })
 // whenever it renders, IslandLook.cover(url) for a new cover and
 // IslandLook.perf(profile) when the Performance mode changes. The sound itself
 // comes from PCCAudio (../visualizer/audio.js), already listening for the bars.
 
 const IslandLook = (() => {
   const canvas = document.getElementById('look');
-  const island = document.getElementById('island');
   const ctx = canvas.getContext('2d');
   const N = 16;                       // levels from low to high
-  let opts = { look: 'off', colors: 'album', accent: '#C9F26C', active: false, open: false, mini: false, nudging: false };
+  const island = document.getElementById('island');
+  let opts = { look: 'off', colors: 'album', accent: '#C9F26C', active: false, handle: false, open: false, nudging: false };
   let albumColors = null;             // up to three colours from the cover
   let fps = 60, lastFrame = 0, running = false;
   let lv = new Array(N).fill(0), peaks = new Array(N).fill(0);
@@ -122,31 +123,43 @@ const IslandLook = (() => {
       if(h > 20) ctx.fillRect(j * bw + bw * 0.22, (h - Math.min(1, peaks[i] * boost) * room) / 2 - 2.5, bw * 0.56, 1.5);
     }
   }
-  // The glow is mostly outside the island (its shadow); inside, a faint wash of colour.
-  // When the whole pill is the visualiser, the inside glows too: colours drifting past each other.
-  function drawGlow(w, h, p, t, bass){
-    const base = ctx.globalAlpha;
-    const blobs = opts.mini ? [[0, 0.6, 0], [2, 0.45, 2.2], [1, 0.8, 4.1]] : [[0, 0.6, 0]];
-    for(const [k, speed, phase] of blobs){
-      const cx = w * (0.5 + 0.38 * Math.sin(t * speed + phase));
-      const g = ctx.createRadialGradient(cx, h / 2, 0, cx, h / 2, w * (opts.mini ? 0.35 + bass * 0.15 : 0.6));
-      g.addColorStop(0, p[k]); g.addColorStop(1, 'transparent');
-      ctx.globalAlpha = base * (opts.mini ? 0.35 + bass * 0.55 : 0.12 + bass * 0.25);
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    }
+  // Glow at full size: mostly outside the island (its shadow, below); inside, a faint wash of colour.
+  function drawGlowWash(w, h, p, t, bass){
+    const cx = w * (0.5 + 0.3 * Math.sin(t * 0.6));
+    const g = ctx.createRadialGradient(cx, h / 2, 0, cx, h / 2, w * 0.6);
+    g.addColorStop(0, p[0]); g.addColorStop(1, 'transparent');
+    ctx.globalAlpha *= 0.12 + bass * 0.25;
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
   }
+  // Light breathing out around the full-size island: three colours drifting like smoke, and a wide haze on the bass.
   function glowShadow(p, t, bass, boost){
-    if(opts.look !== 'glow' || fade <= 0 || opts.nudging) return '';
+    if(opts.look !== 'glow' || opts.handle || fade <= 0 || opts.nudging) return '';
     const alpha = (v) => Math.round(Math.max(0, Math.min(1, v * fade)) * 255).toString(16).padStart(2, '0');
     const a = alpha(0.6 + bass * 0.4), soft = alpha(0.35 + bass * 0.45), haze = alpha(0.18 + bass * 0.3);
     const blur = 14 + bass * 26 * boost, spread = bass * 5 * boost;
-    // Three colours drifting slowly around the island, like smoke, and a wide haze that breathes with the bass.
     const puff = (k, al, scale) => {
       const x = Math.sin(t * 0.7 + k * 2.1) * 9 * (0.6 + bass), y = 4 + Math.cos(t * 0.5 + k * 1.7) * 5 * (0.6 + bass);
       return `${x.toFixed(1)}px ${y.toFixed(1)}px ${(blur * scale).toFixed(1)}px ${spread.toFixed(1)}px ${p[k]}${al}`;
     };
     return [puff(0, a, 1), puff(1, soft, 1.4), puff(2, soft, 1.2),
       `0 6px ${(36 + bass * 30 * boost).toFixed(1)}px ${(2 + bass * 6).toFixed(1)}px ${p[1]}${haze}`, `0 0 0 1px ${p[0]}${a}`].join(', ');
+  }
+  // Glow as the shrunk handle: soft puffs of colour drifting past each other like smoke,
+  // swelling with the bass, around a thin bright line through the middle.
+  function drawGlow(w, h, p, t, bass, boost){
+    const base = ctx.globalAlpha;
+    ctx.filter = `blur(${(2.5 + bass * 2.5).toFixed(1)}px)`;
+    for(const [k, speed, phase] of [[0, 0.6, 0], [2, 0.45, 2.2], [1, 0.8, 4.1]]){
+      const cx = w * (0.5 + 0.32 * Math.sin(t * speed + phase));
+      ctx.globalAlpha = base * (0.45 + bass * 0.5);
+      ctx.fillStyle = p[k];
+      ctx.beginPath(); ctx.ellipse(cx, h / 2, w * (0.16 + bass * 0.1 * boost), h * (0.18 + bass * 0.22 * boost), 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.filter = 'none';
+    ctx.globalAlpha = base * (0.7 + bass * 0.3);
+    ctx.fillStyle = gradient(w, p);
+    const lh = 1.5 + bass * 2.5 * boost;
+    ctx.beginPath(); ctx.roundRect(w * 0.1, (h - lh) / 2, w * 0.8, lh, lh / 2); ctx.fill();
   }
 
   function frame(now){
@@ -170,12 +183,14 @@ const IslandLook = (() => {
     const [w, h] = size();
     ctx.clearRect(0, 0, w, h);
     const p = palette(t);
-    // Behind the track name it stays soft enough to read the text over it; across the handle it's full strength.
-    ctx.globalAlpha = fade * (opts.open ? 0.35 : opts.mini || opts.look === 'glow' ? 1 : opts.look === 'bars' ? 0.55 : 0.8);
+    // As the handle it's the whole thing, full strength, with a soft halo of its own colour so it stands
+    // out over light and dark windows alike. At full size it stays soft enough to read the line over it.
+    ctx.globalAlpha = fade * (opts.handle ? 1 : opts.open ? 0.35 : opts.look === 'glow' ? 1 : opts.look === 'bars' ? 0.55 : 0.8);
+    ctx.shadowColor = p[1]; ctx.shadowBlur = opts.handle && opts.look !== 'glow' ? 4 + bass * 4 : 0;
     if(opts.look === 'wave') drawWave(w, h, p, t, boost);
     else if(opts.look === 'bars') drawBars(w, h, p, boost);
-    else if(opts.look === 'glow') drawGlow(w, h, p, t, bass);
-    ctx.globalAlpha = 1;
+    else if(opts.look === 'glow') opts.handle ? drawGlow(w, h, p, t, bass, boost) : drawGlowWash(w, h, p, t, bass);
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
     island.style.boxShadow = glowShadow(p, t, bass, boost);
 
     if(fade <= 0 && !opts.active) stop();   // faded out: rest

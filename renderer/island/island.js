@@ -109,15 +109,14 @@ function render(){
   } else {
     text = state.quote; side = clock(Date.now());
   }
-  // The music look (wave, bars or glow): the whole island moves with the music while it plays.
+  // The music look (wave, bars or glow) while music plays: softly behind the line at full size,
+  // and when the island has shrunk to its handle, the handle itself becomes the look, with no black behind it.
   const look = state.musicLook || 'off';
-  const lookActive = look !== 'off' && playing && !!hasMedia;
-  // When the line would only show the song anyway, the whole pill becomes the visualiser (the name is a hover away).
   const isOpen = $('island').classList.contains('open');
-  const full = lookActive && text === (media.title || media.artist);
-  $('island').classList.toggle('viz', full);
-  IslandLook.update({ look, colors: state.musicColors || 'album', accent: state.accent, active: lookActive,
-    open: isOpen, mini: (mini && !freshMessage) || full, nudging: !!nudge });
+  const handle = mini && !freshMessage && !isOpen;
+  const lookActive = look !== 'off' && playing && !!hasMedia;
+  $('island').classList.toggle('looking', lookActive && handle);
+  IslandLook.update({ look, colors: state.musicColors || 'album', accent: state.accent, active: lookActive, handle, open: isOpen, nudging: !!nudge });
   // Little bars that dance to the music, beside the track name (not while the island itself moves).
   const showEq = !!(state.musicBars && !lookActive && playing && hasMedia && text === (media.title || media.artist));
   $('pill-eq').hidden = !showEq;

@@ -33,15 +33,18 @@ body[data-position="right"]{justify-content:flex-end;}
 .island.mini:not(.open).nudging{opacity:1;}
 .pill{transition:opacity .15s;}
 
-/* Music look (look.js): drawn behind the compact line, or across the whole handle when shrunk.
-   The glow look also lights the island's shadow, set from look.js. */
-.island{position:relative;}
+/* Music look (look.js): while music plays, drawn softly behind the compact line; when the island
+   has shrunk to its handle, the handle itself becomes the look, with no black behind it.
+   At full size the glow look also lights the island's shadow (set from look.js). */
+.island{position:relative; transition:max-width .28s cubic-bezier(.3,.9,.3,1), max-height .28s cubic-bezier(.3,.9,.3,1), border-radius .28s, min-width .28s, background-color .3s, border-color .3s;}
+.island.mini.looking:not(.open){min-width:96px; max-width:96px; max-height:18px; background:transparent; border-color:transparent; box-shadow:none; opacity:1;}
 .look{position:absolute; left:0; top:0; width:100%; height:34px; pointer-events:none; opacity:0; transition:opacity .4s;}
 .look.on{opacity:1;}
 .island.mini:not(.open) .look{height:100%;}
-/* Music has the line: the whole pill is the visualiser, without the text (it's there on hover) */
-.island.viz:not(.open):not(.mini){min-width:190px; max-width:190px;}
-.island.viz:not(.open) .pill{opacity:0;}
+/* As the see-through handle, its edges fade out softly instead of ending in a hard box */
+.island.mini.looking:not(.open){overflow:visible;}
+.island.mini.looking:not(.open) .look{left:-8px; top:-6px; width:calc(100% + 16px); height:calc(100% + 12px);
+  -webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%, #000 60%, transparent 100%);}
 .pill{position:relative; z-index:1;}
 .panel{position:relative; z-index:1;}
 

@@ -33,6 +33,8 @@ function islandSnapshot(){
     quote: currentWidgetQuote, quoteAuthor: currentWidgetAuthor,
     capture: !!prefs().islandCapture,
     musicBars: !!prefs().musicBars,
+    musicLook: prefs().islandMusicLookOn ? (prefs().islandMusicLook || 'wave') : 'off',   // the island moving with the music (island/look.js)
+    musicColors: prefs().islandMusicColors || 'album',
     channels: msg.channels.map(c => ({ id: c.id, name: c.name })),
     messages: msg.unread.slice(0, 8),
     unreadCount: msg.unread.length,
@@ -88,6 +90,8 @@ if(window.pcc && window.pcc.onIslandAction){
     // the layers button on the island, and the tray menu: visualiser over windows, or back on the wallpaper
     // the tray's Performance menu
     else if(action.type === 'perf-mode' && ['saver', 'balanced', 'best'].includes(action.mode)) setPref('perfMode', action.mode);
+    // the wave button on the island: its music look on or off
+    else if(action.type === 'music-look') setPref('islandMusicLookOn', !prefs().islandMusicLookOn);
     else if(action.type === 'visualizer-layer') setPref('visualizerLayer', prefs().visualizerLayer === 'top' ? 'wallpaper' : 'top');
     pushIsland();
   });

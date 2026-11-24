@@ -10,6 +10,8 @@
 
 <!-- The island: a one-line pill that grows into a panel while the pointer is over it -->
 <div class="island" id="island">
+  <!-- Music look: a wave, bars or a glow that moves with what's playing (look.js) -->
+  <canvas class="look" id="look"></canvas>
   <div class="pill" id="pill">
     <span class="pill-dot" id="pill-dot"></span>
     <span class="pill-text" id="pill-text"></span>
@@ -80,6 +82,8 @@
       <div class="row-actions">
         <!-- the desktop visualiser: on the wallpaper, or over every window (shown while it's on) -->
         <button class="icon layer" data-action="visualizer-layer" id="viz-layer" aria-label="Visualiser over windows" title="Show the visualiser over your windows" hidden><svg viewBox="0 0 24 24"><path d="M12 4l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4"/><path d="M4 16l8 4 8-4"/></svg></button>
+        <!-- the island's music look (wave, bars or glow): on or off -->
+        <button class="icon layer" data-action="music-look" id="look-toggle" aria-label="Music look on the island" title="Make the island move with the music"><svg viewBox="0 0 24 24"><path d="M2 12c2-5 4-5 6 0s4 5 6 0 4-5 6 0 2 2 2 2"/></svg></button>
         <button class="icon" data-media="prev" aria-label="Previous track"><svg viewBox="0 0 24 24"><path d="M7 5v14"/><path d="M19 5l-9 7 9 7z"/></svg></button>
         <button class="icon big" data-media="toggle" id="media-toggle" aria-label="Play or pause"></button>
         <button class="icon" data-media="next" aria-label="Next track"><svg viewBox="0 0 24 24"><path d="M17 5v14"/><path d="M5 5l9 7-9 7z"/></svg></button>
@@ -130,6 +134,7 @@
 </div>
 
 <script src="../visualizer/audio.js"></script>
+<script src="look.js"></script>
 <script src="island.js"></script>
 </body>
 </html>

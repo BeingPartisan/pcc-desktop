@@ -109,8 +109,13 @@ function render(){
   } else {
     text = state.quote; side = clock(Date.now());
   }
-  // Little bars that dance to the music, beside the track name.
-  const showEq = !!(state.musicBars && playing && hasMedia && text === (media.title || media.artist));
+  // The music look (wave, bars or glow): the whole island moves with the music while it plays.
+  const look = state.musicLook || 'off';
+  const lookActive = look !== 'off' && playing && !!hasMedia;
+  IslandLook.update({ look, colors: state.musicColors || 'album', accent: state.accent, active: lookActive,
+    open: $('island').classList.contains('open'), mini: mini && !freshMessage, nudging: !!nudge });
+  // Little bars that dance to the music, beside the track name (not while the island itself moves).
+  const showEq = !!(state.musicBars && !lookActive && playing && hasMedia && text === (media.title || media.artist));
   $('pill-eq').hidden = !showEq;
   setEqRunning(showEq);
   $('pill-text').textContent = text;
@@ -184,6 +189,9 @@ function render(){
     $('viz-layer').hidden = !state.visualizer || state.visualizer === 'off';
     $('viz-layer').classList.toggle('on', over);
     $('viz-layer').title = over ? 'Put the visualiser back on the wallpaper' : 'Show the visualiser over your windows';
+    const lookOn = look !== 'off';
+    $('look-toggle').classList.toggle('on', lookOn);
+    $('look-toggle').title = lookOn ? 'Stop the island moving with the music' : 'Make the island move with the music';
   }
 
   $('row-mail').hidden = !state.mail.count;
@@ -250,7 +258,7 @@ function eqFrame(){
 // they reappear. Starting to listen is the slow part.
 let eqStopTimer = null;
 function setEqRunning(on){
-  const playing = media.status === 'playing' && !!(state && state.musicBars);
+  const playing = media.status === 'playing' && !!(state && (state.musicBars || (state.musicLook && state.musicLook !== 'off')));
   if(playing){ clearTimeout(eqStopTimer); eqStopTimer = null; PCCAudio.start(); }
   else if(PCCAudio.listening && !eqStopTimer) eqStopTimer = setTimeout(() => { eqStopTimer = null; PCCAudio.stop(); }, 8000);
   if(on === eqRunning) return;
@@ -263,7 +271,8 @@ window.island.onMedia((next) => { media = next; render(); });
 window.island.onUpdate((next) => { update = next; render(); });
 window.island.onNudge((next) => { nudge = next; render(); });
 window.island.onMini((next) => { mini = next; render(); });
-window.island.onCover((url) => { const img = $('media-cover'); img.hidden = !url; if(url) img.src = url; else img.removeAttribute('src'); });
+window.island.onCover((url) => { const img = $('media-cover'); img.hidden = !url; if(url) img.src = url; else img.removeAttribute('src'); IslandLook.cover(url); });
+if(window.island.onPerf) window.island.onPerf((profile) => IslandLook.perf(profile));
 window.island.onPosition((position) => { document.body.dataset.position = position; });
 setInterval(render, 500); // keeps countdowns and the clock moving between snapshots
 

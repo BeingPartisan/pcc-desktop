@@ -2,7 +2,7 @@
 
 A desktop dashboard for running student life from one window. It covers your classes, mail, deadlines, grades, money, habits, focus time, apps and games. It also puts a small **floating island** at the top of your screen with your timer, next class, music and messages. It's built with Electron and is developed and tested on Windows. Your data stays on your own computer; the only things that leave it are the ones you switch on (see [What uses the internet](#what-uses-the-internet)).
 
-**Current version:** 2.8.2 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest) · **PCC for Android** 0.1.2 is on the same release page (see [PCC for Android](#pcc-for-android)).
+**Current version:** 2.8.3 · [Download the latest release](https://github.com/BeingPartisan/pcc-desktop/releases/latest) · **PCC for Android** 0.1.2 is on the same release page (see [PCC for Android](#pcc-for-android)).
 
 ---
 
@@ -277,6 +277,9 @@ pcc-desktop/
 ---
 
 ## Changelog
+
+### 2.8.3
+- **The island moves with the music**: while something plays, the island itself comes alive, across the whole handle when it's shrunk and softly behind the track name at normal size. Three looks: **Wave** (the default), **Bars** and **Glow**, which breathes coloured light out around the island like smoke. Colours come from each song's album art (or your accent colour, or a slow rainbow), and it gets a little bigger when the song drops. The new wave button in the island's music row turns it on and off; the look and colours are in Settings > Island > Music.
 
 ### 2.8.2
 - **Bring back a ticked deadline**: under Deadlines (and on the phone's Tasks page), **Show done** lists the ones you've ticked off, with **Restore** to put one back. It syncs like any other change.

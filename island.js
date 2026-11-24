@@ -118,6 +118,7 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
       send('island-cover', config.media ? lastCover : '');
       send('island-nudge', nudge);
       send('island-mini', mini);
+      if (perf) send('island-perf', perf.current());
       applyVisibility();
     });
     win.on('closed', () => { win = null; });
@@ -337,7 +338,7 @@ module.exports = function registerIsland({ logEvent, getMainWindow, showMainWind
   }
 
   // Performance mode changed (or the laptop was plugged in / unplugged): tell the visualiser, without restarting it.
-  if (perf) perf.onChange((profile) => { vizSend('viz-perf', profile); applyVisualizer(); });
+  if (perf) perf.onChange((profile) => { vizSend('viz-perf', profile); send('island-perf', profile); applyVisualizer(); });
 
   // --- IPC ---
 

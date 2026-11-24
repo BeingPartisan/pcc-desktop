@@ -804,6 +804,28 @@
 
         <div class="setting-row">
           <div class="setting-text">
+            <label class="setting-name" for="pref-music-look-on">Island moves with the music</label>
+            <div class="setting-desc">While something plays, the island itself comes alive: across the whole handle when it's shrunk, and behind the track name at normal size. The wave button on the island turns it on and off.</div>
+          </div>
+          <div class="setting-control"><input id="pref-music-look-on" type="checkbox" class="switch" data-pref="islandMusicLookOn" onchange="setPref('islandMusicLookOn', this.checked)" /></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Island music look</div>
+            <div class="setting-desc">Wave: glowing lines that swell with the sound. Bars: little bars from the middle out. Glow: light that breathes out around the island, like coloured smoke.</div>
+          </div>
+          <div class="setting-control"><div class="segmented" data-pref="islandMusicLook"><button data-value="wave" onclick="setPref('islandMusicLook', 'wave')">Wave</button><button data-value="bars" onclick="setPref('islandMusicLook', 'bars')">Bars</button><button data-value="glow" onclick="setPref('islandMusicLook', 'glow')">Glow</button></div></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-text">
+            <div class="setting-name">Island music colours</div>
+            <div class="setting-desc">Album art picks colours from each song's cover.</div>
+          </div>
+          <div class="setting-control"><div class="segmented" data-pref="islandMusicColors"><button data-value="album" onclick="setPref('islandMusicColors', 'album')">Album art</button><button data-value="accent" onclick="setPref('islandMusicColors', 'accent')">Accent</button><button data-value="rainbow" onclick="setPref('islandMusicColors', 'rainbow')">Rainbow</button></div></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
             <div class="setting-name">Desktop visualiser</div>
             <div class="setting-desc">Shapes that move to whatever is playing, drawn on your wallpaper itself: behind your desktop icons, which stay clickable, and under all your windows. It pauses while a maximised or full-screen window covers the desktop.</div>
           </div>

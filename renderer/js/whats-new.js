@@ -10,6 +10,12 @@
 
 const RELEASE_NOTES = [
   {
+    version: '2.8.3',
+    items: [
+      { icon: 'music', title: 'The island moves with the music', text: 'While something plays, the island itself comes alive in the colours of the album art: a wave, bars, or a glow that breathes out around it like smoke. Tap the wave button on the island to turn it on or off.', go: { label: 'Pick a look', run: () => openSettingsAt('island') } },
+    ],
+  },
+  {
     version: '2.8.2',
     items: [
       { icon: 'calendar', title: 'Bring back a ticked deadline', text: 'Ticked one off by mistake? Under Deadlines, Show done lists them with a Restore button. It works on the phone too, and syncs.', go: { label: 'Open Deadlines', run: () => navigate('focus') } },

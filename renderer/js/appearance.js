@@ -59,6 +59,9 @@ const PREF_DEFAULTS = {
                               // 'shrink' (that, and become a small handle over maximised windows) | 'maximized' (hide for both)
   islandCapture: true,
   musicBars: true,            // little bars that move to the music in the island's line
+  islandMusicLookOn: true,    // the island itself moves with the music (the wave button on the island)
+  islandMusicLook: 'wave',    // 'wave' | 'bars' | 'glow'
+  islandMusicColors: 'album', // 'album' (from the cover) | 'accent' | 'rainbow'
   visualizerPlace: 'raised',  // 'raised' (just above the taskbar) | 'edge' (the screen's bottom edge)
   visualizerLayer: 'wallpaper', // 'wallpaper' (behind icons and windows) | 'top' (over every window, clicks pass through)
   visualizer: 'off',          // 'off' | 'bars' | 'wave' | 'ring' | 'nebula' | 'orbit' | 'album': music visualiser on the desktop        // a text box on the island for quick notes and tasks

@@ -12,7 +12,7 @@ const RELEASE_NOTES = [
   {
     version: '2.8.3',
     items: [
-      { icon: 'music', title: 'The island moves with the music', text: 'While something plays, the island itself comes alive in the colours of the album art: a wave, bars, or a glow that breathes out around it like smoke. Tap the wave button on the island to turn it on or off.', go: { label: 'Pick a look', run: () => openSettingsAt('island') } },
+      { icon: 'music', title: 'The island moves with the music', text: 'While something plays, the whole island becomes a small visualiser in the colours of the album art: a wave, bars, or a glow that breathes out around it like smoke. Hover to see the song. Tap the wave button on the island to turn it on or off.', go: { label: 'Pick a look', run: () => openSettingsAt('island') } },
     ],
   },
   {

@@ -123,12 +123,17 @@ const IslandLook = (() => {
     }
   }
   // The glow is mostly outside the island (its shadow); inside, a faint wash of colour.
+  // When the whole pill is the visualiser, the inside glows too: colours drifting past each other.
   function drawGlow(w, h, p, t, bass){
-    const cx = w * (0.5 + 0.3 * Math.sin(t * 0.6));
-    const g = ctx.createRadialGradient(cx, h / 2, 0, cx, h / 2, w * 0.6);
-    g.addColorStop(0, p[0]); g.addColorStop(1, 'transparent');
-    ctx.globalAlpha *= 0.12 + bass * 0.25;
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    const base = ctx.globalAlpha;
+    const blobs = opts.mini ? [[0, 0.6, 0], [2, 0.45, 2.2], [1, 0.8, 4.1]] : [[0, 0.6, 0]];
+    for(const [k, speed, phase] of blobs){
+      const cx = w * (0.5 + 0.38 * Math.sin(t * speed + phase));
+      const g = ctx.createRadialGradient(cx, h / 2, 0, cx, h / 2, w * (opts.mini ? 0.35 + bass * 0.15 : 0.6));
+      g.addColorStop(0, p[k]); g.addColorStop(1, 'transparent');
+      ctx.globalAlpha = base * (opts.mini ? 0.35 + bass * 0.55 : 0.12 + bass * 0.25);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    }
   }
   function glowShadow(p, t, bass, boost){
     if(opts.look !== 'glow' || fade <= 0 || opts.nudging) return '';
@@ -148,10 +153,12 @@ const IslandLook = (() => {
     if(!running) return;
     requestAnimationFrame(frame);
     if(fps && now - lastFrame < 1000 / fps - 2) return;
+    const dt = Math.min(0.25, (now - (lastFrame || now)) / 1000);
     lastFrame = now;
     const t = now / 1000;
 
-    fade = Math.max(0, Math.min(1, fade + (opts.active ? 0.06 : -0.04)));
+    // Eases in over about a third of a second, out over half a second, whatever the frame rate.
+    fade = Math.max(0, Math.min(1, fade + (opts.active ? dt / 0.35 : -dt / 0.5)));
     const raw = opts.active ? levels(t) : new Array(N).fill(0);
     lv = lv.map((s, i) => raw[i] > s ? s + (raw[i] - s) * 0.55 : s * 0.86 + raw[i] * 0.14);
     peaks = peaks.map((s, i) => Math.max(lv[i], s - 0.012));

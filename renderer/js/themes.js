@@ -150,7 +150,7 @@ function applyThemeColours(root, dark, accent){
 }
 
 function setPalette(id){
-  if(id === 'wallpaper') loadWallpaperTheme().then(() => { setPref('palette', id); if(!wallpaperTheme) showToast('Couldn\'t read colours from your wallpaper, so Partisan it is for now'); });
+  if(id === 'wallpaper') loadWallpaperTheme().then(() => { setPref('palette', id); if(!wallpaperTheme) showToast(sayAny('Couldn\'t read colours from your wallpaper, so Partisan it is for now', 'Couldn’t read colours from your wallpaper, so Partisan it is for now. Honestly, an upgrade.')); });
   else setPref('palette', id);
 }
 

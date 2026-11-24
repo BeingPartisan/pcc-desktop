@@ -11,6 +11,11 @@ const FEEDBACK_PROMPTS = {
   idea: 'What would you like PCC to do?',
   other: 'What\'s on your mind?',
 };
+const FEEDBACK_PROMPTS_FUN = {
+  bug: 'What broke, and what did you expect? Spill the tea.',
+  idea: 'What should PCC do? Pitch it like Shark Tank.',
+  other: 'What’s on your mind, bhai?',
+};
 
 const feedback = {
   type: 'bug',
@@ -25,7 +30,7 @@ const feedback = {
 function setFeedbackType(type){
   feedback.type = type;
   document.querySelectorAll('#feedback-type button').forEach(b => b.classList.toggle('active', b.dataset.value === type));
-  document.getElementById('feedback-text-label').textContent = FEEDBACK_PROMPTS[type];
+  document.getElementById('feedback-text-label').textContent = say(FEEDBACK_PROMPTS[type], FEEDBACK_PROMPTS_FUN[type]);
   document.getElementById('feedback-log').checked = type === 'bug' && document.getElementById('feedback-log').checked;
 }
 
@@ -39,7 +44,7 @@ function closeFeedback(){ document.getElementById('feedback-overlay').classList.
 
 async function sendFeedback(){
   const text = document.getElementById('feedback-text').value.trim();
-  if(!text){ showToast('Write a few words first'); return; }
+  if(!text){ showToast(sayAny('Write a few words first', 'Write a few words first. Telepathy isn’t a feature yet.', 'Write a few words first, bro. Empty feedback is just vibes.')); return; }
   const button = document.getElementById('feedback-send-btn');
   button.disabled = true;
   try {
@@ -48,10 +53,12 @@ async function sendFeedback(){
       name: document.getElementById('feedback-name').value,
       includeLog: document.getElementById('feedback-log').checked,
     });
-    if(!result.ok){ showToast(result.error || 'Could not send'); return; }
+    if(!result.ok){ showToast(result.error || sayAny('Could not send', 'Could not send. Try again in a bit, your words matter.')); return; }
     document.getElementById('feedback-text').value = '';
     closeFeedback();
-    showToast(result.sent ? 'Sent. Thank you!' : 'Saved. It will be sent when you\'re back online.');
+    showToast(result.sent
+      ? sayAny('Sent. Thank you!', 'Sent. Thank you! Legend behaviour.', 'Sent. You’re basically on the dev team now.', 'Sent. Partisan owes you one.')
+      : sayAny('Saved. It will be sent when you\'re back online.', 'Saved. It will be sent when you’re back online. Wi-Fi went for chai, it seems.'));
     showFeedbackPending(result.pending);
   } finally { button.disabled = false; }
 }
@@ -72,7 +79,7 @@ function setFeedbackFilter(filter){
 async function toggleFeedbackDone(id){
   const done = !feedback.done.has(id);
   const result = await window.pcc.feedbackMark(id, done);
-  if(!result.ok){ showToast('Could not save that'); return; }
+  if(!result.ok){ showToast(sayAny('Could not save that', 'Could not save that. Try once more, boss.')); return; }
   if(done) feedback.done.add(id); else feedback.done.delete(id);
   renderFeedbackInbox();
 }
@@ -92,7 +99,9 @@ function renderFeedbackInbox(){
       <div class="msg-body" style="white-space:pre-wrap;">${esc(r.text)}</div>
       ${r.log ? `<details><summary>Activity log</summary><pre>${esc(r.log)}</pre></details>` : ''}
     </div>`).join('')
-    : `<div class="empty">${feedback.filter === 'open' ? 'Nothing open.' : 'Nothing here.'}</div>`;
+    : `<div class="empty">${feedback.filter === 'open'
+      ? say('Nothing open.', 'Nothing open. Zero bugs? Damn bro, you’re on fire.', 'Nothing open. Either PCC is perfect or nobody’s using it.')
+      : say('Nothing here.', 'Nothing here. Just tumbleweeds.')}</div>`;
   const open = feedback.reports.filter(r => !feedback.done.has(r.id)).length;
   document.getElementById('feedback-tab').textContent = open ? `Feedback (${open})` : 'Feedback';
 }
@@ -124,7 +133,7 @@ if(window.pcc && window.pcc.onFeedbackReceived){
   });
   window.pcc.onFeedbackDelivered((status) => {
     showFeedbackPending(status.pending);
-    showToast('Your feedback arrived. Thank you!');
+    showToast(sayAny('Your feedback arrived. Thank you!', 'Your feedback arrived. Thank you, legend!', 'Your feedback arrived. The dev has been summoned.'));
   });
 }
 

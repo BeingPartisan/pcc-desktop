@@ -12,6 +12,7 @@ const RELEASE_NOTES = [
   {
     version: '2.9.0',
     items: [
+      { icon: 'star', title: 'PCC got a personality', text: 'It talks like your friend now: roasts when you slack, hype when you deliver. Too much? Keep it simple in Appearance turns the jokes off, you boring human.', go: { label: 'Keep it simple', run: () => openSettingsAt('appearance') } },
       { icon: 'star', title: 'Colour themes', text: 'Eight whole looks instead of one lonely colour: Partisan, Midnight, Sakura, Ocean, Forest, Sunset, Classic, or one made from your wallpaper. Your old colour is still there under Custom.', go: { label: 'Pick one', run: () => openSettingsAt('appearance') } },
       { icon: 'star', title: 'Settings got a glow-up', text: 'Bigger, tidier and searchable: type what you\'re after ("music", "theme", "battery") and it shows up, from whichever page it lives on.', go: { label: 'Have a look', run: () => openSettings() } },
       { icon: 'star', title: 'Sounds and actions', text: 'Make PCC react when things happen: plug in the charger, finish all your tasks or keep a streak going, and hear a sound (built in, or any clip of your own), see confetti or watch the island celebrate.', go: { label: 'Set it up', run: () => openSettingsAt('sounds') } },

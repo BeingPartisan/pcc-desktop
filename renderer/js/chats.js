@@ -43,7 +43,7 @@ function showChatForm(form){ chatForm = chatForm === form ? null : form; renderC
 // The page's own create / join forms reuse the Settings ones' logic.
 function createChatFromPage(){
   const name = document.getElementById('chat-new-name').value.trim();
-  if(!name){ showToast('Give it a name first'); return; }
+  if(!name){ showToast(sayAny('Give it a name first', 'Give it a name first. “Untitled chat” is not a vibe.')); return; }
   document.getElementById('msg-new-name').value = name;
   createChannel();
   openChatWith(msg.channels[msg.channels.length - 1].id);
@@ -89,7 +89,7 @@ function renderChats(){
   const presence = activePresence();
   document.getElementById('chat-list').innerHTML = chats.length ? chats.map(c => {
     const busy = presence.find(p => p.channelId === c.id);
-    const preview = c.last ? `${c.last.mine ? 'You: ' : ''}${c.last.text}` : 'No messages yet';
+    const preview = c.last ? `${c.last.mine ? 'You: ' : ''}${c.last.text}` : say('No messages yet', 'No messages yet. Awkward silence.', 'No messages yet. Make the first move.');
     return `
       <button class="chat-item ${c.id === openChat ? 'active' : ''} ${c.unread ? 'has-unread' : ''}" onclick="openChatWith('${c.id}')">
         <span class="chat-avatar" style="background:${c.channel ? colorForSubject(c.name) : 'var(--accent)'}">${esc((c.name || '?').trim().charAt(0).toUpperCase())}</span>
@@ -102,10 +102,10 @@ function renderChats(){
   }).join('') : '';
 
   document.getElementById('chat-form').innerHTML = chatForm === 'new' ? `
-      <div class="field-note">Name the chat, then send its code to the other person.</div>
-      <div class="row-form"><input id="chat-new-name" type="text" maxlength="30" placeholder="Their name" onkeydown="if(event.key==='Enter')createChatFromPage()" /><button class="btn btn-primary" onclick="createChatFromPage()">Create</button></div>`
+      <div class="field-note">${say('Name the chat, then send its code to the other person.', 'Name the chat, then send its code to the other person. No code, no convo.')}</div>
+      <div class="row-form"><input id="chat-new-name" type="text" maxlength="30" placeholder="${esc(say('Their name', 'Their name (or what you call them, e.g. Champ)'))}" onkeydown="if(event.key==='Enter')createChatFromPage()" /><button class="btn btn-primary" onclick="createChatFromPage()">Create</button></div>`
     : chatForm === 'join' ? `
-      <div class="field-note">Paste the code someone sent you.</div>
+      <div class="field-note">${say('Paste the code someone sent you.', 'Paste the code someone sent you. Ctrl+V, you know the drill.')}</div>
       <input id="chat-join-code" type="text" placeholder="PCC-XXXX-XXXX-XXXX-XXXX" style="font-family:var(--mono);" onkeydown="if(event.key==='Enter')joinChatFromPage()" />
       <div class="row-form"><input id="chat-join-name" type="text" maxlength="30" placeholder="Name for this chat" onkeydown="if(event.key==='Enter')joinChatFromPage()" /><button class="btn btn-primary" onclick="joinChatFromPage()">Join</button></div>`
     : '';
@@ -118,7 +118,7 @@ function renderChats(){
     view.innerHTML = `
       <div class="chat-empty">
         <div class="chat-empty-title">Message your friends' PCC</div>
-        <div class="setting-desc">Messages show up on their floating island, even while PCC is hidden. Start a chat and send them its code, or join one with a code they sent you.</div>
+        <div class="setting-desc">${say('Messages show up on their floating island, even while PCC is hidden. Start a chat and send them its code, or join one with a code they sent you.', 'Messages pop up on their floating island, even while PCC is hidden, so they can’t pretend they didn’t see it. Start a chat and send them its code, or join one with a code they sent you.')}</div>
         <div class="row-form" style="justify-content:center;"><button class="btn btn-primary" onclick="showChatForm('new')">Start a chat</button><button class="btn" onclick="showChatForm('join')">Join with a code</button></div>
         <div class="field-note">Messages go through a public relay (ntfy.sh). Fine for "call me" or "class moved", not for anything private.</div>
       </div>`;
@@ -129,7 +129,7 @@ function renderChats(){
   const busy = presence.filter(p => p.channelId === chat.id);
   const items = chatMessages(chat.id);
   const status = busy.length ? busy.map(p => `${p.from} is ${p.state === 'break' ? 'on a break' : 'focusing'}`).join(', ')
-    : channel ? 'Messages arrive on their island' : 'From the person who makes PCC';
+    : channel ? say('Messages arrive on their island', 'Messages land right on their island. No escape.') : say('From the person who makes PCC', 'Straight from the guy who makes PCC');
 
   let lastDay = '';
   const bubbles = items.map(m => {
@@ -152,11 +152,15 @@ function renderChats(){
         <button class="btn" onclick="copyChannelCode('${channel.id}')" title="Anyone with the code can join this chat">Copy code</button>
         <button class="btn btn-icon" onclick="removeChannel('${channel.id}'); renderChats();" title="Leave this chat" aria-label="Leave this chat">&times;</button>` : ''}
     </div>
-    <div class="chat-scroll" id="chat-scroll">${bubbles || `<div class="chat-none">${channel ? `No messages yet. Say hello, or copy the code and send it to ${esc(chat.name)} if they haven't joined.` : 'Nothing yet.'}</div>`}</div>
+    <div class="chat-scroll" id="chat-scroll">${bubbles || `<div class="chat-none">${channel
+      ? say(`No messages yet. Say hello, or copy the code and send it to ${esc(chat.name)} if they haven't joined.`,
+          `No messages yet. Don't be shy, say hello. If ${esc(chat.name)} hasn't joined, copy the code and send it to them.`,
+          `Dead chat, bro. Say hello, or copy the code and send it to ${esc(chat.name)} if they haven't joined.`)
+      : say('Nothing yet.', 'Nothing yet. The boss is busy cooking.')}</div>`}</div>
     ${channel ? `
       <div class="chat-nudges">${nudgePhrases().map(n => `<button class="chip" onclick="sendChat(${esc(JSON.stringify(n))}, 'nudge')">${esc(n)}</button>`).join('')}</div>
       <div class="chat-compose">
-        <input id="chat-input" type="text" maxlength="500" placeholder="Message ${esc(chat.name)}" onkeydown="if(event.key==='Enter')sendChat()" />
+        <input id="chat-input" type="text" maxlength="500" placeholder="${esc(say(`Message ${chat.name}`, `Say something nice to ${chat.name}`, `Message ${chat.name}, keep it classy`))}" onkeydown="if(event.key==='Enter')sendChat()" />
         <button class="btn btn-primary" onclick="sendChat()">Send</button>
       </div>` : ''}`;
   const scroll = document.getElementById('chat-scroll');

@@ -174,14 +174,14 @@ function setMailDone(key, done){
 function addMailDeadline(key){
   const msg = inbox.messages.find(m => m.key === key);
   const input = document.querySelector(`[data-due-for="${key}"]`);
-  if(!msg || !input || !input.value) return showToast('Pick a date first');
+  if(!msg || !input || !input.value) return showToast(sayAny('Pick a date first', 'Pick a date first, bro. Deadlines need a when.', 'No date, no deadline. Pick one first.'));
   state.agenda.push({ id: uid(), title: msg.subject, date: input.value });
   Store.set('agenda', state.agenda);
   msg.deadlineAdded = true;
   saveInbox();
   renderAgenda(); // also refreshes Today's deadlines
   renderInbox();
-  showToast('Added to Deadlines');
+  showToast(sayAny('Added to Deadlines', 'Added to Deadlines. Future you says thanks.', 'Added to Deadlines. Responsible behaviour detected.', 'Added to Deadlines. Can’t sneak up on you now.'));
 }
 
 function openMail(key){
@@ -220,7 +220,9 @@ async function scanMail(manual){
     const result = await window.pcc.scanEmail(inbox.messages.map(m => m.key));
     if(result.error){
       inboxError = result.notConfigured ? 'not-configured' : result.error;
-      if(manual) showToast(result.notConfigured ? 'Set up mail in Settings first' : 'Could not read mail');
+      if(manual) showToast(result.notConfigured
+        ? sayAny('Set up mail in Settings first', 'Set up mail in Settings first. I can’t read mail I don’t have, yaar.')
+        : sayAny('Could not read mail', 'Could not read mail. The inbox ghosted us, try again in a bit.'));
     } else {
       inboxError = null;
       const fresh = ingestMail(result.messages || []);
@@ -235,13 +237,18 @@ async function scanMail(manual){
       inbox.hadScan = true;
       inbox.lastScan = Date.now();
       saveInbox();
-      if(manual) showToast(fresh.length ? `${fresh.length} new email${fresh.length === 1 ? '' : 's'}` : 'No new mail');
+      if(manual){
+        const got = `${fresh.length} new email${fresh.length === 1 ? '' : 's'}`;
+        showToast(fresh.length
+          ? sayAny(got, `${got}. Popular today, huh.`, `${got}. Brace yourself.`)
+          : sayAny('No new mail', 'No new mail. Nobody needs you right now, enjoy it.', 'No new mail. Go touch some grass.', 'No new mail. Refreshing harder won’t help, bro.'));
+      }
       // A first scan can hold more mail than one pass downloads; keep going until it's all in.
       if(result.more) setTimeout(() => scanMail(false), 1500);
     }
   } catch(e){
     inboxError = 'Mail scan failed: ' + (e.message || e);
-    if(manual) showToast('Mail scan failed');
+    if(manual) showToast(sayAny('Mail scan failed', 'Mail scan failed. Bish, the internet said no. Try again in a bit.'));
   } finally {
     inboxChecked = true;
     inboxScanning = false;
@@ -361,7 +368,7 @@ function renderInboxSenders(){
   }
   for(const address of Object.keys(inbox.rules)) if(!known[address]) known[address] = { name: address, count: 0 };
   const rows = Object.entries(known).sort((a, b) => b[1].count - a[1].count);
-  if(!rows.length) return '<div class="empty">Senders appear here once mail has been scanned.</div>';
+  if(!rows.length) return `<div class="empty">${say('Senders appear here once mail has been scanned.', 'Senders appear here once mail has been scanned. Patience, bhai.', 'No senders yet. Scan your mail and the gang shows up here.')}</div>`;
   return rows.map(([address, s]) => `
     <div class="item-row">
       <div class="txt"><div style="font-weight:500;">${esc(s.name)}</div><div class="mail-note">${esc(address)} · ${s.count} email${s.count === 1 ? '' : 's'}</div></div>
@@ -390,7 +397,7 @@ function renderInbox(){
 
   let notice = '';
   if(inboxError === 'not-configured'){
-    notice = `<div class="pending-error">Mail isn't set up yet. <a href="#" onclick="openSettingsAt('mail'); return false;">Open mail settings</a></div>`;
+    notice = `<div class="pending-error">${say("Mail isn't set up yet.", "Mail isn't set up yet, so this inbox is just vibes.")} <a href="#" onclick="openSettingsAt('mail'); return false;">Open mail settings</a></div>`;
   } else if(inboxError){
     notice = `<div class="pending-error">${esc(inboxError)}</div>`;
   }
@@ -400,15 +407,15 @@ function renderInbox(){
   } else {
     const list = inbox.messages.filter(m => mailCategory(m).category === inboxTab && (inboxShowDone || !m.done) && (!inboxToMeOnly || isToMe(m)));
     const hint = inboxTab === 'new' && list.length
-      ? '<div class="mail-hint">Label a sender once and all their mail, past and future, is sorted for you.</div>' : '';
+      ? `<div class="mail-hint">${say('Label a sender once and all their mail, past and future, is sorted for you.', 'Label a sender once and all their mail, past and future, is sorted for you. Work smart, not hard.')}</div>` : '';
     let empty = {
-      important: 'Nothing important waiting.',
-      opportunity: 'No opportunities waiting.',
-      info: 'Nothing here.',
-      new: 'Every sender is sorted.',
-      ignore: 'Nothing ignored.',
+      important: say('Nothing important waiting.', 'Nothing important waiting. Professors are quiet, suspicious but nice.', 'Nothing important waiting. Inbox peace achieved.'),
+      opportunity: say('No opportunities waiting.', 'No opportunities waiting. The universe is buffering.', 'No opportunities right now. They’ll come knocking, bro.'),
+      info: say('Nothing here.', 'Nothing here. Just tumbleweeds.', 'Nothing here. Clean as your browser history should be.'),
+      new: say('Every sender is sorted.', 'Every sender is sorted. Damn bro, inbox zero energy.', 'Every sender is sorted. Organised king behaviour.'),
+      ignore: say('Nothing ignored.', 'Nothing ignored. You’re too nice, yaar.', 'Nothing ignored yet. The spam hasn’t earned it.'),
     }[inboxTab];
-    if(inboxToMeOnly && !list.length) empty = 'Nothing here was sent to you personally.';
+    if(inboxToMeOnly && !list.length) empty = say('Nothing here was sent to you personally.', 'Nothing here was sent to you personally. All group mail, no love letters.');
     const waiting = !list.length && !inboxError && !inboxChecked && !inbox.messages.length;
     body.innerHTML = notice + hint + (list.length ? list.map(m => mailRowHtml(m, false)).join('') : waiting ? skeletonRows(4, true) : (inboxError ? '' : `<div class="empty">${empty}</div>`));
   }
@@ -425,7 +432,7 @@ function renderTodayMail(counts){
   if(!el) return;
   document.getElementById('today-mail-count').textContent = counts.important || '';
   if(inboxError === 'not-configured'){
-    el.innerHTML = `<div class="empty">Connect your mail to see what needs attention.</div>
+    el.innerHTML = `<div class="empty">${say('Connect your mail to see what needs attention.', 'Connect your mail to see what needs attention. I’m not psychic, bro.')}</div>
       <div><button class="btn" onclick="openSettingsAt('mail')">Set up mail</button></div>`;
     return;
   }

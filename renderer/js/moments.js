@@ -111,7 +111,7 @@ function syncCountdowns(channelId, announce){
   const items = moments.countdowns.filter(c => c.channelId === channelId)
     .map(c => c.del ? { id: c.id, u: c.u, del: 1 } : { id: c.id, title: c.title, date: c.date, u: c.u });
   window.pcc.messagesSend({ topic: channel.topic, from: state.settings.name || 'Someone', kind: 'countdowns', data: { items }, text: announce || '' })
-    .then(result => { if(result && !result.ok && announce) showToast(result.error || 'Could not share the countdown'); })
+    .then(result => { if(result && !result.ok && announce) showToast(result.error || sayAny('Could not share the countdown', 'Could not share the countdown. It’s only on your PC for now, try again later.')); })
     .catch(e => console.error('Countdowns not sent', e));
 }
 
@@ -119,8 +119,8 @@ function addCountdown(){
   const title = document.getElementById('countdown-title').value.trim().slice(0, 40);
   const date = document.getElementById('countdown-date').value;
   const channelId = document.getElementById('countdown-channel').value;
-  if(!title || !/^\d{4}-\d{2}-\d{2}$/.test(date)){ showToast('Give it a name and a date'); return; }
-  if(moments.countdowns.filter(c => c.channelId === channelId && !c.del).length >= COUNTDOWN_LIMIT){ showToast(`That's the limit of ${COUNTDOWN_LIMIT} here. Remove one first.`); return; }
+  if(!title || !/^\d{4}-\d{2}-\d{2}$/.test(date)){ showToast(sayAny('Give it a name and a date', 'Give it a name and a date. Counting down to nothing is just waiting, bro.')); return; }
+  if(moments.countdowns.filter(c => c.channelId === channelId && !c.del).length >= COUNTDOWN_LIMIT){ showToast(sayAny(`That's the limit of ${COUNTDOWN_LIMIT} here. Remove one first.`, `That's the limit of ${COUNTDOWN_LIMIT} here. Too many things to look forward to, yaar. Remove one first.`)); return; }
   moments.countdowns.push({ id: uid(), title, date, channelId, u: Date.now() });
   document.getElementById('countdown-title').value = '';
   saveCountdowns(); renderCountdowns(); pushIsland();
@@ -132,7 +132,9 @@ function removeCountdown(id){
   if(!item) return;
   if(item.channelId){
     const channel = msg.channels.find(c => c.id === item.channelId);
-    if(!confirm(`Remove "${item.title}"?\n\nIt is shared, so it will be removed for everyone in ${channel ? channel.name : 'the channel'}.`)) return;
+    const where = channel ? channel.name : 'the channel';
+    if(!confirm(say(`Remove "${item.title}"?\n\nIt is shared, so it will be removed for everyone in ${where}.`,
+      `Remove "${item.title}"? Cancelling plans, bro?\n\nIt is shared, so it will be removed for everyone in ${where}.`))) return;
     Object.assign(item, { del: true, u: Date.now() }); // kept as a marker so it's removed on the other copies too
     syncCountdowns(item.channelId);
   } else moments.countdowns = moments.countdowns.filter(c => c.id !== id);
@@ -176,11 +178,11 @@ function renderCountdowns(){
       <div class="countdown-days">${c.days === 0 ? 'Today' : Math.abs(c.days)}</div>
       <div style="min-width:0; flex:1;">
         <div class="setting-name" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(c.title)}</div>
-        <div class="setting-desc">${esc(c.days === 0 ? 'It\'s today' : c.days > 0 ? `day${c.days === 1 ? '' : 's'} to go` : `day${c.days === -1 ? '' : 's'} ago`)} · ${esc(parseLocalDate(c.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }))}${channel ? ' · shared with ' + esc(channel.name) : ''}</div>
+        <div class="setting-desc">${esc(c.days === 0 ? say('It\'s today', 'It’s today! Let’s gooo') :c.days > 0 ? `day${c.days === 1 ? '' : 's'} to go` : `day${c.days === -1 ? '' : 's'} ago`)} · ${esc(parseLocalDate(c.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }))}${channel ? ' · shared with ' + esc(channel.name) : ''}</div>
       </div>
       <button class="btn btn-icon" onclick="removeCountdown('${c.id}')" aria-label="Remove ${esc(c.title)}">&times;</button>
     </div>`; }).join('')
-    : '<div class="empty">Nothing to count down to yet. Add a trip, the last exam, a birthday.</div>';
+    : `<div class="empty">${say('Nothing to count down to yet. Add a trip, the last exam, a birthday.', 'Nothing to count down to yet? Go make some plans, bro. Add a trip, the last exam, a birthday.', 'Nothing to look forward to yet. Add a trip, the last exam, a birthday, anything.')}</div>`;
 }
 
 // What the island shows: the soonest three that haven't passed.

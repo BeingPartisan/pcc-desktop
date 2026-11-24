@@ -149,7 +149,9 @@ function runSettingsSearch(query){
   if(!empty){ body.insertAdjacentHTML('beforeend', '<div id="settings-search-empty"></div>'); empty = document.getElementById('settings-search-empty'); }
   const anyPane = body.querySelector('.settings-pane.search-hit');
   empty.hidden = !q || !!anyPane;
-  empty.innerHTML = `<b>Nothing called “${esc(query.trim())}” in here.</b><span>Try “music”, “theme”, “battery” or “sync”.</span>`;
+  empty.innerHTML = say(`<b>Nothing called “${esc(query.trim())}” in here.</b><span>Try “music”, “theme”, “battery” or “sync”.</span>`,
+    `<b>Nothing called “${esc(query.trim())}” in here, bro.</b><span>Try “music”, “theme”, “battery” or “sync”.</span>`,
+    `<b>“${esc(query.trim())}”? Never heard of her.</b><span>Try “music”, “theme”, “battery” or “sync”.</span>`);
   if(q) body.scrollTop = 0;
 }
 

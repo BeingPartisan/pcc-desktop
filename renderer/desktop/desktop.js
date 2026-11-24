@@ -8,6 +8,23 @@ let state = null, media = null, cover = '', active = true, stats = null;
 const TASK_LIMIT = 5, DEADLINE_LIMIT = 5, INBOX_LIMIT = 3, CLASS_LIMIT = 3;
 const DAY_MS = 86400000;
 
+// PCC's voice: the plain line when "Keep it simple" is on, otherwise a cheeky one (steady for the day).
+function say(plain, ...funny){
+  if(!state || state.keepSimple || !funny.length) return plain;
+  let h = 2166136261; const key = plain + '|' + funny[0] + '|' + new Date().toDateString();
+  for(let i = 0; i < key.length; i++){ h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return funny[(h >>> 0) % funny.length];
+}
+// Fixed card labels in index.html, said in PCC's voice (only touched when they change).
+function setText(el, text){ if(el && el.textContent !== text) el.textContent = text; }
+function voiceLabels(){
+  setText(document.querySelector('#p-deadlines .label > span:first-child'), say('Coming up', 'Deadlines incoming', 'Doom approaching'));
+  setText(document.querySelector('#p-tasks .label > span:first-child'), say('Tasks', 'Stuff to do (eventually)', 'The to-do pile'));
+  setText(document.querySelector('#p-today .label > span:first-child'), say('Classes today', 'Classes today, unfortunately', 'Today’s lectures, sigh'));
+  setText(document.querySelector('#p-inbox .label > span:first-child'), say('Mail and messages', 'People want you', 'Mail and messages, Mr. Popular'));
+  setText(document.querySelector('#p-system .label > span:first-child'), say('System', 'How’s the PC holding up', 'PC vitals'));
+}
+
 // ---------- layout: room for the island, the taskbar and the desktop icons ----------
 function applyLayout(l){
   const root = document.documentElement.style;
@@ -93,7 +110,7 @@ function renderClock(){
     + (state && state.clock24 ? '' : `<span class="ampm">${now.getHours() < 12 ? 'AM' : 'PM'}</span>`);
   $('date').textContent = now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
   const hr = now.getHours();
-  const g = hr < 5 ? 'Still up' : hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : hr < 21 ? 'Good evening' : 'Good night';
+  const g = hr < 5 ? say('Still up', 'Still up? Go sleep, owl', 'Bro, it’s literally night') : hr < 12 ? say('Good morning', 'Rise and grind', 'Morning, sunshine') : hr < 17 ? say('Good afternoon', 'Afternoon, legend', 'Post-lunch nap o’clock') : hr < 21 ? say('Good evening', 'Evening, hero', 'Evening, yaar') : say('Good night', 'Night mode on', 'Sleep soon, okay?');
   $('greeting').innerHTML = esc(g) + (state && state.name ? `, <em>${esc(state.name)}</em>` : '');
   renderNext();
 }
@@ -107,7 +124,7 @@ function renderNext(){
   const cls = (state.classes || []).find(c => now < c.end);
   if(t && t.running && t.endsAt){
     const left = Math.max(0, Math.round((t.endsAt - now) / 1000));
-    html = `<span class="k">${t.mode === 'focus' ? 'Focusing' : 'On a break'}</span><b>${pad(Math.floor(left / 60))}:${pad(left % 60)}</b><span class="k">left</span>`;
+    html = `<span class="k">${t.mode === 'focus' ? say('Focusing', 'Locked in') : say('On a break', 'Chilling')}</span><b>${pad(Math.floor(left / 60))}:${pad(left % 60)}</b><span class="k">left</span>`;
   } else if(cls && now >= cls.start){
     html = `<span class="k">Now</span><b class="t">${esc(cls.subject)}</b><span class="k">until ${timeText(cls.end)}</span>`;
   } else if(cls){
@@ -129,7 +146,7 @@ function renderToday(){
   const now = Date.now();
   const ahead = list.filter(c => now < c.end);
   $('today-side').textContent = ahead.length ? `${ahead.length} of ${list.length} left` : '';
-  if(!ahead.length){ $('classes').innerHTML = '<div class="cls-done">All done for today</div>'; return; }
+  if(!ahead.length){ $('classes').innerHTML = `<div class="cls-done">${say('All done for today', 'All done for today. Go touch some grass', 'Classes over. You survived, damn bro')}</div>`; return; }
   $('classes').innerHTML = ahead.slice(0, CLASS_LIMIT).map((c, i) => {
     const on = now >= c.start;
     const when = on ? 'now' : i === 0 ? `in ${minsText(Math.round((c.start - now) / 60000))}` : esc(c.room || '');
@@ -140,7 +157,7 @@ function renderToday(){
 function renderTasks(){
   const tasks = state.tasks || [];
   $('p-tasks').hidden = !tasks.length;
-  $('task-count').textContent = state.taskCount ? `${state.taskCount} open` : '';
+  $('task-count').textContent = state.taskCount ? say(`${state.taskCount} open`, `${state.taskCount} open, no pressure`, `${state.taskCount} open, chalo`) : '';
   $('tasks').innerHTML = tasks.slice(0, TASK_LIMIT).map(t =>
     `<div class="task"><span class="ring ${esc(t.priority || 'med')}"></span><span class="txt">${esc(t.text)}</span></div>`).join('')
     + (state.taskCount > TASK_LIMIT ? `<div class="more">and ${state.taskCount - TASK_LIMIT} more</div>` : '');
@@ -151,11 +168,11 @@ function renderDeadlines(){
   const items = state.deadlines || [];
   $('p-deadlines').hidden = !items.length;
   const late = items.filter(a => daysAway(a.date) < 0).length;
-  $('deadline-count').textContent = late ? `${late} overdue` : '';
+  $('deadline-count').textContent = late ? say(`${late} overdue`, `${late} overdue, yikes`, `${late} overdue, bro…`) : '';
   $('deadlines').innerHTML = items.slice(0, DEADLINE_LIMIT).map(a => {
     const n = daysAway(a.date);
     const date = new Date(a.date + 'T00:00');
-    const when = n < 0 ? `Was due ${n === -1 ? 'yesterday' : `${-n} days ago`}` : n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+    const when = n < 0 ? say(`Was due ${n === -1 ? 'yesterday' : `${-n} days ago`}`, `Was due ${n === -1 ? 'yesterday' : `${-n} days ago`}, oops`, `Was due ${n === -1 ? 'yesterday' : `${-n} days ago`}, we don’t talk about it`) : n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
     const badge = n < 0 ? `<b>${-n}</b><small>LATE</small>` : n === 0 ? '<b>!</b><small>TODAY</small>' : `<b>${n}</b><small>${n === 1 ? 'DAY' : 'DAYS'}</small>`;
     return `<div class="deadline"><div class="badge ${n < 0 ? 'late' : n === 0 ? 'today' : n <= 2 ? 'soon' : ''}">${badge}</div>
       <div class="txt"><div class="title">${esc(a.title)}</div><div class="when ${n < 0 ? 'late' : ''}">${when}</div></div></div>`;
@@ -187,7 +204,7 @@ function renderInbox(){
   const rows = [];
   for(const m of state.mail || []) rows.push(`<div class="msg">${avatar(m.from)}<div class="body"><div class="title">${m.toYou ? '<span class="tag">To you</span>' : ''}${esc(m.subject)}</div><div class="sub">${esc(m.from)}</div></div></div>`);
   for(const m of state.messages || []) rows.push(`<div class="msg">${avatar(m.from)}<div class="body"><div class="title">${esc(m.text)}</div><div class="sub">${esc(m.from)}${m.channel ? ' · ' + esc(m.channel) : ''}</div></div><div class="time">${m.at ? timeText(m.at) : ''}</div></div>`);
-  for(const p of state.presence || []) rows.push(`<div class="msg">${avatar(p.from)}<div class="body"><div class="title">${esc(p.from)} is ${p.state === 'break' ? 'on a break' : 'focusing'}</div><div class="sub">${p.until ? 'until ' + timeText(p.until) : ''}</div></div></div>`);
+  for(const p of state.presence || []) rows.push(`<div class="msg">${avatar(p.from)}<div class="body"><div class="title">${esc(p.from)} is ${p.state === 'break' ? say('on a break', 'chilling') : say('focusing', 'locked in')}</div><div class="sub">${p.until ? 'until ' + timeText(p.until) : ''}</div></div></div>`);
   $('p-inbox').hidden = !rows.length;
   $('inbox').innerHTML = rows.slice(0, INBOX_LIMIT).join('');
 }
@@ -265,7 +282,7 @@ function renderStats(s){
     + gauge('Memory', s.memory, `${s.memory}%`, s.memory > 90 ? 'hot' : '')
     + (b && !b.none ? gauge(b.charging ? 'Charging' : perfProfile && perfProfile.savingForBattery ? 'Battery saver' : 'Battery', b.percent, `${b.percent}%`, !b.charging && b.percent <= 20 ? 'low' : '')
       : gauge('Power', 100, '<small>plugged in</small>'));
-  $('network').textContent = navigator.onLine ? `↓ ${speed(s.down)}  ↑ ${speed(s.up)}` : 'offline';
+  $('network').textContent = navigator.onLine ? `↓ ${speed(s.down)}  ↑ ${speed(s.up)}` : say('offline', 'offline, touch grass', 'offline, rip wifi');
 }
 
 function renderGlance(){
@@ -273,12 +290,12 @@ function renderGlance(){
   const a = state.attendance;
   if(a) cells.push({ num: `${Math.round(a.pct)}%`, what: 'Attendance', cls: a.pct < a.target ? 'warn' : '' });
   const b = state.budget;
-  if(b) cells.push({ num: `${b.left < 0 ? '-' : ''}₹${Math.abs(b.left).toLocaleString('en-IN')}`, what: b.left < 0 ? 'Over budget' : 'Left to spend', cls: b.left < 0 ? 'warn' : '' });
+  if(b) cells.push({ num: `${b.left < 0 ? '-' : ''}₹${Math.abs(b.left).toLocaleString('en-IN')}`, what: b.left < 0 ? say('Over budget', 'Over budget, bro chill', 'Over budget, oops') : say('Left to spend', 'Left to spend (wisely?)', 'Left to blow'), cls: b.left < 0 ? 'warn' : '' });
   const h = state.habits;
-  if(h && h.total) cells.push({ num: `${h.done}/${h.total}`, what: 'Habits today', cls: h.done === h.total ? 'accent' : '' });
-  if(h && h.streak) cells.push({ num: h.streak, what: 'Day streak', cls: 'accent' });
-  if(state.mailCount) cells.push({ num: state.mailCount, what: 'Important mail', cls: '' });
-  if(state.unread) cells.push({ num: state.unread, what: 'Unread messages', cls: '' });
+  if(h && h.total) cells.push({ num: `${h.done}/${h.total}`, what: say('Habits today', 'Habits today, keep going'), cls: h.done === h.total ? 'accent' : '' });
+  if(h && h.streak) cells.push({ num: h.streak, what: say('Day streak', 'Day streak, damn bro', 'Day streak, on fire'), cls: 'accent' });
+  if(state.mailCount) cells.push({ num: state.mailCount, what: say('Important mail', 'Important mail, ugh'), cls: '' });
+  if(state.unread) cells.push({ num: state.unread, what: say('Unread messages', 'Unread, people miss you', 'Unread, reply na'), cls: '' });
   $('p-glance').hidden = !cells.length;
   $('glance').innerHTML = cells.slice(0, 4).map(c => `<div class="stat"><div class="num ${c.cls}">${esc(c.num)}</div><div class="what">${esc(c.what)}</div></div>`).join('');
 }
@@ -289,7 +306,7 @@ function renderMusic(){
   $('p-music').hidden = !on;
   if(on){
     $('p-music').classList.toggle('playing', m.status === 'playing' && active);
-    $('music-label').textContent = m.status === 'playing' ? 'Now playing' : 'Paused';
+    $('music-label').textContent = m.status === 'playing' ? say('Now playing', 'Vibing to', 'Now bumping') : say('Paused', 'Paused (vibe on hold)');
     $('music-app').textContent = m.app || '';
     $('track-title').textContent = m.title;
     $('track-artist').textContent = m.artist || '';
@@ -302,8 +319,8 @@ function renderMusic(){
 
 function renderUpdate(u){
   $('p-update').hidden = !u;
-  if(u) $('update-text').textContent = u.state === 'downloaded' ? `PCC ${u.version || ''} is ready · restart from the island or tray`
-    : u.state === 'downloading' ? `Downloading PCC ${u.version || ''}…` : `PCC ${u.version || ''} is available`;
+  if(u) $('update-text').textContent = u.state === 'downloaded' ? say(`PCC ${u.version || ''} is ready · restart from the island or tray`, `PCC ${u.version || ''} is cooked · restart from the island or tray`, `PCC ${u.version || ''} is ready · restart from the island or tray, no cap`)
+    : u.state === 'downloading' ? say(`Downloading PCC ${u.version || ''}…`, `Downloading PCC ${u.version || ''}… hold up`, `Grabbing PCC ${u.version || ''}…`) : say(`PCC ${u.version || ''} is available`, `PCC ${u.version || ''} just dropped`, `PCC ${u.version || ''} is out, bro`);
   settle();
 }
 
@@ -313,6 +330,7 @@ function renderAll(){
   document.documentElement.style.setProperty('--accent', accent);
   if(state.accentInk) document.documentElement.style.setProperty('--accent-ink', state.accentInk);
   $('desk').hidden = false;
+  voiceLabels();
   renderClock(); renderToday(); renderTasks(); renderDeadlines(); renderWeek(); renderInbox(); renderCountdowns(); renderQuote(); renderWeather(); renderGlance();
   if(!stats) $('gauges').innerHTML = gauge('CPU', 0, '–') + gauge('Memory', 0, '–') + gauge('Battery', 0, '–');
   settle();

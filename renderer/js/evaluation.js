@@ -116,20 +116,20 @@ function updateEvalComponent(courseIndex, id, field, value){
   if(field === 'date') comp.date = value;
   if(field === 'time') comp.time = value.trim();
   if(field === 'max' && value === ''){
-    if(comp.got !== null){ showToast('Remove the mark scored first'); return renderEvaluation(); }
+    if(comp.got !== null){ showToast(sayAny('Remove the mark scored first', 'Remove the mark scored first. Can’t un-know the total, bro.')); return renderEvaluation(); }
     comp.max = null; // not known yet
   } else if(field === 'max'){
     const max = Number(value);
-    if(!(max > 0 && max <= 100)){ showToast('Marks must be between 1 and 100'); return renderEvaluation(); }
+    if(!(max > 0 && max <= 100)){ showToast(sayAny('Marks must be between 1 and 100', 'Marks must be between 1 and 100. This isn’t a video game score, yaar.')); return renderEvaluation(); }
     comp.max = max;
     if(comp.got !== null && comp.got > max) comp.got = max;
   }
   if(field === 'got'){
-    if(value !== '' && comp.max == null){ showToast('Fill in what it is out of first'); return renderEvaluation(); }
+    if(value !== '' && comp.max == null){ showToast(sayAny('Fill in what it is out of first', 'Fill in what it is out of first. 18 out of what, bhai?')); return renderEvaluation(); }
     if(value === ''){ comp.got = null; }
     else {
       const got = Number(value);
-      if(!(got >= 0 && got <= comp.max)){ showToast(`Enter a mark from 0 to ${comp.max}`); return renderEvaluation(); }
+      if(!(got >= 0 && got <= comp.max)){ showToast(sayAny(`Enter a mark from 0 to ${comp.max}`, `Enter a mark from 0 to ${comp.max}. Bonus marks aren't real, bro.`, `Enter a mark from 0 to ${comp.max}. We love the confidence though.`)); return renderEvaluation(); }
       comp.got = got;
     }
   }
@@ -150,14 +150,14 @@ function closeEvalPaste(){
 function applyEvalPaste(){
   if(!evalPasteCourse) return;
   const found = parseEvaluationText(document.getElementById('eval-paste-text').value);
-  if(!found.length) return showToast("Couldn't find any components. Try one per line, like \"Mid-term: 25\".");
+  if(!found.length) return showToast(sayAny("Couldn't find any components. Try one per line, like \"Mid-term: 25\".", "Couldn't find any components. Professor-speak is hard. Try one per line, like \"Mid-term: 25\"."));
   const entry = evalFor(evalPasteCourse);
   // Components that already carry a mark are kept; the rest are replaced.
   entry.components = [...entry.components.filter(c => c.got !== null), ...found.map(f => ({ id: uid(), name: f.name, max: f.max, got: null, date: '' }))];
   const total = entry.components.reduce((s, c) => s + c.max, 0);
   closeEvalPaste();
   evalChanged();
-  showToast(`${found.length} components read, adding up to ${total}`);
+  showToast(sayAny(`${found.length} components read, adding up to ${total}`, `${found.length} components read, adding up to ${total}. Decoded the professor, easy.`, `${found.length} components read, adding up to ${total}. Now you know what you're up against.`));
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && evalPasteCourse) closeEvalPaste(); });
 
@@ -168,11 +168,11 @@ async function exportEvaluationDocx(){
   if(!window.pcc || !window.pcc.exportEvaluationDocx) return;
   const courses = evalCourses().map(name => ({ name, components: componentsByDate(evalFor(name).components).map(c => ({ name: c.name, max: c.max, got: c.got, date: c.date || '', time: c.time || '' })) }))
     .filter(c => c.components.length);
-  if(!courses.length) return showToast('Add an evaluation pattern to a course first');
+  if(!courses.length) return showToast(sayAny('Add an evaluation pattern to a course first', 'Add an evaluation pattern to a course first. Can’t export thin air, bro.'));
   const result = await window.pcc.exportEvaluationDocx({ name: state.settings.name || '', courses });
   if(result.canceled) return;
-  if(!result.ok) return showToast("Couldn't save the document: " + (result.error || 'unknown error'));
-  showToast('Evaluation pattern saved');
+  if(!result.ok) return showToast(say("Couldn't save the document: ", "Couldn't save the document (Word said no): ") + (result.error || 'unknown error'));
+  showToast(sayAny('Evaluation pattern saved', 'Evaluation pattern saved. Very lawyerly of you.', 'Evaluation pattern saved. Print it, frame it, fear it.'));
   window.pcc.openExportedFile(result.filePath);
 }
 
@@ -193,7 +193,7 @@ function renderEvaluation(){
       return `
         <div class="eval-course">
           <div class="eval-head">${head}</div>
-          <div class="att-meta">No evaluation pattern yet. Paste it from the course page, or add components one by one.</div>
+          <div class="att-meta">${say('No evaluation pattern yet. Paste it from the course page, or add components one by one.', 'No evaluation pattern yet. Paste it from the course page, or add components one by one. Know thy enemy.', 'No evaluation pattern yet. Paste it from the course page, or add components one by one. Going in blind is a choice, bro.')}</div>
           <div class="eval-actions"><button class="btn btn-primary" onclick="openEvalPaste(${i})">Paste pattern</button><button class="btn" onclick="addEvalComponent(${i})">Add component</button></div>
         </div>`;
     }
@@ -226,7 +226,7 @@ function renderEvaluation(){
         </div>
         <div class="eval-bar"><span class="got" style="width:${s.got / scale * 100}%"></span><span class="lost" style="width:${lost / scale * 100}%"></span></div>
         ${s.unknown ? `<div class="mail-note" style="color:var(--amber);">${s.unknown} component${s.unknown === 1 ? ' has' : 's have'} no marks yet. Fill in what ${s.unknown === 1 ? 'it is' : 'they are'} out of when you know.</div>` : ''}
-        ${s.total !== 100 && !s.unknown ? `<div class="mail-note" style="color:var(--amber);">These components add up to ${s.total}, not 100.</div>` : ''}
+        ${s.total !== 100 && !s.unknown ? `<div class="mail-note" style="color:var(--amber);">${say(`These components add up to ${s.total}, not 100.`, `These components add up to ${s.total}, not 100. Maths is hard, we get it.`)}</div>` : ''}
         <table class="eval-table">
           <tr><th>Component</th><th class="num">Out of</th><th class="num">Scored</th><th>Date</th><th></th></tr>
           ${rows}
@@ -236,7 +236,7 @@ function renderEvaluation(){
           ? `<div class="eval-outlook"><div class="att-meta">Marks needed from the ${s.remaining} still to come${pass.status === 'secured' ? '' : pass.status === 'out' ? ' · a pass is out of reach' : ` · ${pass.need} to pass`}</div><div class="eval-grades">${outlook}</div></div>`
           : s.unknown
             ? `<div class="eval-outlook"><div class="att-meta">${+s.got.toFixed(2)} of ${s.total} so far. Fill in the marks for the rest to see what you need for each grade.</div></div>`
-            : `<div class="eval-outlook"><div class="att-meta">All components marked: ${+s.got.toFixed(2)} of ${s.total}</div></div>`}
+            : `<div class="eval-outlook"><div class="att-meta">${say(`All components marked: ${+s.got.toFixed(2)} of ${s.total}`, `All components marked: ${+s.got.toFixed(2)} of ${s.total}. It's over, you survived.`)}</div></div>`}
       </div>`;
   }).join('');
 }

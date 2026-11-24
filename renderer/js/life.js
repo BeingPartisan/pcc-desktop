@@ -50,7 +50,7 @@ function habitStreakCell(habitId){
 
 function renderHabits(){
   const table = document.getElementById('habit-table');
-  if(!state.habits.list.length){ table.innerHTML = '<tr><td class="empty">No habits yet.</td></tr>'; return; }
+  if(!state.habits.list.length){ table.innerHTML = `<tr><td class="empty">${say('No habits yet.', 'No habits yet. Even “drink water” counts, bro.', 'Zero habits. Your future self is judging you a little.', 'No habits yet. Start small, like waking up before noon.')}</td></tr>`; return; }
   
   const days = Array.from({length:7}, (_,i) => { let d=new Date(); d.setDate(d.getDate()-(6-i)); return d; });
   const head = '<tr><th></th>' + days.map(d => `<th>${d.toLocaleDateString(undefined,{weekday:'narrow'})}</th>`).join('') + '<th class="habit-streak-head">Streak</th></tr>';
@@ -73,7 +73,7 @@ function renderHabits(){
 function loadWeather(force){
   const city = state.settings.weatherCity;
   const wb = document.getElementById('weather-body');
-  if(!city){ wb.innerHTML = '<div class="empty">Set a city in Settings.</div>'; return; }
+  if(!city){ wb.innerHTML = `<div class="empty">${say('Set a city in Settings.', 'Set a city in Settings. I’m good, but not psychic.', 'Set a city in Settings, yaar. Where do you even live?')}</div>`; return; }
   if(force || !wb.textContent.trim()) wb.innerHTML = '<div class="skel skel-big"></div><div class="skel skel-line" style="width:55%; margin-top:10px;"></div>';
   
   fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`)
@@ -88,7 +88,7 @@ function loadWeather(force){
       wb.innerHTML = `
         <div class="weather-temp">${Math.round(cw.temperature)}&deg;</div>
         <div class="weather-meta">${esc(city)} · Wind ${Math.round(cw.windspeed)} km/h</div>`;
-    }).catch(() => wb.innerHTML = '<div class="empty">Weather is unavailable right now.</div>');
+    }).catch(() => wb.innerHTML = `<div class="empty">${say('Weather is unavailable right now.', 'Weather is unavailable right now. Just look out the window, bro.', 'Weather is unavailable right now. The clouds left me on read.')}</div>`);
 }
 
 /* ---------- Aesthetic Widget ---------- */

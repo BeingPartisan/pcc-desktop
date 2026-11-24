@@ -24,14 +24,14 @@ async function chooseGamesFolder(){
 
 async function loadGamesFolderLabel(){
   const cfg = await window.pcc.getGamesConfig();
-  document.getElementById('games-folder-label').textContent = cfg.gamesDir || 'No folder chosen yet.';
+  document.getElementById('games-folder-label').textContent = cfg.gamesDir || say('No folder chosen yet.', 'No folder chosen yet. Where are you hiding the games, bro?');
 }
 
 // force=true (the Refresh button) recomputes folder sizes instead of using
 // the cached ones.
 async function loadGames(force){
   const body = document.getElementById('games-body');
-  body.innerHTML = '<div class="empty">Looking for games&hellip;</div>';
+  body.innerHTML = `<div class="empty">${say('Looking for games&hellip;', 'Looking for games&hellip; studies can wait, apparently.', 'Hunting for your games&hellip;', 'Looking for games&hellip; one more match, right?')}</div>`;
   try{
     gamesCache = await window.pcc.scanGames(!!force);
   } catch(e){
@@ -44,7 +44,7 @@ async function loadGames(force){
 function renderGames(){
   const body = document.getElementById('games-body');
   if(!gamesCache.length){
-    body.innerHTML = '<div class="empty">No games found. Choose the folder that holds your games.</div>';
+    body.innerHTML = `<div class="empty">${say('No games found. Choose the folder that holds your games.', 'No games found. Either you’re a saint or it’s the wrong folder. Choose the folder that holds your games.', 'No games found? Bish, that can’t be right. Choose the folder that holds your games.')}</div>`;
     return;
   }
   body.innerHTML = gamesCache.map(g => `
@@ -61,7 +61,7 @@ function renderGames(){
   body.querySelectorAll('.game-tile-launch').forEach(btn => {
     btn.addEventListener('click', async () => {
       const result = await window.pcc.launchGame(btn.dataset.exe);
-      if(result && !result.ok) showToast('Could not launch game: ' + (result.error || 'unknown error'));
+      if(result && !result.ok) showToast(sayAny('Could not launch game: ', 'Game refused to launch, maybe it’s a sign to study: ', 'Could not launch game, rage quit pending: ') + (result.error || 'unknown error'));
     });
   });
 }

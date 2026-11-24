@@ -27,7 +27,7 @@ function startWorkspaceSetup(){
 function declineWorkspaces(){
   localStorage.setItem(WORKSPACES_ASKED_KEY, '1');
   renderWorkspaces();
-  showToast('No problem. You can turn workspaces on later in Settings > Island.');
+  showToast(sayAny('No problem. You can turn workspaces on later in Settings > Island.', 'Cool cool, no pressure. You can turn workspaces on later in Settings > Island.'));
 }
 
 function editWorkspace(id){ workspaces.editing = id; renderWorkspaces(); }
@@ -36,8 +36,8 @@ function cancelWorkspaceEdit(){ workspaces.editing = null; renderWorkspaces(); }
 function saveWorkspaceEdit(){
   const name = document.getElementById('workspace-name').value.trim();
   const items = Array.from(document.querySelectorAll('#workspace-items input:checked')).map(input => input.value);
-  if(!name){ showToast('Give the workspace a name'); return; }
-  if(!items.length){ showToast('Pick at least one thing to open'); return; }
+  if(!name){ showToast(sayAny('Give the workspace a name', 'Give the workspace a name. “Stuff” counts, I won’t judge.')); return; }
+  if(!items.length){ showToast(sayAny('Pick at least one thing to open', 'Pick at least one thing to open. An empty workspace is just a nap.')); return; }
   if(workspaces.editing === 'new') workspaces.list.push({ id: uid(), name: name.slice(0, 24), items });
   else Object.assign(workspaces.list.find(w => w.id === workspaces.editing), { name: name.slice(0, 24), items });
   workspaces.editing = null;
@@ -46,7 +46,8 @@ function saveWorkspaceEdit(){
 
 function deleteWorkspace(id){
   const workspace = workspaces.list.find(w => w.id === id);
-  if(!workspace || !confirm(`Delete the "${workspace.name}" workspace?\n\nThe sites and apps in it stay in Quick launch.`)) return;
+  if(!workspace || !confirm(say(`Delete the "${workspace.name}" workspace?\n\nThe sites and apps in it stay in Quick launch.`,
+    `Delete the "${workspace.name}" workspace? It had a good run.\n\nThe sites and apps in it stay in Quick launch.`))) return;
   workspaces.list = workspaces.list.filter(w => w.id !== id);
   saveWorkspaces(); renderWorkspaces();
 }
@@ -55,32 +56,35 @@ async function openWorkspace(id){
   const workspace = workspaces.list.find(w => w.id === id);
   if(!workspace) return;
   const links = workspaceLinks(workspace);
-  if(!links.length){ showToast('Everything in this workspace has been removed from Quick launch'); return; }
+  if(!links.length){ showToast(sayAny('Everything in this workspace has been removed from Quick launch', 'Nothing to open, bro. Everything in this workspace was removed from Quick launch.')); return; }
   let failed = 0;
   for(const link of links){
     const result = await window.pcc.launchItem(link.type || 'url', link.target || link.url || '');
     if(result && !result.ok) failed++;
   }
-  showToast(failed ? `Opened ${workspace.name}, but ${failed} item${failed === 1 ? '' : 's'} could not be opened` : `Opened ${workspace.name}`);
+  const failedText = `Opened ${workspace.name}, but ${failed} item${failed === 1 ? '' : 's'} could not be opened`;
+  showToast(failed
+    ? sayAny(failedText, `${failedText}. Mostly a win.`)
+    : sayAny(`Opened ${workspace.name}`, `Opened ${workspace.name}. Locked in, let’s go.`, `Opened ${workspace.name}. Now actually do the work, bro.`, `Opened ${workspace.name}. Grind mode: on.`));
 }
 
 function workspaceFormHtml(){
   const current = workspaces.list.find(w => w.id === workspaces.editing);
   if(!state.links.length){
-    return `<div class="empty">A workspace opens things from Quick launch. Add a few sites or apps to Quick launch above, then come back.</div>
+    return `<div class="empty">${say('A workspace opens things from Quick launch. Add a few sites or apps to Quick launch above, then come back.', 'A workspace opens things from Quick launch, and yours is empty, bro. Add a few sites or apps to Quick launch above, then come back.')}</div>
       <div class="row-form"><button class="btn" onclick="cancelWorkspaceEdit()">Close</button></div>`;
   }
   return `
     <div class="field">
       <label class="field-label" for="workspace-name">Name</label>
-      <input id="workspace-name" type="text" maxlength="24" placeholder="e.g. Study, Research, Wind down" value="${esc(current ? current.name : '')}" />
+      <input id="workspace-name" type="text" maxlength="24" placeholder="${esc(say('e.g. Study, Research, Wind down', 'e.g. Study, Grind, Pretend to study'))}" value="${esc(current ? current.name : '')}" />
     </div>
     <div class="field">
       <div class="field-label">Open these together</div>
       <div class="workspace-items" id="workspace-items">
         ${state.links.map(l => `<label class="workspace-item"><input type="checkbox" value="${l.id}" ${current && current.items.includes(l.id) ? 'checked' : ''} /><span>${esc(l.name)}</span></label>`).join('')}
       </div>
-      <div class="field-note">Missing something? Add it to Quick launch above first.</div>
+      <div class="field-note">${say('Missing something? Add it to Quick launch above first.', 'Missing something? Add it to Quick launch above first, I can’t read minds yet.')}</div>
     </div>
     <div class="row-form" style="justify-content:flex-end;">
       <button class="btn" onclick="cancelWorkspaceEdit()">Cancel</button>
@@ -103,7 +107,7 @@ function renderWorkspaces(){
       <div class="workspace-intro">
         <div>
           <div class="setting-name">Open everything for a task in one click</div>
-          <div class="setting-desc">A workspace is a set of your sites and apps that open together, from here or from the island. Want to set one up?</div>
+          <div class="setting-desc">${say('A workspace is a set of your sites and apps that open together, from here or from the island. Want to set one up?', 'A workspace is a set of your sites and apps that open together, from here or from the island. One click, zero excuses. Want to set one up?')}</div>
         </div>
         <div class="row-form" style="flex-shrink:0;">
           <button class="btn" onclick="declineWorkspaces()">Not now</button>
@@ -119,7 +123,7 @@ function renderWorkspaces(){
     return;
   }
   if(!workspaces.list.length){
-    body.innerHTML = '<div class="empty">No workspaces yet. Use "New workspace" to make one, or switch this off in Settings &gt; Island.</div>';
+    body.innerHTML = `<div class="empty">${say('No workspaces yet. Use "New workspace" to make one, or switch this off in Settings &gt; Island.', 'No workspaces yet. Still opening tabs one by one like it’s 2010? Use "New workspace" to make one, or switch this off in Settings &gt; Island.')}</div>`;
     return;
   }
   body.innerHTML = `<div class="link-grid">${workspaces.list.map(w => {
@@ -128,7 +132,7 @@ function renderWorkspaces(){
     <div class="workspace-tile">
       <div style="min-width:0;">
         <div class="setting-name">${esc(w.name)}</div>
-        <div class="setting-desc" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(names.join(', ') || 'Nothing left to open')}</div>
+        <div class="setting-desc" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(names.join(', ') || say('Nothing left to open', 'Nothing left to open. Empty shell, bro.'))}</div>
       </div>
       <div class="row-form">
         <button class="btn btn-primary" onclick="openWorkspace('${w.id}')">Open</button>

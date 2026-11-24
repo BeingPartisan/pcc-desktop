@@ -171,7 +171,7 @@ function planRow(row){
 /* ----- The dialog ----- */
 
 function openScheduleImport(){
-  if(!evalCourses().length){ showToast('Connect Digiicampus first, so PCC knows your courses'); return; }
+  if(!evalCourses().length){ showToast(sayAny('Connect Digiicampus first, so PCC knows your courses', 'Connect Digiicampus first, so PCC knows your courses. I’m smart, not psychic, bro.', 'Connect Digiicampus first, so PCC knows your courses. Can’t sort homework for subjects I’ve never met.')); return; }
   importRows = [];
   document.getElementById('import-text').value = '';
   showImportStep('paste');
@@ -189,7 +189,7 @@ function showImportStep(step){
 function readSchedule(){
   const courses = evalCourses();
   const rows = parseSchedule(document.getElementById('import-text').value, courses);
-  if(!rows.length){ showToast('Couldn\'t find any rows. Copy the whole table, including its header, and paste it here.'); return; }
+  if(!rows.length){ showToast(sayAny('Couldn\'t find any rows. Copy the whole table, including its header, and paste it here.', 'Couldn’t find any rows, yaar. Copy the whole table, including its header, and paste it here.', 'Couldn’t find any rows. That paste was a mystery. Copy the whole table, including its header, and paste it here.')); return; }
   importRows = rows.map(r => {
     const course = matchCourseName(r.courseText, courses);
     return planRow({ ...r, course: course || (r.date ? IMPORT_DEADLINE : IMPORT_SKIP) });
@@ -236,11 +236,11 @@ function rowsFromPccExport(tables){
 
 async function importFromWord(){
   if(!window.pcc || !window.pcc.importWordTables) return;
-  if(!evalCourses().length){ showToast('Connect Digiicampus first, so PCC knows your courses'); return; }
+  if(!evalCourses().length){ showToast(sayAny('Connect Digiicampus first, so PCC knows your courses', 'Connect Digiicampus first, so PCC knows your courses. I’m smart, not psychic, bro.', 'Connect Digiicampus first, so PCC knows your courses. Can’t sort homework for subjects I’ve never met.')); return; }
   const result = await window.pcc.importWordTables();
   if(result.canceled) return;
-  if(!result.ok){ showToast("Couldn't read that file: " + (result.error || 'unknown error')); return; }
-  if(!result.tables.length){ showToast('That document has no tables to import'); return; }
+  if(!result.ok){ showToast(sayAny("Couldn't read that file: ", "Couldn't read that file (it fought back). Make sure it's a .docx and try again: ") + (result.error || 'unknown error')); return; }
+  if(!result.tables.length){ showToast(sayAny('That document has no tables to import', 'That document has no tables to import. Just vibes and paragraphs.', 'That document has no tables to import. Wrong file, bro?')); return; }
   document.getElementById('import-overlay').classList.add('open');
   const courses = evalCourses();
   const pcc = rowsFromPccExport(result.tables);
@@ -307,7 +307,11 @@ function applyScheduleImport(){
   closeScheduleImport();
   evalChanged();
   const needMarks = importRows.some(r => r.action === 'add' && r.max == null);
-  showToast(changed ? `Imported ${changed} item${changed === 1 ? '' : 's'}.${needMarks ? ' New components need their marks filled in.' : ''}` : 'Nothing to import');
+  showToast(changed
+    ? sayAny(`Imported ${changed} item${changed === 1 ? '' : 's'}.${needMarks ? ' New components need their marks filled in.' : ''}`,
+        `Imported ${changed} item${changed === 1 ? '' : 's'}. Admin work done, you absolute machine.${needMarks ? ' New components need their marks filled in.' : ''}`,
+        `Imported ${changed} item${changed === 1 ? '' : 's'}. Saved you a whole lot of typing, bro.${needMarks ? ' New components need their marks filled in.' : ''}`)
+    : sayAny('Nothing to import', 'Nothing to import. Everything was already here, overachiever.', 'Nothing to import. All that for nothing, bhai.'));
 }
 
 document.addEventListener('keydown', e => {

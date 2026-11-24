@@ -140,7 +140,7 @@
       <div class="card-head">
         <div class="card-title dot-amber"><span class="dot"></span>Inbox <span id="inbox-status" class="sub"></span></div>
         <div style="display:flex; gap:12px; align-items:center;">
-          <label class="inline-field" id="inbox-to-me-toggle" title="Only mail sent to you personally or with you in Cc, not mailing lists or big groups"><input id="inbox-to-me" type="checkbox" class="chk" onchange="toggleInboxToMe(this.checked)" /> To you only</label>
+          <label class="inline-field" id="inbox-to-me-toggle" title="Only mail sent to you personally or with you in Cc, not mailing lists or big groups" data-fun-title="Only mail sent to you personally or with you in Cc. No mailing-list spam, no giant groups."><input id="inbox-to-me" type="checkbox" class="chk" onchange="toggleInboxToMe(this.checked)" /> To you only</label>
           <label class="inline-field" id="inbox-done-toggle"><input id="inbox-show-done" type="checkbox" class="chk" onchange="toggleInboxDone(this.checked)" /> Show done</label>
           <button class="btn" id="inbox-refresh-btn" onclick="scanMail(true)">Check now</button>
         </div>
@@ -158,7 +158,7 @@
           <div class="card-title"><span class="dot"></span>Tasks</div>
         </div>
         <div class="row-form">
-          <input id="task-input" type="text" placeholder="Add a task, then press enter" onkeydown="if(event.key==='Enter')addTask()" />
+          <input id="task-input" type="text" placeholder="Add a task, then press enter" onkeydown="if(event.key==='Enter')addTask()" data-fun-placeholder="What are you procrastinating on? Type it, press enter" />
           <select id="task-priority" style="flex: 0 1 120px;"><option value="low">Low</option><option value="med" selected>Med</option><option value="high">High</option></select>
           <button class="btn btn-primary" onclick="addTask()">Add</button>
         </div>
@@ -184,7 +184,7 @@
           <div class="card-title"><span class="dot"></span>Deadlines</div>
         </div>
         <div class="row-form">
-          <input id="agenda-title" type="text" placeholder="What is due?" />
+          <input id="agenda-title" type="text" placeholder="What is due?" data-fun-placeholder="What's due? (Don't say everything)" />
           <input id="agenda-date" type="date" />
         </div>
         <button class="btn" onclick="addAgenda()">Add deadline</button>
@@ -272,7 +272,7 @@
       <section class="card" id="card-attendance">
         <div class="card-head">
           <div class="card-title"><span class="dot"></span>Attendance <span id="attendance-summary" class="sub"></span></div>
-          <label id="attendance-target-wrap" class="inline-field" title="The attendance you want to stay above">
+          <label id="attendance-target-wrap" class="inline-field" title="The attendance you want to stay above" data-fun-title="The attendance you want to stay above. Bunk responsibly.">
             Target
             <input id="attendance-target" type="number" min="1" max="100" onchange="setAttendanceTarget(this.value)" />%
           </label>
@@ -308,7 +308,7 @@
           <div class="card-title dot-red"><span class="dot" style="background:var(--red);"></span>Spending</div>
           <div style="display:flex; gap:8px;">
             <button class="btn" onclick="toggleFinanceHistory()">History</button>
-            <button class="btn" onclick="cycleMonth()" title="Archive this month and start a new one">New month</button>
+            <button class="btn" onclick="cycleMonth()" title="Archive this month and start a new one" data-fun-title="Archive this month and start a new one. New month, new wallet.">New month</button>
           </div>
         </div>
 
@@ -329,8 +329,8 @@
           </div>
 
           <div class="row-form" style="margin-top: 16px;">
-            <input id="fin-name" type="text" placeholder="What was it?" style="flex:2;" />
-            <input id="fin-amt" type="number" min="1" placeholder="Amount in ₹" style="flex:1;" />
+            <input id="fin-name" type="text" placeholder="What was it?" style="flex:2;" data-fun-placeholder="What did you blow money on?" />
+            <input id="fin-amt" type="number" min="1" placeholder="Amount in ₹" style="flex:1;" data-fun-placeholder="Damage in ₹" />
             <select id="fin-type" style="flex:1;">
               <option value="exp">One-off</option>
               <option value="sub">Subscription</option>
@@ -379,7 +379,7 @@
           <div class="card-title"><span class="dot"></span>Habits</div>
         </div>
         <div class="row-form">
-          <input id="habit-input" type="text" placeholder="Add a habit" onkeydown="if(event.key==='Enter')addHabit()" />
+          <input id="habit-input" type="text" placeholder="Add a habit" onkeydown="if(event.key==='Enter')addHabit()" data-fun-placeholder="A habit you'll totally keep this time" />
           <button class="btn" onclick="addHabit()">Add</button>
         </div>
         <div style="overflow-x:auto; margin-top: 8px;">
@@ -401,7 +401,7 @@
         </div>
         <div id="countdowns-body" class="countdown-grid"></div>
         <div class="row-form" style="border-top:1px solid var(--line); padding-top:16px;">
-          <input id="countdown-title" type="text" maxlength="40" placeholder="What are you counting down to?" style="flex:2;" onkeydown="if(event.key==='Enter')addCountdown()" />
+          <input id="countdown-title" type="text" maxlength="40" placeholder="What are you counting down to?" style="flex:2;" onkeydown="if(event.key==='Enter')addCountdown()" data-fun-placeholder="Counting down to? Trip, results, doom?" />
           <input id="countdown-date" type="date" style="flex:0 1 170px;" />
           <select id="countdown-channel" style="flex:0 1 200px;" aria-label="Who sees this countdown"></select>
           <button class="btn btn-primary" onclick="addCountdown()">Add</button>
@@ -512,7 +512,7 @@
 
 <div id="cmd-palette-overlay" onclick="if(event.target===this)togglePalette()">
   <div id="cmd-palette">
-    <input id="cmd-input-large" type="text" placeholder="Type a command or search" oninput="filterPalette()" onkeydown="handlePaletteKeys(event)" autocomplete="off" />
+    <input id="cmd-input-large" type="text" placeholder="Type a command or search" oninput="filterPalette()" onkeydown="handlePaletteKeys(event)" autocomplete="off" data-fun-placeholder="Type a command or search. Go on, boss me around." />
     <div class="cmd-hint-text">Shortcuts: <b>/task [high|med|low]</b>, <b>/note</b>, <b>scc:</b>, <b>gh:</b>, <b>r:</b>, <b>yt:</b></div>
     <div id="cmd-results">
       </div>
@@ -553,20 +553,20 @@
       <!-- General -->
       <section class="settings-pane active" data-tab="general">
         <h2 class="pane-title">General</h2>
-        <p class="pane-intro">How the app greets you and how you get to it.</p>
+        <p class="pane-intro" data-fun="How PCC greets you and how you summon it.">How the app greets you and how you get to it.</p>
 
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="set-name">Your name</label>
-            <div class="setting-desc">Shown in the greeting on Today.</div>
+            <div class="setting-desc" data-fun="So PCC knows who to hype up (or roast) on Today.">Shown in the greeting on Today.</div>
           </div>
-          <div class="setting-control"><input id="set-name" type="text" placeholder="Name" onchange="updateSettings('name',this.value)" /></div>
+          <div class="setting-control"><input id="set-name" type="text" placeholder="Name" onchange="updateSettings('name',this.value)" data-fun-placeholder="What do we call you, boss?" /></div>
         </div>
 
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="set-city">Weather city</label>
-            <div class="setting-desc">Used for the weather card on Life.</div>
+            <div class="setting-desc" data-fun="For the weather card on Life, so you know if today is a touch-grass day.">Used for the weather card on Life.</div>
           </div>
           <div class="setting-control"><input id="set-city" type="text" placeholder="City" onchange="updateSettings('weatherCity',this.value)" /></div>
         </div>
@@ -574,7 +574,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="hotkey-display">Global shortcut</label>
-            <div class="setting-desc">Shows or hides PCC from anywhere. Click the box, then press the keys.</div>
+            <div class="setting-desc" data-fun="Summons or hides PCC from anywhere, like a cheat code. Click the box, then press the keys.">Shows or hides PCC from anywhere. Click the box, then press the keys.</div>
             <div id="hotkey-status" class="setting-desc"></div>
           </div>
           <div class="setting-control"><input id="hotkey-display" type="text" readonly placeholder="Click to set" class="mono" style="cursor:pointer; text-align:center;" onclick="startHotkeyCapture()" /></div>
@@ -583,7 +583,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Focus timer</div>
-            <div class="setting-desc">Length of a focus session and of the break after it, in minutes.</div>
+            <div class="setting-desc" data-fun="How long you grind, and how long the break after it lasts, in minutes.">Length of a focus session and of the break after it, in minutes.</div>
           </div>
           <div class="setting-control">
             <label class="inline-field">Focus <input id="pref-focus-minutes" type="number" min="1" max="180" class="number-field" onchange="setTimerPref('focusMinutes', this.value, 180)" /></label>
@@ -594,7 +594,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-quotes-online">Fresh quotes</label>
-            <div class="setting-desc">Tops up the quotes on the island and the Life page from the internet. A new one appears each time a focus session ends. Off uses only the built-in few.</div>
+            <div class="setting-desc" data-fun="Tops up the quotes on the island and the Life page from the internet. A fresh one drops each time a focus session ends. Off means just the built-in few, on repeat forever.">Tops up the quotes on the island and the Life page from the internet. A new one appears each time a focus session ends. Off uses only the built-in few.</div>
           </div>
           <div class="setting-control"><input id="pref-quotes-online" type="checkbox" class="switch" data-pref="quotesOnline" onchange="setPref('quotesOnline', this.checked)" /></div>
         </div>
@@ -602,7 +602,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="autostart-toggle">Start when I sign in</label>
-            <div class="setting-desc">Opens quietly in the tray when Windows starts.</div>
+            <div class="setting-desc" data-fun="Opens quietly in the tray when Windows starts. Ninja mode.">Opens quietly in the tray when Windows starts.</div>
             <div id="autostart-status" class="setting-desc"></div>
           </div>
           <div class="setting-control"><input id="autostart-toggle" type="checkbox" class="switch" onchange="toggleAutostart(this.checked)" /></div>
@@ -612,18 +612,18 @@
       <!-- Appearance -->
       <section class="settings-pane" data-tab="appearance">
         <h2 class="pane-title">Appearance</h2>
-        <p class="pane-intro">How the app looks. Changes apply as you make them.</p>
+        <p class="pane-intro" data-fun="How PCC looks. Changes apply as you make them, so go wild.">How the app looks. Changes apply as you make them.</p>
 
         <div class="setting-block">
           <div class="setting-name">Colour theme</div>
-          <div class="setting-desc">The whole look: page, cards, the main colour and its sidekick. Warnings always stay easy to spot.</div>
+          <div class="setting-desc" data-fun="The whole look: page, cards, the main colour and its sidekick. Warnings always stay easy to spot, however aesthetic you get.">The whole look: page, cards, the main colour and its sidekick. Warnings always stay easy to spot.</div>
           <div class="theme-picker" id="theme-picker"></div>
         </div>
 
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Light or dark</div>
-            <div class="setting-desc">System follows your Windows light or dark setting.</div>
+            <div class="setting-desc" data-fun="System follows your Windows light or dark setting. (Dark mode gang, we see you.)">System follows your Windows light or dark setting.</div>
           </div>
           <div class="setting-control"><div class="segmented" data-pref="theme"><button data-value="system" onclick="setPref('theme', 'system')">System</button><button data-value="light" onclick="setPref('theme', 'light')">Light</button><button data-value="dark" onclick="setPref('theme', 'dark')">Dark</button></div></div>
         </div>
@@ -631,7 +631,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Your colour</div>
-            <div class="setting-desc">For the Custom theme: buttons, the active page and anything marked done.</div>
+            <div class="setting-desc" data-fun="For the Custom theme: buttons, the active page and anything marked done. Pick wisely, you'll be staring at it a lot.">For the Custom theme: buttons, the active page and anything marked done.</div>
           </div>
           <div class="setting-control"><div class="swatches" id="accent-swatches"></div></div>
         </div>
@@ -639,7 +639,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Background</div>
-            <div class="setting-desc">Blur lets your desktop show through. Image uses a picture of your own.</div>
+            <div class="setting-desc" data-fun="Blur lets your desktop show through. Image uses a picture of your own. Choose your aesthetic.">Blur lets your desktop show through. Image uses a picture of your own.</div>
           </div>
           <div class="setting-control" style="flex-direction:column; align-items:flex-end;">
             <div class="segmented" data-pref="background"><button data-value="blur" onclick="setPref('background', 'blur')">Blur</button><button data-value="solid" onclick="setPref('background', 'solid')">Solid</button><button data-value="image" onclick="setPref('background', 'image')">Image</button></div>
@@ -653,7 +653,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Density</div>
-            <div class="setting-desc">Compact fits more on screen.</div>
+            <div class="setting-desc" data-fun="Compact fits more on screen. For people with way too much going on.">Compact fits more on screen.</div>
           </div>
           <div class="setting-control"><div class="segmented" data-pref="density"><button data-value="comfortable" onclick="setPref('density', 'comfortable')">Comfortable</button><button data-value="compact" onclick="setPref('density', 'compact')">Compact</button></div></div>
         </div>
@@ -661,7 +661,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Text size</div>
-            <div class="setting-desc">Scales the whole interface.</div>
+            <div class="setting-desc" data-fun="Scales the whole interface. No squinting allowed.">Scales the whole interface.</div>
           </div>
           <div class="setting-control"><div class="segmented" data-pref="textSize"><button data-value="90" onclick="setPref('textSize', 90)">Small</button><button data-value="100" onclick="setPref('textSize', 100)">Medium</button><button data-value="110" onclick="setPref('textSize', 110)">Large</button><button data-value="120" onclick="setPref('textSize', 120)">Larger</button></div></div>
         </div>
@@ -669,7 +669,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-reduce-motion">Reduce motion</label>
-            <div class="setting-desc">Turns off animations and transitions.</div>
+            <div class="setting-desc" data-fun="Turns off animations and transitions. For when the wiggles get to be too much.">Turns off animations and transitions.</div>
           </div>
           <div class="setting-control"><input id="pref-reduce-motion" type="checkbox" class="switch" data-pref="reduceMotion" onchange="setPref('reduceMotion', this.checked)" /></div>
         </div>
@@ -677,7 +677,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-logo-text">Logo</label>
-            <div class="setting-desc">The mark in the top-left corner. It's the PCC icon unless you type one or two characters (or an emoji) here, or choose your own image. Clear the box to go back to the icon.</div>
+            <div class="setting-desc" data-fun="The mark in the top-left corner. It's the PCC icon unless you type one or two characters (or an emoji, go crazy) here, or choose your own image. Clear the box to go back to the icon.">The mark in the top-left corner. It's the PCC icon unless you type one or two characters (or an emoji) here, or choose your own image. Clear the box to go back to the icon.</div>
           </div>
           <div class="setting-control">
             <input id="pref-logo-text" type="text" class="short" maxlength="4" placeholder="Icon" onchange="setLogoText(this.value)" />
@@ -689,7 +689,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-app-name">App name</label>
-            <div class="setting-desc">Shown in the window title and the tray. The name in the Start menu and taskbar is set when the app is built.</div>
+            <div class="setting-desc" data-fun="Shown in the window title and the tray. Call it whatever you want, bro. The name in the Start menu and taskbar is set when the app is built.">Shown in the window title and the tray. The name in the Start menu and taskbar is set when the app is built.</div>
           </div>
           <div class="setting-control"><input id="pref-app-name" type="text" maxlength="60" onchange="setPref('appName', this.value.trim() || PREF_DEFAULTS.appName)" /></div>
         </div>
@@ -707,12 +707,12 @@
       <!-- Layout -->
       <section class="settings-pane" data-tab="layout">
         <h2 class="pane-title">Pages and cards</h2>
-        <p class="pane-intro">What appears where. Use the arrows to reorder and the switches to show or hide.</p>
+        <p class="pane-intro" data-fun="What goes where. Arrows to reorder, switches to show or hide. Interior designer mode: on.">What appears where. Use the arrows to reorder and the switches to show or hide.</p>
 
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-start-page">Start page</label>
-            <div class="setting-desc">The page that opens when the app starts.</div>
+            <div class="setting-desc" data-fun="The page that opens when the app starts. First impressions matter.">The page that opens when the app starts.</div>
           </div>
           <div class="setting-control"><select id="pref-start-page" onchange="setPref('startPage', this.value)"></select></div>
         </div>
@@ -720,7 +720,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-clock24">24-hour clock</label>
-            <div class="setting-desc">Applies to the clock on Today and to class times.</div>
+            <div class="setting-desc" data-fun="Applies to the clock on Today and to class times. Army time, basically.">Applies to the clock on Today and to class times.</div>
           </div>
           <div class="setting-control"><input id="pref-clock24" type="checkbox" class="switch" data-pref="clock24" onchange="setPref('clock24', this.checked)" /></div>
         </div>
@@ -728,20 +728,20 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-status-chips">Status chips on Today</label>
-            <div class="setting-desc">The row showing attendance, budget, habits and flashcards.</div>
+            <div class="setting-desc" data-fun="The row showing attendance, budget, habits and flashcards. The receipts, basically.">The row showing attendance, budget, habits and flashcards.</div>
           </div>
           <div class="setting-control"><input id="pref-status-chips" type="checkbox" class="switch" data-pref="showStatusChips" onchange="setPref('showStatusChips', this.checked)" /></div>
         </div>
 
         <div class="setting-block">
           <div class="setting-name">Today's cards</div>
-          <div class="setting-desc">Shown in this order, left to right and top to bottom.</div>
+          <div class="setting-desc" data-fun="Shown in this order, left to right and top to bottom. Rank them like your friends.">Shown in this order, left to right and top to bottom.</div>
           <div class="order-list" id="today-cards-order"></div>
         </div>
 
         <div class="setting-block">
           <div class="setting-name">Pages</div>
-          <div class="setting-desc">Hidden pages leave the rail and the Ctrl+number shortcuts. Today is always shown.</div>
+          <div class="setting-desc" data-fun="Hidden pages leave the rail and the Ctrl+number shortcuts. Today is always shown, it's the boss.">Hidden pages leave the rail and the Ctrl+number shortcuts. Today is always shown.</div>
           <div class="order-list" id="pages-order"></div>
         </div>
       </section>
@@ -749,12 +749,12 @@
       <!-- Island -->
       <section class="settings-pane" data-tab="island">
         <h2 class="pane-title">Island</h2>
-        <p class="pane-intro">A small bar that floats at the top of your screen, above other windows. It shows a running timer, your current or next class, what's playing and new important mail. Move the pointer over it for controls.</p>
+        <p class="pane-intro" data-fun="A tiny bar that floats at the top of your screen, above other windows, and babysits your timer, your current or next class, what's playing and new important mail. Hover over it for controls.">A small bar that floats at the top of your screen, above other windows. It shows a running timer, your current or next class, what's playing and new important mail. Move the pointer over it for controls.</p>
 
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-island-enabled">Show the island</label>
-            <div class="setting-desc">Stays on screen while PCC is running, even when its window is hidden.</div>
+            <div class="setting-desc" data-fun="Stays on screen while PCC is running, even when its window is hidden. Loyal little guy.">Stays on screen while PCC is running, even when its window is hidden.</div>
           </div>
           <div class="setting-control"><input id="pref-island-enabled" type="checkbox" class="switch" data-pref="islandEnabled" onchange="setPref('islandEnabled', this.checked)" /></div>
         </div>
@@ -762,7 +762,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Position</div>
-            <div class="setting-desc">Where along the top edge it sits.</div>
+            <div class="setting-desc" data-fun="Where along the top edge it chills.">Where along the top edge it sits.</div>
           </div>
           <div class="setting-control"><div class="segmented" data-pref="islandPosition"><button data-value="left" onclick="setPref('islandPosition', 'left')">Left</button><button data-value="center" onclick="setPref('islandPosition', 'center')">Centre</button><button data-value="right" onclick="setPref('islandPosition', 'right')">Right</button></div></div>
         </div>
@@ -770,7 +770,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-island-media">Show what's playing</label>
-            <div class="setting-desc">Track name with play, pause and skip, for music or video playing in any app. Uses a small helper that runs in the background.</div>
+            <div class="setting-desc" data-fun="Track name with play, pause and skip, for music or video playing in any app. Uses a small helper that runs in the background. Your music taste, on full display.">Track name with play, pause and skip, for music or video playing in any app. Uses a small helper that runs in the background.</div>
           </div>
           <div class="setting-control"><input id="pref-island-media" type="checkbox" class="switch" data-pref="islandMedia" onchange="setPref('islandMedia', this.checked)" /></div>
         </div>
@@ -778,7 +778,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Hide when another app is in front</div>
-            <div class="setting-desc">Full screen hides it for games, videos and presentations. Shrink does that too, and turns it into a small handle while another app's maximised window (a browser, say) is in front, so it doesn't cover tabs; point at the handle to open it. Maximised hides it completely in that case.</div>
+            <div class="setting-desc" data-fun="Full screen hides it for games, videos and presentations, so no photobombing. Shrink does that too, and turns it into a small handle while another app's maximised window (a browser, say) is in front, so it doesn't cover tabs; point at the handle to open it. Maximised hides it completely in that case.">Full screen hides it for games, videos and presentations. Shrink does that too, and turns it into a small handle while another app's maximised window (a browser, say) is in front, so it doesn't cover tabs; point at the handle to open it. Maximised hides it completely in that case.</div>
           </div>
           <div class="setting-control"><div class="segmented" data-pref="islandHide"><button data-value="never" onclick="setPref('islandHide', 'never')">Never</button><button data-value="fullscreen" onclick="setPref('islandHide', 'fullscreen')">Full screen</button><button data-value="shrink" onclick="setPref('islandHide', 'shrink')">Shrink</button><button data-value="maximized" onclick="setPref('islandHide', 'maximized')">Maximised</button></div></div>
         </div>
@@ -786,7 +786,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-island-capture">Quick capture</label>
-            <div class="setting-desc">A box on the island for jotting a note or adding a task without opening PCC. Notes go to a "Quick notes" note on the Study page.</div>
+            <div class="setting-desc" data-fun="A box on the island for jotting a note or adding a task without opening PCC. Notes go to a &quot;Quick notes&quot; note on the Study page. Perfect for 3 AM thoughts.">A box on the island for jotting a note or adding a task without opening PCC. Notes go to a "Quick notes" note on the Study page.</div>
           </div>
           <div class="setting-control"><input id="pref-island-capture" type="checkbox" class="switch" data-pref="islandCapture" onchange="setPref('islandCapture', this.checked)" /></div>
         </div>
@@ -794,7 +794,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-island-breaks">Break reminders</label>
-            <div class="setting-desc">After a long stretch at the computer the island glows softly for a few minutes. No sound, no pop-up. Five minutes away resets the count.</div>
+            <div class="setting-desc" data-fun="After a long stretch at the computer the island glows softly for a few minutes. Translation: go touch some grass. No sound, no pop-up. Five minutes away resets the count.">After a long stretch at the computer the island glows softly for a few minutes. No sound, no pop-up. Five minutes away resets the count.</div>
           </div>
           <div class="setting-control"><input id="pref-island-breaks" type="checkbox" class="switch" data-pref="islandBreaks" onchange="setPref('islandBreaks', this.checked)" /></div>
         </div>
@@ -802,7 +802,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-island-break-minutes">Remind me after</label>
-            <div class="setting-desc">Minutes of continuous use before the glow.</div>
+            <div class="setting-desc" data-fun="Minutes of nonstop screen time before the glow starts nagging.">Minutes of continuous use before the glow.</div>
           </div>
           <div class="setting-control"><input id="pref-island-break-minutes" type="number" class="number-field" min="20" max="240" step="5" onchange="setBreakMinutes(this.value)" /></div>
         </div>
@@ -810,7 +810,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-workspaces">Workspaces</label>
-            <div class="setting-desc">Sets of sites and apps that open together, set up on the Launch page. When on, each one gets a button on the island.</div>
+            <div class="setting-desc" data-fun="Sets of sites and apps that open together, set up on the Launch page. When on, each one gets a button on the island. One click, whole setup. Big brain.">Sets of sites and apps that open together, set up on the Launch page. When on, each one gets a button on the island.</div>
           </div>
           <div class="setting-control"><input id="pref-workspaces" type="checkbox" class="switch" data-pref="workspacesEnabled" onchange="setPref('workspacesEnabled', this.checked)" /></div>
         </div>
@@ -820,7 +820,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-music-bars">Bars in the island</label>
-            <div class="setting-desc">Little bars beside the track name that move with the music.</div>
+            <div class="setting-desc" data-fun="Little bars beside the track name that vibe with the music.">Little bars beside the track name that move with the music.</div>
           </div>
           <div class="setting-control"><input id="pref-music-bars" type="checkbox" class="switch" data-pref="musicBars" onchange="setPref('musicBars', this.checked)" /></div>
         </div>
@@ -828,21 +828,21 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-music-look-on">Island moves with the music</label>
-            <div class="setting-desc">While something plays, a look moves softly behind the track name; when the island has shrunk to its small handle over a maximised window, the handle itself becomes a little visualiser, with no black behind it. The wave button on the island turns it on and off.</div>
+            <div class="setting-desc" data-fun="While something plays, a look moves softly behind the track name; when the island has shrunk to its small handle over a maximised window, the handle itself becomes a tiny visualiser, with no black behind it. The wave button on the island turns it on and off. Pure vibes.">While something plays, a look moves softly behind the track name; when the island has shrunk to its small handle over a maximised window, the handle itself becomes a little visualiser, with no black behind it. The wave button on the island turns it on and off.</div>
           </div>
           <div class="setting-control"><input id="pref-music-look-on" type="checkbox" class="switch" data-pref="islandMusicLookOn" onchange="setPref('islandMusicLookOn', this.checked)" /></div>
         </div>
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Island music look</div>
-            <div class="setting-desc">Wave: glowing lines that swell with the sound. Bars: little bars from the middle out. Glow: light that breathes out around the island, like coloured smoke.</div>
+            <div class="setting-desc" data-fun="Wave: glowing lines that swell with the sound. Bars: little bars from the middle out. Glow: light that breathes out around the island, like coloured smoke. They all slap, honestly.">Wave: glowing lines that swell with the sound. Bars: little bars from the middle out. Glow: light that breathes out around the island, like coloured smoke.</div>
           </div>
           <div class="setting-control"><div class="segmented" data-pref="islandMusicLook"><button data-value="wave" onclick="setPref('islandMusicLook', 'wave')">Wave</button><button data-value="bars" onclick="setPref('islandMusicLook', 'bars')">Bars</button><button data-value="glow" onclick="setPref('islandMusicLook', 'glow')">Glow</button></div></div>
         </div>
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Island music colours</div>
-            <div class="setting-desc">Album art picks colours from each song's cover.</div>
+            <div class="setting-desc" data-fun="Album art steals colours from each song's cover.">Album art picks colours from each song's cover.</div>
           </div>
           <div class="setting-control"><div class="segmented" data-pref="islandMusicColors"><button data-value="album" onclick="setPref('islandMusicColors', 'album')">Album art</button><button data-value="accent" onclick="setPref('islandMusicColors', 'accent')">Accent</button><button data-value="rainbow" onclick="setPref('islandMusicColors', 'rainbow')">Rainbow</button></div></div>
         </div>
@@ -850,7 +850,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Desktop visualiser</div>
-            <div class="setting-desc">Shapes that move to whatever is playing, drawn on your wallpaper itself: behind your desktop icons, which stay clickable, and under all your windows. It pauses while a maximised or full-screen window covers the desktop.</div>
+            <div class="setting-desc" data-fun="Shapes that dance to whatever is playing, drawn on your wallpaper itself: behind your desktop icons, which stay clickable, and under all your windows. It pauses while a maximised or full-screen window covers the desktop. Free concert, every day.">Shapes that move to whatever is playing, drawn on your wallpaper itself: behind your desktop icons, which stay clickable, and under all your windows. It pauses while a maximised or full-screen window covers the desktop.</div>
           </div>
           <div class="setting-control"><div class="segmented" data-pref="visualizer"><button data-value="off" onclick="setPref('visualizer', 'off')">Off</button><button data-value="bars" onclick="setPref('visualizer', 'bars')">Bars</button><button data-value="wave" onclick="setPref('visualizer', 'wave')">Wave</button><button data-value="ring" onclick="setPref('visualizer', 'ring')">Ring</button><button data-value="nebula" onclick="setPref('visualizer', 'nebula')">Nebula</button><button data-value="orbit" onclick="setPref('visualizer', 'orbit')">Orbit</button><button data-value="album" onclick="setPref('visualizer', 'album')">Album art</button></div></div>
         </div>
@@ -868,18 +868,18 @@
           </div>
           <div class="setting-control"><div class="segmented" data-pref="visualizerLayer"><button data-value="wallpaper" onclick="setPref('visualizerLayer', 'wallpaper')">On the wallpaper</button><button data-value="top" onclick="setPref('visualizerLayer', 'top')">Over windows</button></div></div>
         </div>
-        <div class="field-note">Both listen to the sound your computer is playing, only while music plays, and only to measure how loud it is. Nothing is recorded or sent anywhere.</div>
+        <div class="field-note" data-fun="Both listen to the sound your computer is playing, only while music plays, and only to measure how loud it is. Nothing is recorded or sent anywhere. No snooping, pinky promise.">Both listen to the sound your computer is playing, only while music plays, and only to measure how loud it is. Nothing is recorded or sent anywhere.</div>
       </section>
 
       <!-- Performance -->
       <section class="settings-pane" data-tab="sounds">
         <h2 class="pane-title">Sounds and actions</h2>
-        <p class="pane-intro">Make PCC react when things happen: a sound, confetti, or the island celebrating. Use the built-in sounds or any audio file of your own.</p>
+        <p class="pane-intro" data-fun="Make PCC react when things happen: a sound, confetti, or the island throwing a party. Use the built-in sounds or any audio file of your own (yes, even that one meme sound).">Make PCC react when things happen: a sound, confetti, or the island celebrating. Use the built-in sounds or any audio file of your own.</p>
 
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-sounds-on">Sounds and actions</label>
-            <div class="setting-desc">Turn all the rules below on or off at once.</div>
+            <div class="setting-desc" data-fun="Turn all the rules below on or off at once. The master switch.">Turn all the rules below on or off at once.</div>
           </div>
           <div class="setting-control"><input id="pref-sounds-on" type="checkbox" class="switch" data-pref="soundsOn" onchange="setPref('soundsOn', this.checked)" /></div>
         </div>
@@ -890,7 +890,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-sounds-quiet">Quiet hours</label>
-            <div class="setting-desc">No sounds from 11 PM to 7 AM. Confetti and the island still celebrate.</div>
+            <div class="setting-desc" data-fun="No sounds from 11 PM to 7 AM, so your roommates don't hate you. Confetti and the island still celebrate.">No sounds from 11 PM to 7 AM. Confetti and the island still celebrate.</div>
           </div>
           <div class="setting-control"><input id="pref-sounds-quiet" type="checkbox" class="switch" data-pref="soundsQuiet" onchange="setPref('soundsQuiet', this.checked)" /></div>
         </div>
@@ -898,19 +898,19 @@
         <h3 class="pane-subtitle">Your rules</h3>
         <div id="sound-rules" class="sound-rules"></div>
         <button class="btn" style="margin-top:10px;" onclick="addSoundRule()">Add a rule</button>
-        <div class="field-note">Built-in sounds: Chime, Pop, Power up, Level up, Tada, Whoosh, Uh-oh. A file of your own is copied into PCC, so it keeps working if you move the original.</div>
+        <div class="field-note" data-fun="Built-in sounds: Chime, Pop, Power up, Level up, Tada, Whoosh, Uh-oh. A file of your own is copied into PCC, so it keeps working even if you move (or lose) the original.">Built-in sounds: Chime, Pop, Power up, Level up, Tada, Whoosh, Uh-oh. A file of your own is copied into PCC, so it keeps working if you move the original.</div>
       </section>
 
       <!-- Only on the developer's own PC (see eggs.js) -->
       <section class="settings-pane" data-tab="dev">
         <h2 class="pane-title">Developer</h2>
-        <p class="pane-intro">Only on your PC. Nobody else's PCC shows this page.</p>
+        <p class="pane-intro" data-fun="Only on your PC. Nobody else's PCC shows this page. Secret lair stuff.">Only on your PC. Nobody else's PCC shows this page.</p>
         <div id="dev-eggs"></div>
       </section>
 
       <section class="settings-pane" data-tab="performance">
         <h2 class="pane-title">Performance</h2>
-        <p class="pane-intro">How smooth PCC's moving parts are (the visualiser, and Desktop mode with its live stats) and how much of your computer they use. Changes apply straight away.</p>
+        <p class="pane-intro" data-fun="How smooth PCC's moving parts are (the visualiser, and Desktop mode with its live stats) and how much of your computer they eat. Changes apply straight away.">How smooth PCC's moving parts are (the visualiser, and Desktop mode with its live stats) and how much of your computer they use. Changes apply straight away.</p>
 
         <div class="setting-block">
           <div class="perf-modes segmented" data-pref="perfMode">
@@ -924,7 +924,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-perf-battery">Lighter on battery</label>
-            <div class="setting-desc">Switch to Battery saver while the laptop is unplugged, and back to your choice when it's plugged in.</div>
+            <div class="setting-desc" data-fun="Switch to Battery saver while the laptop is unplugged, and back to your choice when it's plugged in. Your battery says thanks.">Switch to Battery saver while the laptop is unplugged, and back to your choice when it's plugged in.</div>
           </div>
           <div class="setting-control"><input id="pref-perf-battery" type="checkbox" class="switch" data-pref="perfBatterySaver" onchange="setPref('perfBatterySaver', this.checked)" /></div>
         </div>
@@ -932,14 +932,14 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-perf-gaming">Pause for full-screen apps</label>
-            <div class="setting-desc">While a game or video is full screen, the visualiser stops listening to the sound too, leaving the computer to that app. It starts again when you leave.</div>
+            <div class="setting-desc" data-fun="While a game or video is full screen, the visualiser stops listening to the sound too, leaving the computer to that app. It starts again when you leave. No FPS drops on our watch.">While a game or video is full screen, the visualiser stops listening to the sound too, leaving the computer to that app. It starts again when you leave.</div>
           </div>
           <div class="setting-control"><input id="pref-perf-gaming" type="checkbox" class="switch" data-pref="perfPauseGaming" onchange="setPref('perfPauseGaming', this.checked)" /></div>
         </div>
 
         <div class="setting-block">
           <div class="setting-name">What PCC is using</div>
-          <div class="setting-desc">Right now, by part. "Electron (shared)" is the engine PCC runs on: graphics, network and the app itself.</div>
+          <div class="setting-desc" data-fun="Right now, by part. The receipts. &quot;Electron (shared)&quot; is the engine PCC runs on: graphics, network and the app itself.">Right now, by part. "Electron (shared)" is the engine PCC runs on: graphics, network and the app itself.</div>
           <div class="perf-usage" id="perf-usage"></div>
         </div>
         <div class="field-note">The modes can also be switched from the tray icon's menu.</div>
@@ -948,12 +948,12 @@
       <!-- Desktop mode -->
       <section class="settings-pane" data-tab="desktop">
         <h2 class="pane-title">Desktop mode</h2>
-        <p class="pane-intro">Turn your desktop into a PCC dashboard: a big clock, today's classes, tasks, deadlines, important mail and messages, your stats, what's playing and more, drawn on the wallpaper itself. Your desktop icons stay on top and clickable, and your windows cover it as usual.</p>
+        <p class="pane-intro" data-fun="Turn your desktop into a PCC dashboard: a big clock, today's classes, tasks, deadlines, important mail and messages, your stats, what's playing and more, drawn on the wallpaper itself. Your desktop icons stay on top and clickable, and your windows cover it as usual. Flex on anyone who walks past.">Turn your desktop into a PCC dashboard: a big clock, today's classes, tasks, deadlines, important mail and messages, your stats, what's playing and more, drawn on the wallpaper itself. Your desktop icons stay on top and clickable, and your windows cover it as usual.</p>
 
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-desktop-mode">Desktop mode</label>
-            <div class="setting-desc">Shows while PCC is running, even when its window is hidden. It stops updating while a maximised or full-screen window covers the desktop. Windows only.</div>
+            <div class="setting-desc" data-fun="Shows while PCC is running, even when its window is hidden. It stops updating while a maximised or full-screen window covers the desktop. Windows only (sorry, Mac people).">Shows while PCC is running, even when its window is hidden. It stops updating while a maximised or full-screen window covers the desktop. Windows only.</div>
           </div>
           <div class="setting-control"><input id="pref-desktop-mode" type="checkbox" class="switch" data-pref="desktopMode" onchange="setPref('desktopMode', this.checked)" /></div>
         </div>
@@ -961,29 +961,29 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Your desktop icons are on the</div>
-            <div class="setting-desc">The dashboard leaves those sides free so it doesn't sit behind your icons.</div>
+            <div class="setting-desc" data-fun="The dashboard leaves those sides free so it doesn't sit behind your icons. Respect the icons.">The dashboard leaves those sides free so it doesn't sit behind your icons.</div>
           </div>
           <div class="setting-control"><div class="segmented" data-pref="desktopIcons"><button data-value="left" onclick="setPref('desktopIcons', 'left')">Left</button><button data-value="right" onclick="setPref('desktopIcons', 'right')">Right</button><button data-value="both" onclick="setPref('desktopIcons', 'both')">Both sides</button></div></div>
         </div>
-        <div class="field-note">For the weather, set your city in Settings &gt; General. Looking at the dashboard is all it does for now; clicking things on it is coming later.</div>
+        <div class="field-note" data-fun="For the weather, set your city in Settings &amp;gt; General. For now the dashboard is look-don't-touch; clicking things on it is coming later.">For the weather, set your city in Settings &gt; General. Looking at the dashboard is all it does for now; clicking things on it is coming later.</div>
       </section>
 
       <!-- Sync -->
       <section class="settings-pane" data-tab="sync">
         <h2 class="pane-title">Sync devices</h2>
-        <p class="pane-intro">Keep your own devices in step: tasks, deadlines (and their ticks), evaluation patterns and marks, countdowns, message channels, notes, and your name, city and colour. Changes are end-to-end encrypted with your sync code before they leave this device; the relay in between only sees scrambled data. Passwords, sign-ins and this computer's own settings stay on each device.</p>
+        <p class="pane-intro" data-fun="Keep your own devices in step: tasks, deadlines (and their ticks), evaluation patterns and marks, countdowns, message channels, notes, and your name, city and colour. Changes are end-to-end encrypted with your sync code before they leave this device; the relay in between only sees scrambled data. Passwords, sign-ins and this computer's own settings stay on each device. Your laptop and PC, finally on speaking terms.">Keep your own devices in step: tasks, deadlines (and their ticks), evaluation patterns and marks, countdowns, message channels, notes, and your name, city and colour. Changes are end-to-end encrypted with your sync code before they leave this device; the relay in between only sees scrambled data. Passwords, sign-ins and this computer's own settings stay on each device.</p>
 
         <div id="sync-off">
           <div class="setting-row">
             <div class="setting-text">
               <div class="setting-name">Start syncing</div>
-              <div class="setting-desc">Makes a sync code for your devices. Do this on one device, then enter the code on the others.</div>
+              <div class="setting-desc" data-fun="Makes a sync code for your devices. Do this on one device, then enter the code on the others. Easy peasy.">Makes a sync code for your devices. Do this on one device, then enter the code on the others.</div>
             </div>
             <div class="setting-control"><button class="btn btn-primary" onclick="syncCreate()">Start syncing</button></div>
           </div>
           <div class="setting-block">
             <label class="setting-name" for="sync-join-code">Have a code from your other device?</label>
-            <div class="setting-desc">What's already here is kept and combined with what the others have.</div>
+            <div class="setting-desc" data-fun="What's already here is kept and combined with what the others have. Nothing gets thrown out.">What's already here is kept and combined with what the others have.</div>
             <div class="row-form" style="margin-top:10px;"><input id="sync-join-code" type="text" placeholder="SYNC-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" onkeydown="if(event.key==='Enter')syncJoin()" /><button class="btn" onclick="syncJoin()">Join</button></div>
             <div class="mail-test" id="sync-join-status"></div>
           </div>
@@ -992,14 +992,14 @@
         <div id="sync-on" hidden>
           <div class="setting-block">
             <div class="setting-name">Sync code</div>
-            <div class="setting-desc">Enter it on your other devices to add them. It's the key to everything synced, so keep it to your own devices.</div>
+            <div class="setting-desc" data-fun="Enter it on your other devices to add them. It's the key to everything synced, so keep it to your own devices. Not your bestie's, not the group chat's. Yours.">Enter it on your other devices to add them. It's the key to everything synced, so keep it to your own devices.</div>
             <div class="sync-code-row"><code id="sync-code"></code><button class="btn" onclick="syncRevealCode(false)">Show</button><button class="btn" onclick="syncRevealCode(true)">Copy</button></div>
-            <div class="field-note" id="sync-new-note" hidden>Syncing has started here. Now open Settings &gt; Sync on your other device and enter this code.</div>
+            <div class="field-note" id="sync-new-note" hidden data-fun="Syncing has started here. Now open Settings &amp;gt; Sync on your other device and enter this code. Go go go.">Syncing has started here. Now open Settings &gt; Sync on your other device and enter this code.</div>
           </div>
           <div class="setting-row">
             <div class="setting-text">
               <label class="setting-name" for="sync-device-name">This device</label>
-              <div class="setting-desc">How it's named on your other devices.</div>
+              <div class="setting-desc" data-fun="How it's named on your other devices. Make it iconic.">How it's named on your other devices.</div>
             </div>
             <div class="setting-control"><input id="sync-device-name" type="text" maxlength="40" onchange="syncRenameDevice(this.value)" /></div>
           </div>
@@ -1009,11 +1009,11 @@
             <div class="field-note" id="sync-last" style="margin-top:8px;"></div>
           </div>
           <div class="setting-row">
-            <div class="setting-text"><div class="setting-name">Sync now</div><div class="setting-desc">Changes sync by themselves within seconds; this also asks the others for their latest.</div></div>
+            <div class="setting-text"><div class="setting-name">Sync now</div><div class="setting-desc" data-fun="Changes sync by themselves within seconds; this also pokes the others for their latest. For the impatient.">Changes sync by themselves within seconds; this also asks the others for their latest.</div></div>
             <div class="setting-control"><button class="btn" onclick="syncNow()">Sync now</button></div>
           </div>
           <div class="setting-row danger">
-            <div class="setting-text"><div class="setting-name">Stop syncing on this device</div><div class="setting-desc">Everything stays here; it just stops being shared.</div></div>
+            <div class="setting-text"><div class="setting-name">Stop syncing on this device</div><div class="setting-desc" data-fun="Everything stays here; it just stops being shared. No drama.">Everything stays here; it just stops being shared.</div></div>
             <div class="setting-control"><button class="btn" onclick="syncLeave()">Stop syncing</button></div>
           </div>
         </div>
@@ -1022,26 +1022,26 @@
       <!-- Messages -->
       <section class="settings-pane" data-tab="messages">
         <h2 class="pane-title">Messages</h2>
-        <p class="pane-intro">Your chats are on the <a href="#" onclick="closeSettings(); navigate('messages'); return false;">Messages page</a>; this is where codes, one-tap phrases and notifications are set up. Messages appear on the island. Messages travel through a public relay service (ntfy.sh), so treat a channel like a postcard: fine for "call me" or "class moved", not for anything private.</p>
+        <p class="pane-intro" data-fun="Your chats are on the &lt;a href=&quot;#&quot; onclick=&quot;closeSettings(); navigate('messages'); return false;&quot;&gt;Messages page&lt;/a&gt;; this is where codes, one-tap phrases and notifications are set up. Messages appear on the island. Heads up: messages travel through a public relay service (ntfy.sh), so treat a channel like a postcard: fine for &quot;call me&quot; or &quot;class moved&quot;, not for your deepest secrets or anything private.">Your chats are on the <a href="#" onclick="closeSettings(); navigate('messages'); return false;">Messages page</a>; this is where codes, one-tap phrases and notifications are set up. Messages appear on the island. Messages travel through a public relay service (ntfy.sh), so treat a channel like a postcard: fine for "call me" or "class moved", not for anything private.</p>
 
         <div class="setting-block">
           <div class="setting-name">Your channels</div>
-          <div class="setting-desc">Everyone who has a channel's code can read and send on it. Share the code only with the people you want in it.</div>
+          <div class="setting-desc" data-fun="Everyone who has a channel's code can read and send on it. Share the code only with the people you want in it. Choose your squad wisely.">Everyone who has a channel's code can read and send on it. Share the code only with the people you want in it.</div>
           <div id="msg-channels"></div>
         </div>
 
         <div class="setting-block">
           <div class="setting-name">Create a channel</div>
-          <div class="setting-desc">Name it, then copy its code and give it to the other person.</div>
+          <div class="setting-desc" data-fun="Name it, then copy its code and give it to the other person. Slide into their PCC.">Name it, then copy its code and give it to the other person.</div>
           <div class="row-form">
-            <input id="msg-new-name" type="text" maxlength="30" placeholder="Name, e.g. the other person's name" onkeydown="if(event.key==='Enter')createChannel()" />
+            <input id="msg-new-name" type="text" maxlength="30" placeholder="Name, e.g. the other person's name" onkeydown="if(event.key==='Enter')createChannel()" data-fun-placeholder="Name, e.g. Godfather" />
             <button class="btn btn-primary" onclick="createChannel()">Create</button>
           </div>
         </div>
 
         <div class="setting-block">
           <div class="setting-name">Join a channel</div>
-          <div class="setting-desc">Paste the code you were given.</div>
+          <div class="setting-desc" data-fun="Paste the code you were given. Welcome to the club.">Paste the code you were given.</div>
           <div class="row-form">
             <input id="msg-join-name" type="text" maxlength="30" placeholder="Name" style="flex:1;" />
             <input id="msg-join-code" type="text" placeholder="PCC-XXXX-XXXX-XXXX-XXXX" style="flex:2; font-family:var(--mono);" onkeydown="if(event.key==='Enter')joinChannel()" />
@@ -1052,32 +1052,32 @@
         <div class="setting-row">
           <div class="setting-text">
             <label class="setting-name" for="pref-msg-notify">Windows notification</label>
-            <div class="setting-desc">When the island is switched off, show new messages as a Windows notification instead.</div>
+            <div class="setting-desc" data-fun="When the island is switched off, show new messages as a Windows notification instead. Can't ghost anyone that easily.">When the island is switched off, show new messages as a Windows notification instead.</div>
           </div>
           <div class="setting-control"><input id="pref-msg-notify" type="checkbox" class="switch" data-pref="msgNotify" onchange="setPref('msgNotify', this.checked)" /></div>
         </div>
 
         <div class="setting-block">
           <div class="setting-name">One-tap messages</div>
-          <div class="setting-desc">Short phrases that appear as buttons on the island when you pick a channel. One per line, up to six.</div>
+          <div class="setting-desc" data-fun="Short phrases that appear as buttons on the island when you pick a channel. One per line, up to six. Texting, but lazier.">Short phrases that appear as buttons on the island when you pick a channel. One per line, up to six.</div>
           <textarea id="msg-nudges" rows="4" style="width:100%; resize:vertical; line-height:1.5;" onchange="saveNudgePhrases(this.value)"></textarea>
         </div>
 
         <div class="setting-block" id="msg-compose">
           <div class="setting-name">Send a message</div>
-          <div class="setting-desc">You can also send from the island: point at it and pick the channel.</div>
+          <div class="setting-desc" data-fun="You can also send from the island: point at it and pick the channel. No excuse for leaving people on read.">You can also send from the island: point at it and pick the channel.</div>
           <div class="row-form">
             <select id="msg-compose-channel" style="flex:0 1 150px;"></select>
-            <input id="msg-compose-text" type="text" maxlength="500" placeholder="Message" style="flex:3;" onkeydown="if(event.key==='Enter')sendFromSettings()" />
+            <input id="msg-compose-text" type="text" maxlength="500" placeholder="Message" style="flex:3;" onkeydown="if(event.key==='Enter')sendFromSettings()" data-fun-placeholder="Type something. Be nice-ish." />
             <button class="btn btn-primary" onclick="sendFromSettings()">Send</button>
           </div>
         </div>
 
         <div class="setting-block" id="msg-broadcast" style="display:none;">
           <div class="setting-name">Broadcast to everyone</div>
-          <div class="setting-desc">Shown on every copy of PCC that is running in the next day. Only this computer can do this: it holds the signing key.</div>
+          <div class="setting-desc" data-fun="Shown on every copy of PCC that is running in the next day. Only this computer can do this: it holds the signing key. With great power, etc.">Shown on every copy of PCC that is running in the next day. Only this computer can do this: it holds the signing key.</div>
           <div class="row-form">
-            <input id="msg-broadcast-text" type="text" maxlength="500" placeholder="Announcement" style="flex:3;" />
+            <input id="msg-broadcast-text" type="text" maxlength="500" placeholder="Announcement" style="flex:3;" data-fun-placeholder="Hear ye, hear ye…" />
             <button class="btn" onclick="sendBroadcast()">Broadcast</button>
           </div>
         </div>
@@ -1094,7 +1094,7 @@
       <!-- Timetable -->
       <section class="settings-pane" data-tab="timetable">
         <h2 class="pane-title">Digiicampus</h2>
-        <p class="pane-intro">Connect Digiicampus to show your real classes, rooms, cancellations and holidays instead of the manual timetable.</p>
+        <p class="pane-intro" data-fun="Connect Digiicampus to show your real classes, rooms, cancellations and holidays instead of the manual timetable. Way less typing.">Connect Digiicampus to show your real classes, rooms, cancellations and holidays instead of the manual timetable.</p>
 
         <div class="setting-row">
           <div class="setting-text">
@@ -1111,7 +1111,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">How sign-in works</div>
-            <div class="setting-desc">Connect opens the university's own sign-in page in a separate window. You sign in there; PCC never sees your password and keeps only the session the site gives you, which lasts about a week.</div>
+            <div class="setting-desc" data-fun="Connect opens the university's own sign-in page in a separate window. You sign in there; PCC never sees your password and keeps only the session the site gives you, which lasts about a week. No funny business.">Connect opens the university's own sign-in page in a separate window. You sign in there; PCC never sees your password and keeps only the session the site gives you, which lasts about a week.</div>
           </div>
         </div>
       </section>
@@ -1119,7 +1119,7 @@
       <!-- Mail -->
       <section class="settings-pane" data-tab="mail">
         <h2 class="pane-title">Mail</h2>
-        <p class="pane-intro">PCC reads recent mail from your inbox and sorts it by sender on the Inbox page. Everything stays on this computer.</p>
+        <p class="pane-intro" data-fun="PCC reads recent mail from your inbox and sorts it by sender on the Inbox page. Everything stays on this computer. Nobody's reading your mail but you.">PCC reads recent mail from your inbox and sorts it by sender on the Inbox page. Everything stays on this computer.</p>
 
         <div class="form-grid">
           <div class="field">
@@ -1164,12 +1164,12 @@
       <!-- Data -->
       <section class="settings-pane" data-tab="data">
         <h2 class="pane-title">Data and backups</h2>
-        <p class="pane-intro">Everything you enter stays on this computer. A backup is saved automatically once a day.</p>
+        <p class="pane-intro" data-fun="Everything you enter stays on this computer. A backup is saved automatically once a day, because we know you.">Everything you enter stays on this computer. A backup is saved automatically once a day.</p>
 
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Export</div>
-            <div class="setting-desc">Save all your data to one file. The mail password is never included.</div>
+            <div class="setting-desc" data-fun="Save all your data to one file. Your whole PCC life, to go. The mail password is never included.">Save all your data to one file. The mail password is never included.</div>
           </div>
           <div class="setting-control"><button class="btn" onclick="exportData()">Export&hellip;</button></div>
         </div>
@@ -1177,7 +1177,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Import</div>
-            <div class="setting-desc">Replace everything with a backup file. Your current data is backed up first.</div>
+            <div class="setting-desc" data-fun="Replace everything with a backup file. Your current data is backed up first, so no panic.">Replace everything with a backup file. Your current data is backed up first.</div>
           </div>
           <div class="setting-control"><button class="btn" onclick="importData()">Import&hellip;</button></div>
         </div>
@@ -1185,7 +1185,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Automatic backups</div>
-            <div class="setting-desc">The ten most recent daily backups are kept.</div>
+            <div class="setting-desc" data-fun="The ten most recent daily backups are kept. Past you, saved.">The ten most recent daily backups are kept.</div>
           </div>
           <div class="setting-control"><button class="btn" onclick="window.pcc.openBackupsFolder()">Open folder</button></div>
         </div>
@@ -1193,7 +1193,7 @@
         <div class="setting-row danger">
           <div class="setting-text">
             <div class="setting-name">Reset all data</div>
-            <div class="setting-desc">Erases tasks, notes, spending, habits and the rest. A backup is saved first.</div>
+            <div class="setting-desc" data-fun="Erases tasks, notes, spending, habits and the rest. A backup is saved first. The nuclear option, bro.">Erases tasks, notes, spending, habits and the rest. A backup is saved first.</div>
           </div>
           <div class="setting-control"><button class="btn btn-danger" onclick="resetAllData()">Reset&hellip;</button></div>
         </div>
@@ -1212,7 +1212,7 @@
       <!-- About -->
       <section class="settings-pane" data-tab="about">
         <h2 class="pane-title">About</h2>
-        <p class="pane-intro">A personal dashboard for classes, tasks, money and habits.</p>
+        <p class="pane-intro" data-fun="A personal dashboard for classes, tasks, money and habits. Basically your life, but organised.">A personal dashboard for classes, tasks, money and habits.</p>
 
         <div class="about-maker">
           <img src="../assets/partisan.png" alt="" />
@@ -1226,7 +1226,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name" id="about-version">Version</div>
-            <div class="setting-desc">Checked when the app starts and every 30 minutes. You're always asked before anything downloads or installs.</div>
+            <div class="setting-desc" data-fun="Checked when the app starts and every 30 minutes. You're always asked before anything downloads or installs. No sneaky stuff.">Checked when the app starts and every 30 minutes. You're always asked before anything downloads or installs.</div>
           </div>
           <div class="setting-control"><button class="btn" onclick="openWhatsNew()">What's new</button><button class="btn" onclick="checkForUpdatesNow()">Check for updates</button></div>
         </div>
@@ -1242,7 +1242,7 @@
         <div class="setting-row">
           <div class="setting-text">
             <div class="setting-name">Console</div>
-            <div class="setting-desc">A live log of what the app is doing, useful when something misbehaves.</div>
+            <div class="setting-desc" data-fun="A live log of what the app is doing, useful when something misbehaves. Nerd stuff.">A live log of what the app is doing, useful when something misbehaves.</div>
           </div>
           <div class="setting-control"><button class="btn" onclick="closeSettings(); openConsole();">Open console</button></div>
         </div>
@@ -1267,11 +1267,11 @@
       <img class="wl-logo" src="../assets/icon.png" alt="" />
       <h1 class="wl-title" id="welcome-title">Welcome to <em>PCC</em></h1>
       <div class="wl-by"><img src="../assets/partisan.png" alt="" />by Partisan</div>
-      <p class="wl-lead">Your classes, tasks, mail, music and more, in one place. Let's set things up: it takes about two minutes, and every step can be skipped.</p>
+      <p class="wl-lead" data-fun="Your classes, tasks, mail, music and more, in one place. Let's set things up: about two minutes, and every step can be skipped (but don't be lazy).">Your classes, tasks, mail, music and more, in one place. Let's set things up: it takes about two minutes, and every step can be skipped.</p>
       <button class="btn btn-primary wl-big" onclick="welcomeNext()">Get started</button>
       <div class="wl-card wl-restore">
         <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
-        <div><b>Coming from another computer?</b><span>Restore the backup you exported from PCC there (Settings &gt; Data &gt; Export), and everything comes across.</span></div>
+        <div><b>Coming from another computer?</b><span data-fun="Restore the backup you exported from PCC there (Settings &amp;gt; Data &amp;gt; Export), and everything comes across. New PC, same you.">Restore the backup you exported from PCC there (Settings &gt; Data &gt; Export), and everything comes across.</span></div>
         <button class="btn" onclick="welcomeRestore()">Restore</button>
       </div>
     </section>
@@ -1279,9 +1279,9 @@
     <!-- 2. You -->
     <section class="wl-step" data-step="you">
       <h2 class="wl-h">First, a little about you</h2>
-      <p class="wl-sub">For the greeting and the weather on Today, the island and your desktop.</p>
+      <p class="wl-sub" data-fun="Just for the greeting and the weather on Today, the island and your desktop. No stalking, promise.">For the greeting and the weather on Today, the island and your desktop.</p>
       <div class="field"><label class="field-label" for="welcome-name">What should PCC call you?</label>
-        <input id="welcome-name" type="text" maxlength="40" placeholder="Your name" onkeydown="if(event.key==='Enter')welcomeNext()" /></div>
+        <input id="welcome-name" type="text" maxlength="40" placeholder="Your name" onkeydown="if(event.key==='Enter')welcomeNext()" data-fun-placeholder="Your name (or gamer tag)" /></div>
       <div class="field"><label class="field-label" for="welcome-city">Your city, for the weather</label>
         <input id="welcome-city" type="text" maxlength="60" placeholder="Bengaluru" oninput="welcomeWeatherSoon()" onkeydown="if(event.key==='Enter')welcomeNext()" />
         <div class="wl-weather" id="welcome-weather"></div></div>
@@ -1292,7 +1292,7 @@
     <!-- 3. Your look -->
     <section class="wl-step" data-step="look">
       <h2 class="wl-h">Pick your colour</h2>
-      <p class="wl-sub">It's used across PCC, the island and your desktop. Watch the window change as you pick.</p>
+      <p class="wl-sub" data-fun="It's used across PCC, the island and your desktop. Watch the window change as you pick. Choose your fighter.">It's used across PCC, the island and your desktop. Watch the window change as you pick.</p>
       <div class="wl-swatches" id="welcome-swatches"></div>
       <div class="field"><div class="field-label">Theme</div>
         <div class="segmented" id="welcome-theme"><button data-value="dark" onclick="welcomeTheme('dark')">Dark</button><button data-value="light" onclick="welcomeTheme('light')">Light</button><button data-value="system" onclick="welcomeTheme('system')">Match Windows</button></div></div>
@@ -1301,7 +1301,7 @@
     <!-- 4. Classes -->
     <section class="wl-step" data-step="classes">
       <h2 class="wl-h">Your classes</h2>
-      <p class="wl-sub">At NLSIU, PCC can bring in your timetable, attendance and results from Digiicampus. You sign in on the university's own page; PCC never sees your password.</p>
+      <p class="wl-sub" data-fun="At NLSIU, PCC can bring in your timetable, attendance and results from Digiicampus. You sign in on the university's own page; PCC never sees your password. Yes, attendance too. Brace yourself.">At NLSIU, PCC can bring in your timetable, attendance and results from Digiicampus. You sign in on the university's own page; PCC never sees your password.</p>
       <div class="wl-card wl-row">
         <div><b>Digiicampus</b><span id="welcome-campus-state">Not connected</span></div>
         <button class="btn btn-primary" id="welcome-campus-btn" onclick="welcomeConnectCampus()">Connect</button>
@@ -1316,7 +1316,7 @@
     <!-- 5. Mail -->
     <section class="wl-step" data-step="mail">
       <h2 class="wl-h">Mail <span class="wl-optional">optional</span></h2>
-      <p class="wl-sub">PCC reads your mail (never sends or changes it) and picks out what matters: professors, deadlines, mail sent to you personally. It signs in with an app password, not your normal one.</p>
+      <p class="wl-sub" data-fun="PCC reads your mail (never sends or changes it) and picks out what matters: professors, deadlines, mail sent to you personally. It signs in with an app password, not your normal one. Spam gets ignored, like it deserves.">PCC reads your mail (never sends or changes it) and picks out what matters: professors, deadlines, mail sent to you personally. It signs in with an app password, not your normal one.</p>
       <ol class="wl-steps-list">
         <li>Turn on 2-Step Verification for your Google account, if it isn't already.</li>
         <li>Open <a href="https://myaccount.google.com/apppasswords" target="_blank">Google app passwords</a>, create one called "PCC", and copy it.</li>
@@ -1332,12 +1332,12 @@
     <!-- 6. Your desktop -->
     <section class="wl-step" data-step="desktop">
       <h2 class="wl-h">Make the desktop yours</h2>
-      <p class="wl-sub">Turn on what you like. Everything can be changed later in Settings.</p>
+      <p class="wl-sub" data-fun="Turn on what you like. Everything can be changed later in Settings. Time to make your setup look expensive.">Turn on what you like. Everything can be changed later in Settings.</p>
       <div class="wl-features">
         <div class="wl-card wl-feature">
           <div class="wl-preview pv-island"><div class="pv-pill"><i></i><span>Contracts II in 18 min</span></div></div>
           <div class="wl-feature-head"><b>Island</b><input type="checkbox" class="switch" id="welcome-island" onchange="setPref('islandEnabled', this.checked)" /></div>
-          <span>Your next class, the timer, music and messages at the top of the screen.</span>
+          <span data-fun="Your next class, the timer, music and messages at the top of the screen. A tiny assistant that never sleeps.">Your next class, the timer, music and messages at the top of the screen.</span>
         </div>
         <div class="wl-card wl-feature">
           <div class="wl-preview pv-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1360,7 +1360,7 @@
     <!-- 7. Friends -->
     <section class="wl-step" data-step="friends">
       <h2 class="wl-h">Friends and start-up</h2>
-      <p class="wl-sub">Copies of PCC can send each other short messages, focus status and shared countdowns. If a friend gave you a channel code, paste it here.</p>
+      <p class="wl-sub" data-fun="Copies of PCC can send each other short messages, focus status and shared countdowns. If a friend gave you a channel code, paste it here. Squad up.">Copies of PCC can send each other short messages, focus status and shared countdowns. If a friend gave you a channel code, paste it here.</p>
       <div class="wl-two">
         <div class="field"><label class="field-label" for="welcome-code">Channel code</label><input id="welcome-code" type="text" placeholder="PCC-XXXX-XXXX-XXXX-XXXX" /></div>
         <div class="field"><label class="field-label" for="welcome-code-name">Call it</label><input id="welcome-code-name" type="text" maxlength="30" placeholder="Godfather" /></div>
@@ -1375,7 +1375,7 @@
     <!-- 8. Done -->
     <section class="wl-step" data-step="done">
       <h2 class="wl-h wl-done-title" id="welcome-done-title">You're all set</h2>
-      <p class="wl-sub">Here's what's ready. Anything you skipped is one click away.</p>
+      <p class="wl-sub" data-fun="Here's what's ready. Anything you skipped is one click away. No judgement. Okay, a little judgement.">Here's what's ready. Anything you skipped is one click away.</p>
       <div class="wl-checklist" id="welcome-checklist"></div>
       <div class="wl-row-inline wl-done-actions">
         <button class="btn btn-primary wl-big" onclick="finishWelcome(); startTour()">Take the 20-second tour</button>
@@ -1408,18 +1408,18 @@
 <div id="feedback-overlay" onclick="if(event.target===this)closeFeedback()">
   <div id="feedback-modal" role="dialog" aria-labelledby="feedback-title">
     <div class="settings-title" id="feedback-title">Send feedback</div>
-    <div class="update-text">This goes to the person who makes PCC. It is encrypted on your computer so only they can read it.</div>
+    <div class="update-text" data-fun="This goes straight to Partisan, who makes PCC. It's encrypted on your computer so only he can read it. Roast away.">This goes to the person who makes PCC. It is encrypted on your computer so only they can read it.</div>
     <div class="segmented" id="feedback-type"><button data-value="bug" class="active" onclick="setFeedbackType('bug')">Something's broken</button><button data-value="idea" onclick="setFeedbackType('idea')">An idea</button><button data-value="other" onclick="setFeedbackType('other')">Something else</button></div>
     <div class="field">
       <label class="field-label" for="feedback-text" id="feedback-text-label">What happened, and what did you expect?</label>
       <textarea id="feedback-text" rows="6" maxlength="1200"></textarea>
     </div>
     <div class="field">
-      <label class="field-label" for="feedback-name">Your name (optional, so they can ask you about it)</label>
+      <label class="field-label" for="feedback-name" data-fun="Your name (optional, so they can ask you about it, no hiding)">Your name (optional, so they can ask you about it)</label>
       <input id="feedback-name" type="text" maxlength="40" />
     </div>
     <label class="workspace-item" style="background:transparent; padding:0;"><input type="checkbox" id="feedback-log" /><span style="white-space:normal;">Include the app's recent activity log. Helps with bugs; it lists what the app did (not your notes or mail), with email addresses removed.</span></label>
-    <div class="field-note">Sent with it: your PCC version and Windows version. Nothing else.</div>
+    <div class="field-note" data-fun="Sent with it: your PCC version and Windows version. Nothing else, pinky promise.">Sent with it: your PCC version and Windows version. Nothing else.</div>
     <div class="row-form" style="justify-content:flex-end;">
       <button class="btn" onclick="closeFeedback()">Cancel</button>
       <button class="btn btn-primary" id="feedback-send-btn" onclick="sendFeedback()">Send</button>
@@ -1431,11 +1431,11 @@
   <div id="whats-new-modal" role="dialog" aria-labelledby="whats-new-title">
     <div class="wn-head">
       <div class="update-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l2.4 5.2 5.6.6-4.2 3.8 1.2 5.5L12 15.3 7 18.1l1.2-5.5L4 8.8l5.6-.6z"/></svg></div>
-      <div><div class="settings-title" id="whats-new-title">What's new</div><div class="field-note">PCC was updated. Here's what you can do now.</div></div>
+      <div><div class="settings-title" id="whats-new-title">What's new</div><div class="field-note" data-fun="PCC got a glow-up. Here's what you can do now.">PCC was updated. Here's what you can do now.</div></div>
     </div>
     <div class="wn-list" id="whats-new-list"></div>
     <div class="row-form" style="justify-content:space-between; align-items:center;">
-      <span class="field-note">Something not working? <a href="#" onclick="closeWhatsNew(); openFeedback(); return false;">Tell the developer</a></span>
+      <span class="field-note" data-fun="Something broke? &lt;a href=&quot;#&quot; onclick=&quot;closeWhatsNew(); openFeedback(); return false;&quot;&gt;Snitch to the developer&lt;/a&gt;">Something not working? <a href="#" onclick="closeWhatsNew(); openFeedback(); return false;">Tell the developer</a></span>
       <button class="btn btn-primary" onclick="closeWhatsNew()">Got it</button>
     </div>
   </div>
@@ -1467,7 +1467,7 @@
       <label class="field-label" for="eval-paste-text">Copy the evaluation section from the course page and paste it here</label>
       <textarea id="eval-paste-text" rows="9" placeholder="1. Class participation: 5&#10;2. In-class assignment: 20&#10;3. End term examination: 60"></textarea>
     </div>
-    <div class="field-note">Each line with a name and a number of marks becomes a component. You can fix anything afterwards.</div>
+    <div class="field-note" data-fun="Each line with a name and a number of marks becomes a component. You can fix anything afterwards, no stress.">Each line with a name and a number of marks becomes a component. You can fix anything afterwards.</div>
     <div class="row-form" style="justify-content:flex-end;">
       <button class="btn" onclick="closeEvalPaste()">Cancel</button>
       <button class="btn btn-primary" onclick="applyEvalPaste()">Read pattern</button>
@@ -1479,14 +1479,14 @@
   <div id="import-modal" role="dialog" aria-labelledby="import-title">
     <div>
       <div class="settings-title" id="import-title">Import schedule</div>
-      <div class="field-note">Dates for evaluations, office hours and submissions, for all your courses at once.</div>
+      <div class="field-note" data-fun="Dates for evaluations, office hours and submissions, for all your courses at once. Your doom, neatly scheduled.">Dates for evaluations, office hours and submissions, for all your courses at once.</div>
     </div>
     <div id="import-step-paste" class="import-step">
       <div class="field">
         <label class="field-label" for="import-text">Copy the table from Word, Google Docs or a spreadsheet, header row included, and paste it here</label>
         <textarea id="import-text" rows="10" placeholder="Date&#9;Time&#9;Component&#9;Course&#10;19th November&#9;4 pm - 5 pm&#9;Office Hour&#9;Corporate Law&#10;9th December&#9;&#9;Mid-Term&#9;Jurisprudence"></textarea>
       </div>
-      <div class="field-note">Courses can be written short ("Corporate Law", "LPD"). Rows without a date are fine. You'll see what happens to each row before anything is saved.</div>
+      <div class="field-note" data-fun="Courses can be written short (&quot;Corporate Law&quot;, &quot;LPD&quot;). Rows without a date are fine. You'll see what happens to each row before anything is saved, so no surprises.">Courses can be written short ("Corporate Law", "LPD"). Rows without a date are fine. You'll see what happens to each row before anything is saved.</div>
       <div class="row-form" style="justify-content:flex-end;">
         <button class="btn" onclick="importFromWord()" style="margin-right:auto;">Choose a Word file instead</button>
         <button class="btn" onclick="closeScheduleImport()">Cancel</button>

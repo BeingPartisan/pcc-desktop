@@ -20,10 +20,10 @@ const PALETTE_ACTIONS = [
   { id: 'console', title: 'Open console', cat: 'Actions', action: () => openConsole() },
   { id: 'settings', title: 'Open settings', cat: 'Actions', action: () => openSettings() },
   { id: 'feedback', title: 'Send feedback or report a bug', cat: 'Actions', action: () => openFeedback() },
-  { id: 'island-hide', title: 'Hide the island for an hour', cat: 'Actions', action: () => window.pcc.islandSnooze(60).then(() => showToast('Island hidden for an hour. Bring it back from the tray menu.')) },
+  { id: 'island-hide', title: 'Hide the island for an hour', cat: 'Actions', action: () => window.pcc.islandSnooze(60).then(() => showToast(sayAny('Island hidden for an hour. Bring it back from the tray menu.', 'Island’s on a one-hour smoke break. Bring it back from the tray menu.', 'Island hidden for an hour. Miss it already? It’s in the tray menu.'))) },
   { id: 'island-show', title: 'Show the island again', cat: 'Actions', action: () => window.pcc.islandSnooze(0) },
-  { id: 'visualizer-layer', title: 'Visualiser: over windows or on the wallpaper', cat: 'Actions', action: () => { if(prefs().visualizer === 'off') return openSettingsAt('island'); setPref('visualizerLayer', prefs().visualizerLayer === 'top' ? 'wallpaper' : 'top'); showToast(prefs().visualizerLayer === 'top' ? 'Visualiser is over your windows' : 'Visualiser is back on the wallpaper'); } },
-  { id: 'desktop-mode', title: 'Turn Desktop mode on or off', cat: 'Actions', action: () => { setPref('desktopMode', !prefs().desktopMode); showToast(prefs().desktopMode ? 'Desktop mode is on. Show the desktop to see it.' : 'Desktop mode is off'); } },
+  { id: 'visualizer-layer', title: 'Visualiser: over windows or on the wallpaper', cat: 'Actions', action: () => { if(prefs().visualizer === 'off') return openSettingsAt('island'); setPref('visualizerLayer', prefs().visualizerLayer === 'top' ? 'wallpaper' : 'top'); showToast(prefs().visualizerLayer === 'top' ? sayAny('Visualiser is over your windows', 'Visualiser is over your windows. Vibes on top of everything.') : sayAny('Visualiser is back on the wallpaper', 'Visualiser is back on the wallpaper, where it lives.')); } },
+  { id: 'desktop-mode', title: 'Turn Desktop mode on or off', cat: 'Actions', action: () => { setPref('desktopMode', !prefs().desktopMode); showToast(prefs().desktopMode ? sayAny('Desktop mode is on. Show the desktop to see it.', 'Desktop mode is on. Show the desktop to see your new flex.') : sayAny('Desktop mode is off', 'Desktop mode is off. Back to boring wallpaper.')); } },
   { id: 'whats-new', title: "What's new in this version", cat: 'Actions', action: () => openWhatsNew() },
   { id: 'messages', title: 'Open chats', cat: 'Actions', action: () => navigate('messages') },
   { id: 'import-schedule', title: 'Import a schedule of evaluations', cat: 'Actions', action: () => { navigate('academics'); openScheduleImport(); } }
@@ -92,7 +92,7 @@ function filterPalette() {
 function renderPalette() {
   const container = document.getElementById('cmd-results');
   if (filteredCommands.length === 0) {
-    container.innerHTML = '<div class="empty" style="padding:18px 14px;">Nothing matches. Press Enter to search the web.</div>';
+    container.innerHTML = `<div class="empty" style="padding:18px 14px;">${say('Nothing matches. Press Enter to search the web.', 'Nothing matches, bro. Press Enter and let the internet figure it out.')}</div>`;
     return;
   }
   
@@ -135,12 +135,12 @@ function silentAddTask(text, priority = 'med') {
   if(!text) return;
   state.tasks.unshift({id:uid(), text:text, done:false, priority:priority});
   Store.set('tasks', state.tasks);
-  renderTasks(); showToast('Task added');
+  renderTasks(); showToast(sayAny('Task added', 'Task added. Now actually do it.', 'Task added. Look at you being organised.'));
 }
 
 function silentAddNote(text) {
   if(!text) return;
   state.notes.unshift({id:uid(), title:'Quick Capture', body:text, updatedAt:Date.now()});
   Store.set('notes', state.notes);
-  renderNotes(); showToast('Note saved');
+  renderNotes(); showToast(sayAny('Note saved', 'Note saved. Big brain moment.', 'Note saved. Future you says thanks.'));
 }

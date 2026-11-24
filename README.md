@@ -279,6 +279,7 @@ pcc-desktop/
 ## Changelog
 
 ### 2.9.0
+- **PCC got a personality**: greetings, empty screens, pop-ups, settings and the island now talk like a friend: cheeky, a bit sarcastic, quick to roast you when you slack and to hype you up when you deliver. Information always comes first. Prefer it plain? Settings > Appearance > Keep it simple.
 - **Colour themes** (Settings > Appearance): Partisan, Midnight, Sakura, Ocean, Forest, Sunset, Classic and Match my wallpaper, each in dark and light, with tinted backgrounds, a second colour, and warning colours (overdue, urgent, soon) that never blend into the theme. Custom keeps a single colour of your own. Partisan is the default on a new PC.
 - **Settings, redone**: a bigger window with a search box that finds any setting on any page, icons and groups in the list (You, On your screen, Connected, This PC, Help), and each page split into tidy cards. Clearer names too: Pages and cards, Desktop mode, Digiicampus, Sync devices, Data and backups.
 - **Sounds and actions** (Settings > Sounds): make PCC react when things happen. Pick a moment (charger plugged in or out, battery low or full, a task or all tasks done, a deadline ticked, the focus timer ending, a habit streak reaching 7, 10 or 30 days, a new message, a class in 5 minutes, the first open of the day) and what happens: one of seven built-in sounds or any audio file of your own, confetti, the island celebrating, or a notification. With volume and quiet hours.

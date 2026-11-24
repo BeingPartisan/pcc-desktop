@@ -247,12 +247,12 @@ async function syncJoin(){
   if(!result.ok){ status.textContent = result.error; status.className = 'mail-test bad'; return; }
   input.value = '';
   Object.assign(syncState, result);
-  showToast('Syncing. Your other devices will send what they have in a moment.');
+  showToast(sayAny('Syncing. Your other devices will send what they have in a moment.', 'Syncing. Your other devices will send what they have in a moment. Family reunion loading…', 'You’re in. Your other devices will send their stuff over in a moment.'));
   renderSyncSettings();
 }
 
 async function syncLeave(){
-  if(!confirm('Stop syncing on this device?\n\nEverything stays here as it is; it just stops being shared. Your other devices keep syncing with each other.')) return;
+  if(!confirm(say('Stop syncing on this device?\n\nEverything stays here as it is; it just stops being shared. Your other devices keep syncing with each other.', 'Leaving the group chat, huh? Stop syncing on this device?\n\nEverything stays here as it is; it just stops being shared. Your other devices keep syncing with each other.'))) return;
   Object.assign(syncState, await window.pcc.syncLeave());
   Store.set(SYNC_META_KEY, {}); Store.set(SYNC_PENDING_KEY, []);
   renderSyncSettings();
@@ -261,13 +261,13 @@ async function syncLeave(){
 async function syncNow(){
   await syncFlush();
   await window.pcc.syncSend({ type: 'hello' });
-  showToast('Asked your other devices for their latest');
+  showToast(sayAny('Asked your other devices for their latest', 'Asked your other devices for their latest. They’d better reply.', 'Poked your other devices for their latest.'));
 }
 
 async function syncRevealCode(copy){
   const code = await window.pcc.syncShowCode();
   if(!code) return;
-  if(copy){ await navigator.clipboard.writeText(code); showToast('Sync code copied. Only enter it on your own devices.'); }
+  if(copy){ await navigator.clipboard.writeText(code); showToast(sayAny('Sync code copied. Only enter it on your own devices.', 'Sync code copied. Only enter it on your own devices. Not your bestie’s, not your cousin’s. Yours.', 'Copied. Only enter it on your own devices, bro. It unlocks everything synced.')); }
   else document.getElementById('sync-code').textContent = code;
 }
 
@@ -298,7 +298,7 @@ function renderSyncSettings(newCode){
   const devices = syncState.devices || [];
   document.getElementById('sync-devices').innerHTML = devices.length
     ? devices.map(d => `<div class="sync-device"><span>${esc(d.name)}</span><span>seen ${syncAgo(d.seen)}</span></div>`).join('')
-    : '<div class="setting-desc">No other device yet. Enter the code on your other device to pair it.</div>';
+    : `<div class="setting-desc">${say('No other device yet. Enter the code on your other device to pair it.', 'No other device yet. Lonely in here. Enter the code on your other device to pair it.')}</div>`;
   const pending = Store.get(SYNC_PENDING_KEY, []).length;
   document.getElementById('sync-last').textContent =
     `Sent ${syncAgo(syncState.lastSent)} · received ${syncAgo(syncState.lastReceived)}` + (pending ? ` · ${pending} change${pending === 1 ? '' : 's'} waiting for a connection` : '');

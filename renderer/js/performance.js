@@ -19,7 +19,7 @@ async function configurePerformance(){
 function renderPerfStatus(profile){
   const el = document.getElementById('perf-status');
   if(!el || !profile) return;
-  el.textContent = profile.savingForBattery ? 'Running on battery, so Battery saver is in use until you plug in.' : '';
+  el.textContent = profile.savingForBattery ? say('Running on battery, so Battery saver is in use until you plug in.', 'Running on battery, so Battery saver is in use until you plug in. Go find a charger, bro.') : '';
   el.hidden = !profile.savingForBattery;
 }
 

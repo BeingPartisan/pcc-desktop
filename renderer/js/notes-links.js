@@ -9,7 +9,7 @@ function updateNote(id, field, value){
 }
 function renderNotes(){
   const el = document.getElementById('notes-list');
-  if(!state.notes.length){ el.innerHTML = '<div class="empty">No notes yet.</div>'; return; }
+  if(!state.notes.length){ el.innerHTML = `<div class="empty">${say('No notes yet.', 'No notes yet. Big brain, keeping it all in your head?', 'No notes yet. Your future self is worried.', 'No notes yet. Topper energy loading…')}</div>`; return; }
   el.innerHTML = state.notes.map(n => `
     <div class="note-card">
       <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -26,7 +26,7 @@ function onLinkTypeChange(){
   const targetInput = document.getElementById('link-target');
   const browseBtn = document.getElementById('link-browse-btn');
   if(type === 'app'){
-    targetInput.placeholder = 'App path — use Browse';
+    targetInput.placeholder = say('App path — use Browse', 'App path — hit Browse, typing it out is pain');
     targetInput.readOnly = true;
     browseBtn.style.display = 'inline-block';
   } else {
@@ -57,7 +57,7 @@ function addLink(){
 }
 function renderLinks(){
   const body = document.getElementById('links-body');
-  if(!state.links.length){ body.innerHTML = '<div class="empty">Nothing here yet. Add a site or an app below.</div>'; return; }
+  if(!state.links.length){ body.innerHTML = `<div class="empty">${say('Nothing here yet. Add a site or an app below.', 'Nothing here yet. Still typing URLs by hand? Add a site or an app below.', 'Empty, bro. Add a site or an app below.')}</div>`; return; }
   // Backward-compat: old entries only have {name, url}; treat those as type 'url'
   body.innerHTML = state.links.map(l => {
     const type = l.type || 'url';
@@ -75,7 +75,7 @@ function renderLinks(){
   body.querySelectorAll('.link-tile').forEach(tile => {
     tile.addEventListener('click', async () => {
       const result = await window.pcc.launchItem(tile.dataset.type, tile.dataset.target);
-      if(result && !result.ok) showToast('Could not open: ' + (result.error || 'unknown error'));
+      if(result && !result.ok) showToast(sayAny('Could not open: ', 'Could not open that, bro: ', 'That one refused to open: ') + (result.error || 'unknown error'));
     });
   });
   body.querySelectorAll('.link-remove').forEach(btn => {

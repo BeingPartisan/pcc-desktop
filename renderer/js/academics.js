@@ -38,7 +38,7 @@ function gradeNote(course){
   if(g === 'F' || course.failed) return course.marks === null ? 'Fail' : `Fail · ${+(40 - course.marks).toFixed(2)} short of a pass`;
   if(course.marks === null) return '';
   const next = [...GRADE_SCALE].reverse().find(r => r.min > course.marks);
-  return next ? `${+(next.min - course.marks).toFixed(2)} more for ${next.grade}` : '';
+  return next ? say(`${+(next.min - course.marks).toFixed(2)} more for ${next.grade}`, `${+(next.min - course.marks).toFixed(2)} more for ${next.grade}. So close, yaar!`) : '';
 }
 
 const DEFAULT_ATTENDANCE_TARGET = 75; // percent; adjustable on the Attendance card
@@ -51,7 +51,7 @@ function attendanceTarget(){
 
 function setAttendanceTarget(value){
   const t = Math.round(Number(value));
-  if(!(t >= 1 && t <= 100)){ showToast('Enter a target between 1 and 100'); renderAcademics(); return; }
+  if(!(t >= 1 && t <= 100)){ showToast(sayAny('Enter a target between 1 and 100', 'Enter a target between 1 and 100. Percentages don’t go to 11, bro.', 'Enter a target between 1 and 100. Nice try though.')); renderAcademics(); return; }
   state.settings.attendanceTarget = t;
   Store.set('settings', state.settings);
   renderAcademics();
@@ -62,19 +62,19 @@ function setAttendanceTarget(value){
 //   held    = classes held so far, present = attended, left = still to come
 function attendanceAdvice(present, held, left, targetPct){
   const T = targetPct / 100;
-  if(!held) return { text: 'No classes held yet', cls: '' };
+  if(!held) return { text: say('No classes held yet', 'No classes held yet. Enjoy it while it lasts.'), cls: '' };
   if(present / held >= T){
     const canMiss = Math.floor(present / T - held + 1e-9);
-    if(canMiss <= 0) return { text: 'On target, with no room to miss a class', cls: 'warn' };
-    return { text: `You can miss ${Math.min(canMiss, left || canMiss)} more`, cls: 'ok' };
+    if(canMiss <= 0) return { text: say('On target, with no room to miss a class', 'On target, with no room to miss a class. Don’t even think about bunking.', 'On target, with no room to miss a class. Walking the tightrope, bhai.'), cls: 'warn' };
+    return { text: say(`You can miss ${Math.min(canMiss, left || canMiss)} more`, `You can miss ${Math.min(canMiss, left || canMiss)} more. Spend them wisely.`, `You can miss ${Math.min(canMiss, left || canMiss)} more. Bunk budget unlocked.`), cls: 'ok' };
   }
-  if(T >= 1) return { text: `Below ${targetPct}%`, cls: 'bad' };
+  if(T >= 1) return { text: say(`Below ${targetPct}%`, `Below ${targetPct}%. A ${targetPct}% target? Ambitious, bro.`), cls: 'bad' };
   const need = Math.ceil((T * held - present) / (1 - T) - 1e-9);
   if(left && need > left){
     const best = Math.round((present + left) / (held + left) * 100);
-    return { text: `Can't reach ${targetPct}% this term (${best}% at best)`, cls: 'bad' };
+    return { text: say(`Can't reach ${targetPct}% this term (${best}% at best)`, `Can't reach ${targetPct}% this term (${best}% at best). Time to talk to the faculty, yaar.`), cls: 'bad' };
   }
-  return { text: `Attend the next ${need} to reach ${targetPct}%`, cls: 'bad' };
+  return { text: say(`Attend the next ${need} to reach ${targetPct}%`, `Attend the next ${need} to reach ${targetPct}%. Bed can wait, bro.`, `Attend the next ${need} to reach ${targetPct}%. No bunking, bish.`), cls: 'bad' };
 }
 
 function shortDate(dateStr){
@@ -89,8 +89,8 @@ function shortTermName(name){
 
 function academicsEmptyState(what){
   if(!campus.loaded && window.pcc && window.pcc.campusStatus) return skeletonRows(3);   // still reading the saved data
-  if(campusActive()) return `<div class="empty">No ${what} from Digiicampus yet. Try Sync on the Study page.</div>`;
-  return `<div class="empty">Connect Digiicampus to see your ${what} here.</div>
+  if(campusActive()) return `<div class="empty">${say(`No ${what} from Digiicampus yet. Try Sync on the Study page.`, `No ${what} from Digiicampus yet. Try Sync on the Study page; the uni is taking its sweet time.`, `No ${what} from Digiicampus yet. Try Sync on the Study page and give it a nudge.`)}</div>`;
+  return `<div class="empty">${say(`Connect Digiicampus to see your ${what} here.`, `Connect Digiicampus to see your ${what} here. Can't show what I can't see, bro.`, `Connect Digiicampus to see your ${what} here. Brace yourself.`)}</div>
     <div><button class="btn btn-primary" onclick="openSettingsAt('timetable')">Connect Digiicampus</button></div>`;
 }
 
@@ -193,7 +193,7 @@ function renderResults(){
       </div>
       <div class="gpa-head-side">
         <div class="att-meta">${terms.length} terms${res.totalCredits ? ` · ${res.totalCredits} credits` : ''}</div>
-        <div class="att-meta">SGPA by term. Click a bar to see its courses.</div>
+        <div class="att-meta">${say('SGPA by term. Click a bar to see its courses.', 'SGPA by term. Click a bar to see its courses (if you dare).')}</div>
       </div>
     </div>
     <div class="gpa-chart">${chart}</div>

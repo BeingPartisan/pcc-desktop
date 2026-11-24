@@ -231,7 +231,7 @@ async function loadAppearanceExtras(){
 
 async function chooseCustomImage(kind){
   const result = await window.pcc.pickCustomImage(kind);
-  if(!result.ok){ if(!result.canceled) showToast('Could not use that image'); return; }
+  if(!result.ok){ if(!result.canceled) showToast(sayAny('Could not use that image', 'Couldn’t use that image. Try another one, bro.', 'That image said no. Pick a different one.')); return; }
   customImages[kind] = result.url;
   if(kind === 'wallpaper') setPref('background', 'image');
   else { applyAppearance(); renderAppearanceSettings(); }
@@ -257,7 +257,7 @@ function setAccent(hex){
 
 function setTimerPref(key, value, max){
   const minutes = Math.round(Number(value));
-  if(!(minutes >= 1 && minutes <= max)){ showToast(`Enter between 1 and ${max} minutes`); renderAppearanceSettings(); return; }
+  if(!(minutes >= 1 && minutes <= max)){ showToast(sayAny(`Enter between 1 and ${max} minutes`, `Enter between 1 and ${max} minutes. Nice try though.`, `Between 1 and ${max} minutes, bro. Be realistic.`)); renderAppearanceSettings(); return; }
   setPref(key, minutes);
 }
 

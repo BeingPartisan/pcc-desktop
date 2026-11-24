@@ -154,7 +154,7 @@ async function setRuleSound(id, value){
   const r = soundRules().find(x => x.id === id); if(!r) return;
   if(value === 'pick'){
     const result = await window.pcc.pickSoundFile();
-    if(!result.ok){ if(!result.canceled) showToast(result.error || 'Could not add that file'); return renderSoundSettings(); }
+    if(!result.ok){ if(!result.canceled) showToast(result.error || sayAny('Could not add that file', 'Couldn’t add that file. Is it actually audio, bro?', 'That file refused to join the party. Try another.')); return renderSoundSettings(); }
     if(r.sound.startsWith('file:')) window.pcc.removeSoundFile(r.sound.slice(5));
     r.sound = 'file:' + result.id; r.fileName = result.name;
     saveSoundRules(); playSound(r.sound);
@@ -192,7 +192,7 @@ function renderSoundSettings(){
         <input type="checkbox" class="switch" ${rule.on ? 'checked' : ''} onchange="setSoundRule('${rule.id}', 'on', this.checked)" aria-label="Rule on" />
         <button class="btn btn-icon btn-danger" onclick="removeSoundRule('${rule.id}')" aria-label="Remove rule">&times;</button>
       </span>
-    </div>`).join('') || '<div class="empty">No rules yet. Add one below.</div>';
+    </div>`).join('') || `<div class="empty">${say('No rules yet. Add one below.', 'No rules yet. Dead silence. Add one below and make some noise.')}</div>`;
   const vol = document.getElementById('sounds-volume');
   if(vol && document.activeElement !== vol) vol.value = prefs().soundsVolume ?? 70;
   const out = document.getElementById('sounds-volume-out');

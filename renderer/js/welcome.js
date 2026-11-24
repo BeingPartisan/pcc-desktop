@@ -50,12 +50,12 @@ function renderWelcome(){
     `<button class="${p.visualizer === value ? 'on' : ''}" onclick="welcomeVisualizer(true, '${value}')">${label}</button>`).join('');
   document.getElementById('welcome-desk').checked = !!p.desktopMode;
   document.getElementById('welcome-desk-icons').style.display = p.desktopMode ? '' : 'none';
-  document.getElementById('welcome-desk-note').textContent = p.desktopMode ? 'Where are your desktop icons? The dashboard leaves them room.' : 'A dashboard on your wallpaper, under your icons.';
+  document.getElementById('welcome-desk-note').textContent = p.desktopMode ? say('Where are your desktop icons? The dashboard leaves them room.', 'Where do your desktop icons live? The dashboard will scoot over.') : say('A dashboard on your wallpaper, under your icons.', 'A whole dashboard on your wallpaper, under your icons. Main character energy.');
   const modeName = { saver: 'Battery saver', balanced: 'Balanced', best: 'Best quality' }[p.perfMode] || 'Balanced';
   document.getElementById('welcome-perf-title').textContent = `Performance: ${modeName}`;
   document.getElementById('welcome-perf-note').textContent = welcomeOnLaptop
-    ? 'Picked for your laptop: lighter whenever you\'re on battery.'
-    : 'How smooth the visualiser and dashboard are. You can change it any time.';
+    ? say('Picked for your laptop: lighter whenever you\'re on battery.', 'Picked for your laptop: goes easy on the battery when you’re unplugged.')
+    : say('How smooth the visualiser and dashboard are. You can change it any time.', 'How buttery the visualiser and dashboard are. Change it any time.');
   renderAppearanceSettings();   // the segmented controls with data-pref, here and in Settings
   if(step === 'done') renderWelcomeChecklist();
 
@@ -109,7 +109,7 @@ function welcomeWeatherSoon(){
   welcomeWeatherTimer = setTimeout(async () => {
     try {
       const place = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`).then(r => r.json());
-      if(!place.results){ el.textContent = "Can't find that city yet. Keep typing, or check the spelling."; return; }
+      if(!place.results){ el.textContent = say("Can't find that city yet. Keep typing, or check the spelling.", 'Can’t find that city yet. Keep typing, or check the spelling, bro.'); return; }
       const { latitude, longitude, name, country } = place.results[0];
       const d = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`).then(r => r.json());
       el.textContent = `${Math.round(d.current_weather.temperature)}°, ${weatherWords(d.current_weather.weathercode)} in ${name}${country ? ', ' + country : ''}`;
@@ -126,13 +126,13 @@ function renderWelcomeCampus(){
   const connected = campusActive();
   document.getElementById('welcome-campus-btn').style.display = connected ? 'none' : '';
   document.getElementById('welcome-campus-state').textContent = connected
-    ? `Connected: ${evalCourses().length} courses and your timetable are in.` : 'Not connected';
+    ? say(`Connected: ${evalCourses().length} courses and your timetable are in.`, `Connected: ${evalCourses().length} courses and your timetable are in. Damn bro, efficient.`) : 'Not connected';
   const withPattern = evalCourses().filter(c => evalFor(c).components.length).length;
   if(withPattern) document.getElementById('welcome-eval-state').textContent = `Evaluation pattern in for ${withPattern} course${withPattern === 1 ? '' : 's'}.`;
 }
 async function welcomeConnectCampus(){ await connectCampus(); renderWelcomeCampus(); }
 async function welcomeImportEvaluation(){ await importFromWord(); }
-function welcomeLater(page){ welcomeLaterPage = page; showToast('Timetable settings will open when you finish'); }
+function welcomeLater(page){ welcomeLaterPage = page; showToast(sayAny('Timetable settings will open when you finish', 'Noted. Timetable settings will open when you finish. No escape.')); }
 // After the import dialog closes, show what came in.
 hookRender('renderEvaluation', () => { if(document.getElementById('welcome-overlay').classList.contains('open')) renderWelcomeCampus(); });
 
@@ -141,15 +141,15 @@ async function welcomeSaveMail(){
   const email = document.getElementById('welcome-mail').value.trim();
   const appPassword = document.getElementById('welcome-mail-pass').value.replace(/\s+/g, '');
   const state = document.getElementById('welcome-mail-state');
-  if(!email || !appPassword){ state.className = 'wl-note bad'; state.textContent = 'Enter your email and the app password first.'; return; }
-  state.className = 'wl-note'; state.textContent = 'Checking the sign-in…';
+  if(!email || !appPassword){ state.className = 'wl-note bad'; state.textContent = say('Enter your email and the app password first.', 'Email and app password first, bro. Can’t sign in with vibes.'); return; }
+  state.className = 'wl-note'; state.textContent = say('Checking the sign-in…', 'Checking the sign-in… hold tight.');
   const imapHost = 'imap.gmail.com';   // Gmail and Google-run university mail; anything else is set up in Settings > Mail
   await window.pcc.setMailConfig({ email, imapHost, allowedSenders: [], daysBack: 14, appPassword });
   document.getElementById('welcome-mail-pass').value = '';
   inboxAccount = { email, gmail: true };
   const test = await window.pcc.testMailLogin();
   state.className = 'wl-note ' + (test.ok ? 'ok' : 'bad');
-  state.textContent = test.ok ? 'Signed in. Your mail will be on the Inbox page.' : test.error;
+  state.textContent = test.ok ? say('Signed in. Your mail will be on the Inbox page.', 'Signed in. Your mail will be on the Inbox page. Look at you go.') : test.error;
   if(test.ok){ welcomeMailOk = true; scanMail(true); }
 }
 
@@ -165,20 +165,20 @@ function welcomeJoin(){
   const codeInput = document.getElementById('welcome-code'), nameInput = document.getElementById('welcome-code-name');
   const state = document.getElementById('welcome-join-state');
   const topic = codeToTopic(codeInput.value);
-  if(!topic){ state.className = 'wl-note bad'; state.textContent = "That code doesn't look right. It starts with PCC and has 16 more characters."; return; }
-  if(msg.channels.some(c => c.topic === topic)){ state.className = 'wl-note'; state.textContent = 'You already have this channel.'; return; }
+  if(!topic){ state.className = 'wl-note bad'; state.textContent = say("That code doesn't look right. It starts with PCC and has 16 more characters.", 'That code looks sus. It starts with PCC and has 16 more characters.'); return; }
+  if(msg.channels.some(c => c.topic === topic)){ state.className = 'wl-note'; state.textContent = say('You already have this channel.', 'You already have this channel. Déjà vu, bro?'); return; }
   const name = (nameInput.value.trim() || 'Friends').slice(0, 30);
   msg.channels.push({ id: uid(), name, topic });
   saveMessages(); configureMessages(); pushIsland();
   welcomeJoined++;
   codeInput.value = ''; nameInput.value = '';
-  state.className = 'wl-note ok'; state.textContent = `Joined "${name}". Add another if you like.`;
+  state.className = 'wl-note ok'; state.textContent = say(`Joined "${name}". Add another if you like.`, `Joined "${name}". Popular, aren’t we? Add another if you like.`);
 }
 async function welcomeAutostart(on){
   const result = await window.pcc.setAutostart(on);
   if(result && !result.supported){
     document.getElementById('welcome-autostart').checked = false;
-    document.getElementById('welcome-autostart-note').textContent = 'This works in the installed app (not when running from source).';
+    document.getElementById('welcome-autostart-note').textContent = say('This works in the installed app (not when running from source).', 'This only works in the installed app (not when running from source). Dev life, bro.');
   }
 }
 
@@ -186,7 +186,7 @@ async function welcomeAutostart(on){
 async function renderWelcomeChecklist(){
   const p = prefs();
   const name = state.settings.name;
-  document.getElementById('welcome-done-title').innerHTML = name ? `You're all set, <em>${esc(name)}</em>` : "You're all set";
+  document.getElementById('welcome-done-title').innerHTML = name ? say(`You're all set, <em>${esc(name)}</em>`, `You’re all set, <em>${esc(name)}</em>. Damn.`, `Locked in, <em>${esc(name)}</em>`) : say("You're all set", 'You’re all set. Damn.', 'Locked in');
   const auto = window.pcc && window.pcc.getAutostartStatus ? await window.pcc.getAutostartStatus() : { enabled: false };
   const courses = evalCourses().filter(c => evalFor(c).components.length).length;
   const items = [
@@ -211,10 +211,14 @@ async function renderWelcomeChecklist(){
 /* ---------- The tour ---------- */
 // A spotlight on a few things that aren't obvious, one at a time.
 const TOUR_STEPS = [
-  { target: '.rail', title: 'Your pages', text: 'Today, Inbox, Messages, Focus and the rest. Hover to see their names; Ctrl+1, 2, 3… jumps straight to one.' },
-  { target: '#search-input', title: 'Ctrl+K does almost anything', text: 'Search everything, open any page, start the timer, add a task or note, or change a setting, all from the keyboard.' },
-  { target: '.rail-feedback', title: 'Tell the developer', text: 'Found a bug or have an idea? The star sends it straight to Partisan, encrypted.' },
-  { target: null, title: 'PCC lives in your tray', text: 'Closing the window keeps PCC running by the clock, so the island, reminders and your desktop keep going. Right-click its icon for quick switches.' },
+  { target: '.rail', title: 'Your pages', text: 'Today, Inbox, Messages, Focus and the rest. Hover to see their names; Ctrl+1, 2, 3… jumps straight to one.',
+    fun: 'Today, Inbox, Messages, Focus and the gang. Hover to see their names; Ctrl+1, 2, 3… teleports you there.' },
+  { target: '#search-input', title: 'Ctrl+K does almost anything', text: 'Search everything, open any page, start the timer, add a task or note, or change a setting, all from the keyboard.',
+    fun: 'Search everything, open any page, start the timer, add a task or note, or change a setting. Hacker mode, no mouse needed.' },
+  { target: '.rail-feedback', title: 'Tell the developer', text: 'Found a bug or have an idea? The star sends it straight to Partisan, encrypted.',
+    fun: 'Found a bug or have an idea? The star sends it straight to Partisan, encrypted. Roasts welcome too.' },
+  { target: null, title: 'PCC lives in your tray', text: 'Closing the window keeps PCC running by the clock, so the island, reminders and your desktop keep going. Right-click its icon for quick switches.',
+    fun: 'Closing the window doesn’t kill PCC; it chills by the clock so the island, reminders and your desktop keep going. Right-click its icon for quick switches.' },
 ];
 let tourIndex = 0;
 
@@ -227,7 +231,7 @@ function showTourStep(){
   const spot = document.getElementById('tour-spot'), card = document.getElementById('tour-card');
   document.getElementById('tour-count').textContent = `${tourIndex + 1} of ${TOUR_STEPS.length}`;
   document.getElementById('tour-title').textContent = step.title;
-  document.getElementById('tour-text').textContent = step.text;
+  document.getElementById('tour-text').textContent = step.fun ? say(step.text, step.fun) : step.text;
   document.getElementById('tour-next').textContent = tourIndex === TOUR_STEPS.length - 1 ? 'Done' : 'Next';
   const el = step.target && document.querySelector(step.target);
   const pad = 8, W = innerWidth, H = innerHeight;

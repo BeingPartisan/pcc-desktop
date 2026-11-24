@@ -82,7 +82,7 @@ function updateSlotLabel(index, value){
   if(label){
     state.timetable.slots[index] = label;
     // The Today page reads these times to show "Now" / "In 25m".
-    if(!parseSlotTimes(label)) showToast('Saved. Write times like "9:00-10:50 AM" so Today can track them.');
+    if(!parseSlotTimes(label)) showToast(sayAny('Saved. Write times like "9:00-10:50 AM" so Today can track them.', 'Saved. But write times like "9:00-10:50 AM" so Today can track them. I can’t read hieroglyphs, bro.'));
   }
   saveTimetable();
 }
@@ -107,7 +107,7 @@ function closeSlotEditor(){
 function saveSlot(){
   if(!slotEditTarget) return;
   const subject = document.getElementById('slot-subject').value.trim();
-  if(!subject) return showToast('Enter a subject, or use Clear to empty this period');
+  if(!subject) return showToast(sayAny('Enter a subject, or use Clear to empty this period', 'Enter a subject, or use Clear to empty this period. A free period doesn’t need a name, bhai.', 'Enter a subject, or use Clear to empty this period. Blank class is not a subject.'));
   state.timetable.days[slotEditTarget.day][slotEditTarget.index] = {
     subject,
     prof: document.getElementById('slot-prof').value.trim(),

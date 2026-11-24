@@ -8,7 +8,7 @@ function showAutostartState(state){
   const status = document.getElementById('autostart-status');
   toggle.checked = !!state.enabled;
   toggle.disabled = !state.supported;
-  status.textContent = state.supported ? '' : 'Only available in the installed app, not in a development run.';
+  status.textContent = state.supported ? '' : say('Only available in the installed app, not in a development run.', 'Only works in the installed app, not in a development run. Dev mode has its limits, bro.');
 }
 async function loadAutostartUI(){
   showAutostartState(await window.pcc.getAutostartStatus());
@@ -16,7 +16,7 @@ async function loadAutostartUI(){
 async function toggleAutostart(enable){
   const state = await window.pcc.setAutostart(enable);
   showAutostartState(state);
-  if(state.supported) showToast(state.enabled ? 'PCC will start when you sign in' : 'Autostart turned off');
+  if(state.supported) showToast(state.enabled ? sayAny('PCC will start when you sign in', 'PCC will start when you sign in. Clingy? Maybe. Useful? Definitely.', 'Done. PCC will be waiting for you every time you sign in.') : sayAny('Autostart turned off', 'Autostart off. You’ll have to open PCC yourself now, like a caveman.', 'Autostart turned off. Fine, play hard to get.'));
 }
 
 // --- Data backup: export / import / automatic daily backup ---
@@ -39,8 +39,8 @@ function collectData(){
 
 async function exportData(){
   const result = await window.pcc.exportData(collectData());
-  if(result.ok) showToast('Data exported');
-  else if(!result.canceled) showToast('Export failed: ' + (result.error || 'unknown error'));
+  if(result.ok) showToast(sayAny('Data exported', 'Data exported. Your whole life, in one file. No pressure.', 'Exported. Keep that file safe, bhai.'));
+  else if(!result.canceled) showToast(say('Export failed: ', 'Export failed, yaar: ') + (result.error || 'unknown error'));
 }
 
 async function importData(){
@@ -52,16 +52,17 @@ async function importData(){
   const when = picked.exportedAt ? new Date(picked.exportedAt).toLocaleString() : 'an unknown date';
   const sure = confirm(
     `Replace ALL current data with "${picked.fileName}" (saved ${when})?\n\n` +
-    'Your current data is backed up automatically first, so this can be undone from the backups folder.'
+    say('Your current data is backed up automatically first, so this can be undone from the backups folder.',
+        'Your current data is backed up automatically first, so this can be undone from the backups folder. Relax, nothing gets lost.')
   );
   if(!sure) return;
 
   // Safety copy of what's about to be replaced. Don't go ahead without it.
   const backup = await window.pcc.backupData(collectData(), 'before import');
-  if(!backup.ok){ showToast('Import cancelled: could not back up current data'); return; }
+  if(!backup.ok){ showToast(say('Import cancelled: could not back up current data', 'Import cancelled: couldn’t back up your current data first, and we don’t gamble with your stuff.')); return; }
 
   const applied = await window.pcc.applyImport();
-  if(!applied.ok){ showToast('Import failed: ' + (applied.error || 'unknown error')); return; }
+  if(!applied.ok){ showToast(say('Import failed: ', 'Import failed, bish: ') + (applied.error || 'unknown error')); return; }
 
   Object.keys(collectData()).forEach(key => localStorage.removeItem(key));
   for(const [key, value] of Object.entries(picked.data)){
@@ -107,7 +108,7 @@ async function loadAboutUI(){
 
 async function checkForUpdatesNow(){
   const result = await window.pcc.checkForUpdates();
-  if(result.ok) showToast('Checking for updates…'); // the result arrives as a dialog (updates.js); a development run shows a preview
+  if(result.ok) showToast(sayAny('Checking for updates…', 'Checking for updates… fingers crossed for something shiny.', 'Asking the mothership for updates…')); // the result arrives as a dialog (updates.js); a development run shows a preview
 }
 
 async function loadMailSettingsUI(){
@@ -118,7 +119,7 @@ async function loadMailSettingsUI(){
   document.getElementById('mail-days-back').value = cfg.daysBack || 14;
   document.getElementById('mail-password-status').textContent = cfg.hasPassword
     ? 'An app password is already saved (encrypted). Leave blank to keep it.'
-    : 'No app password saved yet.';
+    : say('No app password saved yet.', 'No app password saved yet. The inbox is waiting, bro.');
 }
 
 async function saveMailSettings(){
@@ -137,10 +138,10 @@ async function saveMailSettings(){
   // Try signing in straight away, so a wrong password is reported here and not left to be found on the Inbox page.
   const result = document.getElementById('mail-test-result');
   result.className = 'mail-test';
-  result.textContent = 'Saved. Checking the sign-in…';
+  result.textContent = say('Saved. Checking the sign-in…', 'Saved. Checking the sign-in… hold tight.');
   const test = await window.pcc.testMailLogin();
   result.className = 'mail-test ' + (test.ok ? 'ok' : 'bad');
-  result.textContent = test.ok ? 'Signed in. Your mail is on the Inbox page.' : test.error;
+  result.textContent = test.ok ? say('Signed in. Your mail is on the Inbox page.', 'Signed in. Damn bro, your mail is on the Inbox page now.') : test.error;
   if(test.ok) scanMail(true); // pick up mail with the new settings straight away
   else { inboxError = test.error; renderInbox(); }
 }
@@ -165,7 +166,7 @@ function startHotkeyCapture(){
   const input = document.getElementById('hotkey-display');
   const status = document.getElementById('hotkey-status');
   if(hotkeyCaptureStop) return; // already capturing
-  input.value = 'Press keys... (Esc to cancel)';
+  input.value = say('Press keys... (Esc to cancel)', 'Smash a combo... (Esc to cancel)');
   status.textContent = '';
   input.focus();
 
@@ -205,7 +206,7 @@ function startHotkeyCapture(){
     // A global shortcut takes its key away from every other app, so it
     // needs Ctrl/Alt/Win — unless it's a function key. Keep listening.
     if(!hasModifier && !/^F\d{1,2}$/.test(key)){
-      status.textContent = 'Add Ctrl, Alt or the Windows key to the combination.';
+      status.textContent = say('Add Ctrl, Alt or the Windows key to the combination.', 'Add Ctrl, Alt or the Windows key too. One lonely key won’t cut it, bro.');
       status.style.color = 'var(--amber)';
       return;
     }
@@ -218,10 +219,10 @@ function startHotkeyCapture(){
 
     window.pcc.setHotkey(accelerator).then(result => {
       if(result.ok){
-        status.textContent = 'Hotkey updated.';
+        status.textContent = say('Hotkey updated.', 'Hotkey updated. Muscle memory, start training.');
         status.style.color = 'var(--accent-text)';
       } else {
-        status.textContent = result.error || 'Failed to set hotkey.';
+        status.textContent = result.error || say('Failed to set hotkey.', 'Couldn’t set that hotkey. Something else probably called dibs.');
         status.style.color = 'var(--red)';
         loadHotkeyUI(); // revert display back to the last working hotkey
       }
@@ -239,8 +240,8 @@ function updateSettings(key, val){
   if(key==='weatherCity') loadWeather(true);
 }
 async function resetAllData(){
-  if(!confirm('Erase all your data?\n\nA backup of the current data is saved to the backups folder first.')) return;
+  if(!confirm(say('Erase all your data?\n\nA backup of the current data is saved to the backups folder first.', 'Erase ALL your data? Fresh start arc?\n\nA backup of the current data is saved to the backups folder first.'))) return;
   const backup = await window.pcc.backupData(collectData(), 'before factory reset');
-  if(!backup.ok && !confirm('The safety backup failed. Erase everything anyway?')) return;
+  if(!backup.ok && !confirm(say('The safety backup failed. Erase everything anyway?', 'The safety backup failed, so there will be NO way back. Erase everything anyway?'))) return;
   localStorage.clear(); location.reload();
 }

@@ -31,7 +31,7 @@ function showUpdateStatus(status){
 
   if(status.state === 'available'){
     title = 'Update available';
-    text = `Version ${status.version} is ready to download. You have ${status.current}.`;
+    text = say(`Version ${status.version} is ready to download. You have ${status.current}.`, `Version ${status.version} is ready to download. You have ${status.current}, which is basically vintage now.`);
     notes = status.notes || '';
     buttons.download = buttons.later = true;
   } else if(status.state === 'downloading'){
@@ -41,15 +41,15 @@ function showUpdateStatus(status){
     buttons.close = true;
   } else if(status.state === 'downloaded'){
     title = 'Update ready';
-    text = `Version ${status.version} has downloaded. Restart to install it; your data stays as it is.`;
+    text = say(`Version ${status.version} has downloaded. Restart to install it; your data stays as it is.`, `Version ${status.version} has downloaded. Restart to install it; your data stays exactly as it is. Fresh PCC, who dis?`);
     buttons.restart = buttons.later = true;
   } else if(status.state === 'none'){
     title = status.preview ? 'End of the preview' : "You're up to date";
-    text = status.preview ? 'A real update would close PCC here, install, and open it again.' : `Version ${status.current} is the latest.`;
+    text = status.preview ? 'A real update would close PCC here, install, and open it again.' : say(`Version ${status.current} is the latest.`, `Version ${status.current} is the latest. Damn bro, peak PCC already.`, `Version ${status.current} is the latest. Nothing new, go touch some grass.`);
     buttons.close = true;
   } else if(status.state === 'error'){
     title = "Couldn't update";
-    text = status.message || 'Something went wrong while checking for updates.';
+    text = status.message || say('Something went wrong while checking for updates.', 'Something went wrong while checking for updates. Check your internet and try again later.');
     buttons.close = true;
   } else return;
 

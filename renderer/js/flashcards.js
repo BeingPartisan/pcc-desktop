@@ -37,15 +37,15 @@ function renderFlashcards() {
   container.classList.remove('flipped');
   
   if (state.flashcards.length === 0) {
-    termDisplay.textContent = "No cards yet";
-    defDisplay.textContent = "Add your first card below.";
+    termDisplay.textContent = say("No cards yet", "No cards yet", "Empty deck, bro");
+    defDisplay.textContent = say("Add your first card below.", "Add your first card below. The exam won’t memorise itself.", "Add your first card below. Can’t revise from an empty deck, bro.");
     metaDisplay.textContent = "";
     return;
   }
   
   if (fcSession.length === 0) {
-    termDisplay.textContent = "All done";
-    defDisplay.textContent = "You've been through this deck. Click to go again.";
+    termDisplay.textContent = say("All done", "Deck cleared!", "Absolute legend");
+    defDisplay.textContent = say("You've been through this deck. Click to go again.", "You've been through this deck. Big brain energy. Click to go again.", "You've been through this deck. Judges are shaking. Click to go again.");
     metaDisplay.textContent = "Click to go again";
     container.onclick = () => { changeFcDeck(currentDeck); container.onclick = () => container.classList.toggle('flipped'); };
     return;
@@ -80,7 +80,7 @@ function addFlashcard() {
   const deck = (document.getElementById('fc-new-deck').value.trim() || 'GEN').toUpperCase();
   const term = document.getElementById('fc-new-term').value.trim();
   const def = document.getElementById('fc-new-def').value.trim();
-  if(!term || !def) return showToast('Enter both a term and a definition');
+  if(!term || !def) return showToast(sayAny('Enter both a term and a definition', 'Enter both a term and a definition. Half a flashcard is just a sticky note.', 'Enter both a term and a definition, yaar. Can’t quiz you on vibes.'));
   
   const newCard = { id: uid(), deck, term, def };
   state.flashcards.push(newCard);
@@ -94,7 +94,7 @@ function addFlashcard() {
   
   renderFlashcards();
   if(fcIsLibrary) renderFcLibrary();
-  showToast('Card added');
+  showToast(sayAny('Card added', 'Card added. Future you says thanks.', 'Card added. One step closer to topper status.', 'Card added. Brain gains incoming.'));
 }
 
 function toggleFcLibrary() {
@@ -107,7 +107,7 @@ function toggleFcLibrary() {
 function renderFcLibrary() {
   const view = document.getElementById('fc-library-view');
   if(state.flashcards.length === 0) {
-    view.innerHTML = '<div class="empty">No cards yet.</div>'; return;
+    view.innerHTML = `<div class="empty">${say('No cards yet.', 'No cards yet. The library is giving ghost town.', 'No cards yet. Make some before the exam makes you cry.')}</div>`; return;
   }
   view.innerHTML = state.flashcards.map(c => `
     <div class="item-row" style="align-items:flex-start;">

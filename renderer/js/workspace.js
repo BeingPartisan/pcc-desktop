@@ -32,7 +32,7 @@ function cycleTaskPriority(id){
 function renderTasks(){
   const el = document.getElementById('tasks-list');
   const list = [...state.tasks].sort((a,b) => a.done - b.done);
-  if(!list.length) { el.innerHTML = '<div class="empty">No tasks yet.</div>'; return; }
+  if(!list.length) { el.innerHTML = `<div class="empty">${say('No tasks yet.', 'No tasks yet. Suspiciously free, bro.', 'Task list empty. Either a genius or in denial.', 'Nothing to do? Go touch some grass then.')}</div>`; return; }
   
   el.innerHTML = list.map(t => `
     <div class="item-row ${t.done?'done':''}">
@@ -47,7 +47,7 @@ function renderTasks(){
 function addAgenda(){
   const title = document.getElementById('agenda-title').value.trim();
   const date = document.getElementById('agenda-date').value;
-  if(!title || !date) return showToast('Title and date required');
+  if(!title || !date) return showToast(sayAny('Title and date required', 'Title and date required, bhai. Can’t remind you about nothing.', 'Title and date required. Deadlines don’t name themselves.'));
   state.agenda.push({id:uid(), title:title, date:date});
   document.getElementById('agenda-title').value=''; document.getElementById('agenda-date').value='';
   Store.set('agenda', state.agenda); renderAgenda();
@@ -67,7 +67,7 @@ function completeDeadline(key){
     if(!item) return;
     item.done = true; item.doneAt = Date.now();
     Store.set('agenda', state.agenda);
-    showToast(`Done: ${item.title}`);
+    showToast(sayAny(`Done: ${item.title}`, `Done: ${item.title}. Damn bro, you're on fire.`, `Done: ${item.title}. One less thing haunting you.`, `Done: ${item.title}. Look at you, actually finishing stuff.`));
     soundEvent('deadline-done', `Done: ${item.title}`);
   } else if(kind === 'e'){
     const course = decodeURIComponent(rest[0]);
@@ -75,7 +75,7 @@ function completeDeadline(key){
     if(!comp) return;
     comp.done = true; comp.doneAt = Date.now();
     saveEvaluations();
-    showToast(`Done: ${comp.name}. Add the marks on the Academics page when they're out.`);
+    showToast(sayAny(`Done: ${comp.name}. Add the marks on the Academics page when they're out.`, `Done: ${comp.name}. Survived it! Add the marks on the Academics page when they're out.`, `Done: ${comp.name}. Now we pray. Add the marks on the Academics page when they're out.`));
     soundEvent('deadline-done', `Done: ${comp.name}`);
   }
   renderAgenda();
@@ -100,14 +100,14 @@ function restoreDeadline(key){
     if(!item) return;
     item.done = false; delete item.doneAt;
     Store.set('agenda', state.agenda);
-    showToast(`Back on the list: ${item.title}`);
+    showToast(sayAny(`Back on the list: ${item.title}`, `Back on the list: ${item.title}. Nice try, it's not done yet.`, `Back on the list: ${item.title}. It missed you.`));
   } else if(kind === 'e'){
     const course = decodeURIComponent(rest[0]);
     const comp = ((evaluations[course] || {}).components || []).find(c => c.id === rest[1]);
     if(!comp) return;
     comp.done = false; delete comp.doneAt;
     saveEvaluations();
-    showToast(`Back on the list: ${comp.name}`);
+    showToast(sayAny(`Back on the list: ${comp.name}`, `Back on the list: ${comp.name}. Nice try, it's not done yet.`, `Back on the list: ${comp.name}. It missed you.`));
   }
   renderAgenda();
 }
@@ -132,7 +132,7 @@ function deadlineDoneButton(a){
 function renderAgenda(){
   const el = document.getElementById('agenda-list');
   const items = openDeadlines();
-  if(!items.length) { el.innerHTML = '<div class="empty">No deadlines yet.</div>' + doneDeadlinesHtml(); return; }
+  if(!items.length) { el.innerHTML = `<div class="empty">${say('No deadlines yet.', 'No deadlines. Professors must be on vacation.', 'Zero deadlines. Enjoy the peace before the storm.')}</div>` + doneDeadlinesHtml(); return; }
   el.innerHTML = items.map(a => `
     <div class="item-row">
       <span class="pill" style="background:var(--accent-soft); color:var(--accent-text);">${parseLocalDate(a.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
@@ -186,9 +186,11 @@ function pomoTick(){
   pomo.remaining = Math.ceil((pomo.endsAt - Date.now()) / 1000);
   if(switched){
     const msg = pomo.mode === 'break'
-      ? `Focus session done. Take a ${POMO_MINUTES.break}-minute break.`
-      : `Break over. Back to a ${POMO_MINUTES.focus}-minute focus session.`;
-    showToast(`Timer switched to ${pomo.mode}`);
+      ? say(`Focus session done. Take a ${POMO_MINUTES.break}-minute break.`, `Focus session done. Legend behaviour. Take a ${POMO_MINUTES.break}-minute break.`)
+      : say(`Break over. Back to a ${POMO_MINUTES.focus}-minute focus session.`, `Break over, yaar. Back to a ${POMO_MINUTES.focus}-minute focus session. Phone down.`);
+    showToast(pomo.mode === 'break'
+      ? sayAny(`Timer switched to ${pomo.mode}`, `Timer switched to ${pomo.mode}. You earned it, bro.`, `Timer switched to ${pomo.mode}. Go stretch, you look like a question mark.`)
+      : sayAny(`Timer switched to ${pomo.mode}`, `Timer switched to ${pomo.mode}. Break's over, bish.`, `Timer switched to ${pomo.mode}. Back to the grind, champ.`));
     if(pomo.mode === 'break'){ showNextQuote(); soundEvent('focus-done', 'Focus session done'); } // a fresh quote to mark the finished session
     // Native notification so it's noticed even when PCC is in the tray.
     if(window.pcc && window.pcc.showNotification) window.pcc.showNotification('Deep Work Timer', msg);

@@ -55,12 +55,12 @@ async function syncCampus(manual){
     if(result.ok){
       campus.data = result.data;
       campus.connected = true;
-      if(manual) showToast(`Timetable synced: ${result.data.sessions.length} classes`);
+      if(manual) showToast(sayAny(`Timetable synced: ${result.data.sessions.length} classes`, `Timetable synced: ${result.data.sessions.length} classes. That's a lot of attendance to keep up, bro.`, `Timetable synced: ${result.data.sessions.length} classes. No more “which room?” panic.`));
     } else if(result.needsSignIn){
       campus.connected = false;
-      if(manual) showToast('Sign in to Digiicampus to sync');
+      if(manual) showToast(sayAny('Sign in to Digiicampus to sync', 'Sign in to Digiicampus to sync. It forgot you, bro. Happens to the best of us.', 'Sign in to Digiicampus to sync. The portal wants to see your face again.'));
     } else if(manual){
-      showToast('Sync failed: ' + (result.error || 'unknown error'));
+      showToast(sayAny('Sync failed: ', 'Sync failed (Digiicampus being Digiicampus). Check your internet and hit Sync again. Error: ', 'Sync failed, yaar. Give it a minute and try Sync again. Error: ') + (result.error || 'unknown error'));
     }
   } finally {
     campusBusy = false;
@@ -73,21 +73,21 @@ async function connectCampus(){
   if(result.ok){
     campus.connected = true;
     campus.expiresAt = result.expiresAt;
-    showToast('Connected to Digiicampus');
+    showToast(sayAny('Connected to Digiicampus', 'Connected to Digiicampus. We’re in, hacker voice.', 'Connected to Digiicampus. Let’s see what the uni has been hiding.'));
     await syncCampus(true);
   } else if(!result.canceled){
-    showToast('Could not connect to Digiicampus');
+    showToast(sayAny('Could not connect to Digiicampus', 'Could not connect to Digiicampus. The portal said no; try Connect again in a bit.', 'Could not connect to Digiicampus. Check your internet and try again, bhai.'));
   }
   refreshCampusViews();
 }
 
 async function disconnectCampus(){
-  if(!confirm('Disconnect Digiicampus?\n\nThis signs PCC out and removes the synced timetable. Your manual timetable comes back.')) return;
+  if(!confirm(say('Disconnect Digiicampus?\n\nThis signs PCC out and removes the synced timetable. Your manual timetable comes back.', 'Breaking up with Digiicampus?\n\nThis signs PCC out and removes the synced timetable. Your manual timetable comes back.'))) return;
   await window.pcc.campusDisconnect();
   campus = { connected: false, expiresAt: null, data: null, loaded: true };
   campusWeekOffset = 0;
   refreshCampusViews();
-  showToast('Digiicampus disconnected');
+  showToast(sayAny('Digiicampus disconnected', 'Digiicampus disconnected. Going old school, respect.', 'Digiicampus disconnected. It’s not you, it’s the portal.'));
 }
 
 function refreshCampusViews(){
@@ -126,7 +126,7 @@ function renderCampusSettings(){
 // Shown above the timetable when the sign-in has lapsed.
 function campusNoticeHtml(){
   if(campus.connected) return '';
-  return `<div class="pending-error">Digiicampus sign-in has expired. This is the timetable saved ${describeAgo(campus.data.syncedAt)}.
+  return `<div class="pending-error">${say(`Digiicampus sign-in has expired. This is the timetable saved ${describeAgo(campus.data.syncedAt)}.`, `Digiicampus sign-in has expired (it does that). This is the timetable saved ${describeAgo(campus.data.syncedAt)}.`)}
     <a href="#" onclick="connectCampus(); return false;">Sign in again</a></div>`;
 }
 
@@ -189,7 +189,7 @@ function shiftCampusWeek(delta){
   const start = todayStr(campusWeekStart(next));
   const end = todayStr(new Date(campusWeekStart(next).getTime() + 6 * 86400000));
   // Stay inside the range that was actually synced.
-  if(end < campus.data.from || start >= campus.data.to) return showToast('That week has not been synced');
+  if(end < campus.data.from || start >= campus.data.to) return showToast(sayAny('That week has not been synced', 'That week has not been synced. I can’t see the future, bro.', 'That week has not been synced. Time travel is a premium feature.'));
   campusWeekOffset = next;
   renderTimetable();
 }
@@ -225,7 +225,7 @@ function renderCampusWeek(){
       <div class="campus-day ${ds === today ? 'is-today' : ''}">
         <div class="campus-day-head"><span>${fmt(d, { weekday: 'short' })}</span><b>${d.getDate()}</b></div>
         ${campusEventChips(ds)}
-        ${cards || (campusEventsOn(ds).length ? '' : '<div class="tt-empty">No classes</div>')}
+        ${cards || (campusEventsOn(ds).length ? '' : `<div class="tt-empty">${say('No classes', 'No classes', 'No classes. Nap time.', 'Free day, bro')}</div>`)}
       </div>`;
   }).join('');
 

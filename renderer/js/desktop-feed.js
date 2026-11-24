@@ -51,6 +51,7 @@ function desktopSnapshot(){
   const streak = habits.reduce((best, h) => Math.max(best, habitStreaks(h.id).current), 0);
   return {
     accent: currentAccent(), accentInk: inkForAccent(currentAccent()), clock24: use24Hour(), name: state.settings.name || '',
+    keepSimple: !!prefs().keepSimple,
     timer: { running: pomo.running, mode: pomo.mode, endsAt: pomo.endsAt },
     classes: islandClasses(),
     tasks: open.slice(0, 6).map(t => ({ text: t.text, priority: t.priority })), taskCount: open.length,

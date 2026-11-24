@@ -81,28 +81,29 @@ async function configureMessages(){
 function createChannel(){
   const input = document.getElementById('msg-new-name');
   const name = input.value.trim();
-  if(!name){ showToast('Give the channel a name first'); return; }
+  if(!name){ showToast(sayAny('Give the channel a name first', 'Give the channel a name first. Nameless chats are for spies, bro.')); return; }
   msg.channels.push({ id: uid(), name: name.slice(0, 30), topic: newChannelTopic() });
   input.value = '';
   saveMessages(); configureMessages(); pushIsland();
-  showToast('Channel created. Share its code with the other person.');
+  showToast(sayAny('Channel created. Share its code with the other person.', 'Channel created. Now share its code, or it’s just you talking to yourself.', 'Channel created. Send them the code and let the bakchodi begin.'));
 }
 
 function joinChannel(){
   const nameInput = document.getElementById('msg-join-name');
   const codeInput = document.getElementById('msg-join-code');
   const topic = codeToTopic(codeInput.value);
-  if(!topic){ showToast('That code doesn\'t look right. It starts with PCC and has 16 more characters.'); return; }
-  if(msg.channels.some(c => c.topic === topic)){ showToast('You already have this channel'); return; }
+  if(!topic){ showToast(sayAny('That code doesn\'t look right. It starts with PCC and has 16 more characters.', 'That code’s sus, bro. It starts with PCC and has 16 more characters.')); return; }
+  if(msg.channels.some(c => c.topic === topic)){ showToast(sayAny('You already have this channel', 'You already have this channel. Miss them that much?')); return; }
   msg.channels.push({ id: uid(), name: (nameInput.value.trim() || 'Channel').slice(0, 30), topic });
   nameInput.value = ''; codeInput.value = '';
   saveMessages(); configureMessages(); pushIsland();
-  showToast('Joined');
+  showToast(sayAny('Joined', 'Joined. You’re in the gang now.', 'Joined. Say hi, don’t be a lurker.'));
 }
 
 function removeChannel(id){
   const channel = msg.channels.find(c => c.id === id);
-  if(!channel || !confirm(`Leave "${channel.name}"?\n\nYou'll stop receiving its messages. You can join again with the code.`)) return;
+  if(!channel || !confirm(say(`Leave "${channel.name}"?\n\nYou'll stop receiving its messages. You can join again with the code.`,
+    `Leave "${channel.name}"? Rage-quitting, bro?\n\nYou'll stop receiving its messages. You can join again with the code.`))) return;
   msg.channels = msg.channels.filter(c => c.id !== id);
   saveMessages(); configureMessages(); pushIsland();
 }
@@ -111,7 +112,7 @@ async function copyChannelCode(id){
   const channel = msg.channels.find(c => c.id === id);
   if(!channel) return;
   await navigator.clipboard.writeText(topicToCode(channel.topic));
-  showToast('Code copied. Anyone with it can read and send on this channel.');
+  showToast(sayAny('Code copied. Anyone with it can read and send on this channel.', 'Code copied. Anyone with it can read and send here, so don’t post it in the class group.'));
 }
 
 function logMessage(entry){
@@ -127,7 +128,7 @@ async function sendMessage(channelId, text, kind){
   const body = String(text || '').trim();
   if(!channel || !body) return false;
   const result = await window.pcc.messagesSend({ topic: channel.topic, text: body, from: state.settings.name || 'Someone', kind: kind === 'nudge' ? 'nudge' : '' });
-  if(!result.ok){ showToast(result.error || 'Could not send'); return false; }
+  if(!result.ok){ showToast(result.error || sayAny('Could not send', 'Could not send. The message got lost on the way, try again.')); return false; }
   logMessage({ id: uid(), channelId: channel.id, channel: channel.name, from: 'You', text: body, ts: Date.now(), mine: true });
   dismissUnread({ channelId: channel.id }); // replying answers what was waiting from that channel
   pushIsland();
@@ -142,10 +143,10 @@ async function sendFromSettings(){
 async function sendBroadcast(){
   const input = document.getElementById('msg-broadcast-text');
   const text = input.value.trim();
-  if(!text || !confirm(`Send this to everyone using PCC?\n\n"${text}"`)) return;
+  if(!text || !confirm(say(`Send this to everyone using PCC?\n\n"${text}"`, `Send this to everyone using PCC? No take-backs, Godfather.\n\n"${text}"`))) return;
   const result = await window.pcc.messagesBroadcast(text);
-  if(result.ok){ input.value = ''; showToast('Broadcast sent'); }
-  else showToast(result.error || 'Could not send the broadcast');
+  if(result.ok){ input.value = ''; showToast(sayAny('Broadcast sent', 'Broadcast sent. The people have been informed.', 'Broadcast sent. Main character moment.')); }
+  else showToast(result.error || sayAny('Could not send the broadcast', 'Could not send the broadcast. The megaphone’s broken, try again.'));
 }
 
 // A message arrived from the relay (already checked by the main process).
@@ -191,7 +192,7 @@ function renderMessagesSettings(){
       <button class="btn" onclick="copyChannelCode('${c.id}')">Copy code</button>
       <button class="btn" onclick="removeChannel('${c.id}')">Leave</button>
     </div>`).join('')
-    : '<div class="empty">No channels yet. Create one and share its code, or join with a code someone gave you.</div>';
+    : `<div class="empty">${say('No channels yet. Create one and share its code, or join with a code someone gave you.', 'No channels yet, so no friends here (yet). Create one and share its code, or join with a code someone gave you.')}</div>`;
 
   document.getElementById('msg-compose').style.display = msg.channels.length ? '' : 'none';
   const select = document.getElementById('msg-compose-channel');
@@ -209,7 +210,7 @@ function renderMessagesSettings(){
       <div class="msg-meta">${esc(m.from)} · ${esc(m.channel)} · ${esc(time(m.ts))}</div>
       <div class="msg-body">${esc(m.text)}</div>
     </div>`).join('')
-    : '<div class="empty">Nothing yet.</div>';
+    : `<div class="empty">${say('Nothing yet.', 'Nothing yet. Crickets.', 'Nothing yet. Somebody start the bakchodi.')}</div>`;
   document.getElementById('msg-clear-btn').style.display = msg.log.length ? '' : 'none';
 }
 

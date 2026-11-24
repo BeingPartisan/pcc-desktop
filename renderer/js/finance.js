@@ -14,7 +14,7 @@ function addFinance() {
   const tag = document.getElementById('fin-tag').value;
   
   // Bug fix: strictly prevent zero or negative expenses
-  if(!name || isNaN(amount) || amount <= 0) return showToast('Enter a name and an amount above zero');
+  if(!name || isNaN(amount) || amount <= 0) return showToast(sayAny('Enter a name and an amount above zero', 'Enter a name and an amount above zero. Free stuff doesn’t count, bro.', 'Enter a name and an amount above zero. Nice try, accountant.'));
   
   state.finances.push({ id: uid(), name, amount, type, tag });
   Store.set('finances', state.finances);
@@ -56,16 +56,18 @@ function renderFinances() {
   let remEl = document.getElementById('fin-rem-text');
   
   if(rem >= 0) {
-    remEl.textContent = `₹${rem} remaining`;
+    remEl.textContent = pct >= 85
+      ? say(`₹${rem} remaining`, `₹${rem} remaining. Easy on the Zomato, bro.`, `₹${rem} remaining. Wallet's on life support.`)
+      : say(`₹${rem} remaining`, `₹${rem} remaining. Rich kid energy.`, `₹${rem} remaining. Financially stable (for now).`);
     remEl.style.color = 'var(--ink)';
   } else {
-    remEl.textContent = `₹${Math.abs(rem)} over budget`;
+    remEl.textContent = say(`₹${Math.abs(rem)} over budget`, `₹${Math.abs(rem)} over budget. Your wallet is crying.`, `₹${Math.abs(rem)} over budget. Bhai, kya kar raha hai?`);
     remEl.style.color = 'var(--red)';
   }
 
   const list = document.getElementById('fin-list');
   if (state.finances.length === 0) {
-    list.innerHTML = '<div class="empty">No spending recorded this month.</div>';
+    list.innerHTML = `<div class="empty">${say('No spending recorded this month.', 'No spending recorded this month. Monk mode or just forgot?', 'No spending recorded this month. Your wallet says thank you.')}</div>`;
     return;
   }
 
@@ -107,7 +109,7 @@ function toggleFinanceHistory() {
 function renderFinanceHistory() {
   let el = document.getElementById('fin-history-list');
   if(state.financeHistory.length === 0) {
-    el.innerHTML = '<div class="empty">No past months yet.</div>';
+    el.innerHTML = `<div class="empty">${say('No past months yet.', 'No past months yet. Fresh start, clean slate.', 'No past months yet. History is waiting to be made (and spent).')}</div>`;
     return;
   }
   
@@ -138,7 +140,7 @@ function renderFinanceHistory() {
 }
 
 function cycleMonth() {
-  if(!confirm("Archive this month and start a new one? Subscriptions carry over; one-off expenses are cleared.")) return;
+  if(!confirm(say("Archive this month and start a new one? Subscriptions carry over; one-off expenses are cleared.", "Archive this month and start a new one? Subscriptions carry over; one-off expenses are cleared. Out of sight, out of guilt."))) return;
   
   let totalBurn = 0;
   state.finances.forEach(f => totalBurn += f.amount);
@@ -158,7 +160,7 @@ function cycleMonth() {
   
   renderFinances();
   if(finViewMode === 'history') renderFinanceHistory();
-  showToast('Month archived. Subscriptions carried over.');
+  showToast(sayAny('Month archived. Subscriptions carried over.', 'Month archived. Subscriptions carried over. New month, new me.', 'Month archived. Subscriptions carried over (they never leave, yaar).'));
 }
 
 /* ---------- Spending charts ---------- */
@@ -177,7 +179,7 @@ function renderFinanceCharts(){
   const tags = Object.entries(byTag).sort((a, b) => b[1] - a[1]);
   const total = tags.reduce((sum, [, v]) => sum + v, 0);
   const max = tags.length ? tags[0][1] : 0;
-  catEl.innerHTML = !tags.length ? '<div class="empty">Nothing spent yet this month.</div>' : tags.map(([tag, amount]) => `
+  catEl.innerHTML = !tags.length ? `<div class="empty">${say('Nothing spent yet this month.', 'Nothing spent yet this month. Who are you and what did you do with the real you?', 'Nothing spent yet this month. Saving up for something, bro?')}</div>` : tags.map(([tag, amount]) => `
     <div class="bar-row">
       <div class="bar-row-top">
         <span>${esc(tag.charAt(0) + tag.slice(1).toLowerCase())}</span>
@@ -202,5 +204,5 @@ function renderFinanceCharts(){
           <span class="gpa-label">${esc(m.label)}</span>
         </div>`).join('')}
     </div>
-    <div class="att-meta" style="margin-top:8px;">${past.length ? (budget ? 'Months over your ₹' + budget + ' budget are shown in red.' : '') : 'Past months appear here after you start a new month.'}</div>`;
+    <div class="att-meta" style="margin-top:8px;">${past.length ? (budget ? say('Months over your ₹' + budget + ' budget are shown in red.', 'Months over your ₹' + budget + ' budget are shown in red. The walls of shame.') : '') : say('Past months appear here after you start a new month.', 'Past months appear here after you start a new month. Your spending history, loading…')}</div>`;
 }

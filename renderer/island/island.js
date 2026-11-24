@@ -28,6 +28,25 @@ const pad = (n) => String(n).padStart(2, '0');
 const mmss = (seconds) => `${pad(Math.floor(seconds / 60))}:${pad(seconds % 60)}`;
 const escapeHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// PCC's voice: the plain line when "Keep it simple" is on, otherwise a cheeky one (steady for the day).
+function say(plain, ...funny){
+  if(!state || state.keepSimple || !funny.length) return plain;
+  let h = 2166136261; const key = plain + '|' + funny[0] + '|' + new Date().toDateString();
+  for(let i = 0; i < key.length; i++){ h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return funny[(h >>> 0) % funny.length];
+}
+// Fixed text in index.html, said in PCC's voice (only touched when it changes).
+function setText(el, text){ if(el && el.textContent !== text) el.textContent = text; }
+function voiceStatic(){
+  setText(document.querySelector('#row-nudge .row-title'), say('Stretch, look away, get some water', 'Stretch, blink, hydrate. You’re not a robot, bro', 'Go touch some grass (or at least some water)', 'Stand up yaar, your spine is filing a complaint'));
+  setText(document.querySelector('#row-presence .row-label'), say('Right now', 'Who’s grinding', 'The squad right now'));
+  setText(document.querySelector('#row-workspaces .row-label'), say('Workspaces', 'Workspaces (pick your poison)', 'Your setups'));
+  setText(document.querySelector('#row-countdowns .row-label'), say('Countdowns', 'Countdowns (no pressure)', 'Days till the drama'));
+  setText(document.querySelector('.island-foot .dim'), say('In the way?', 'Blocking your view, bro?', 'Too much island?', 'Need some space? Rude, but okay'));
+  setText(document.querySelector('.island-foot [data-minutes="30"]'), say('Hide 30 min', 'Ghost me 30 min'));
+  setText(document.querySelector('.island-foot [data-minutes="120"]'), say('Hide 2 hours', 'Ghost me 2 hours'));
+}
+
 function clock(ts){
   const d = new Date(ts);
   if(state && state.clock24) return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -67,8 +86,8 @@ function awayText(minutes){
 // on, plus one entry per message channel.
 function composeModes(){
   const modes = [];
-  if(state.capture) modes.push({ id: 'note', label: 'Note', placeholder: 'Jot a quick note…', button: 'Add' }, { id: 'task', label: 'Task', placeholder: 'Add a task…', button: 'Add' });
-  for(const c of state.channels || []) modes.push({ id: c.id, label: c.name, placeholder: `Message ${c.name}…`, button: 'Send' });
+  if(state.capture) modes.push({ id: 'note', label: 'Note', placeholder: say('Jot a quick note…', 'Dump that big-brain thought…', 'Write it before you forget, bro…', 'Quick, before it’s gone…'), button: 'Add' }, { id: 'task', label: 'Task', placeholder: say('Add a task…', 'What are we procrastinating next…', 'Add a task (you’ll do it, trust)…', 'Another thing to do, yaar…'), button: 'Add' });
+  for(const c of state.channels || []) modes.push({ id: c.id, label: c.name, placeholder: say(`Message ${c.name}…`, `Say something to ${c.name}…`, `Slide into ${c.name}…`, `Bug ${c.name}…`), button: 'Send' });
   return modes;
 }
 
@@ -97,11 +116,11 @@ function render(){
   if(freshMessage){
     text = `${message.from}: ${message.text}`; side = more; pulse = true;
   } else if(state.timer.running){
-    text = state.timer.mode === 'break' ? 'Break' : 'Focus'; side = mmss(seconds); pulse = true;
+    text = state.timer.mode === 'break' ? say('Break', 'Chill break', 'Break, yaar') : say('Focus', 'Locked in', 'Grinding'); side = mmss(seconds); pulse = true;
   } else if(wishMinute()){
     text = 'Make a wish'; side = '11:11'; pulse = true;
   } else if(nudge){
-    text = 'Time for a short break';
+    text = say('Time for a short break', 'Touch grass, bro', 'Break time, legend', 'Go stretch, yaar');
   } else if(cls && cls.on){
     text = cls.subject; side = `${awayText(cls.minutes)} left`; pulse = true;
   } else if(cls && cls.minutes <= SOON_MINUTES){
@@ -111,15 +130,15 @@ function render(){
   } else if(playing && hasMedia){
     text = media.title || media.artist; side = state.musicBars ? '' : '♪';
   } else if(updateReady){
-    text = `Update ${update.version} is ready`;
+    text = say(`Update ${update.version} is ready`, `${update.version} ready, restart pls`, `Update ${update.version} ready, bro`);
   } else if(update && update.state === 'available'){
-    text = `Update ${update.version} available`;
+    text = say(`Update ${update.version} available`, `Update ${update.version} just dropped`, `New drip: ${update.version}`);
   } else if(soon){
     text = soon.title; side = soon.text;
   } else if(state.mail.count){
-    text = state.mail.count === 1 ? state.mail.latest.subject : `${state.mail.count} important emails`;
+    text = state.mail.count === 1 ? state.mail.latest.subject : say(`${state.mail.count} important emails`, `${state.mail.count} important emails, ugh`, `${state.mail.count} emails want you`);
   } else {
-    text = state.quote; side = clock(Date.now());
+    text = state.quote || say('All quiet', 'All quiet. Suspicious.', 'Nothing’s up. Enjoy it'); side = clock(Date.now());
   }
   // The music look (wave, bars or glow) while music plays: softly behind the line at full size,
   // and when the island has shrunk to its handle, the handle itself becomes the look, with no black behind it.
@@ -147,56 +166,56 @@ function render(){
   if(update){
     const button = $('update-button');
     if(update.state === 'available'){
-      $('update-label').textContent = 'Update available'; $('update-title').textContent = `Version ${update.version}`;
+      $('update-label').textContent = say('Update available', 'Fresh update dropped', 'New update, who dis'); $('update-title').textContent = `Version ${update.version}`;
       button.hidden = false; button.textContent = 'Download'; button.dataset.action = 'update-download';
     } else if(update.state === 'downloading'){
-      $('update-label').textContent = 'Downloading update'; $('update-title').textContent = `Version ${update.version} · ${Math.round(update.percent || 0)}%`;
+      $('update-label').textContent = say('Downloading update', 'Downloading the goods', 'Downloading, hold up'); $('update-title').textContent = `Version ${update.version} · ${Math.round(update.percent || 0)}%`;
       button.hidden = true;
     } else {
-      $('update-label').textContent = 'Update ready'; $('update-title').textContent = `Version ${update.version}`;
+      $('update-label').textContent = say('Update ready', 'Update ready, restart pls', 'Cooked and ready to install'); $('update-title').textContent = `Version ${update.version}`;
       button.hidden = false; button.textContent = 'Restart'; button.dataset.action = 'update-install';
     }
   }
 
   $('row-nudge').hidden = !nudge;
-  if(nudge) $('nudge-label').textContent = `You've been at it for about ${awayText(nudge.minutes)}`;
+  if(nudge) $('nudge-label').textContent = say(`You've been at it for about ${awayText(nudge.minutes)}`, `Grinding for ${awayText(nudge.minutes)} straight, damn bro`, `${awayText(nudge.minutes)} non-stop? Okay, topper`, `${awayText(nudge.minutes)} in. Your chair needs a break from you`);
 
   $('row-message').hidden = !message;
   if(message){
-    $('message-label').textContent = unread === 1 ? '1 new message' : `${unread} new messages`;
+    $('message-label').textContent = unread === 1 ? say('1 new message', '1 new message, someone remembered you', '1 new message, popular much?') : say(`${unread} new messages`, `${unread} new messages, Mr. Popular`, `${unread} new messages, people need you bro`);
     const shown = messages.slice(0, 4);
     setHtml('message-list', shown.map(m => `
       <div class="msg-card ${m.channelId ? 'can-reply' : ''}" ${m.channelId ? `data-reply="${escapeHtml(m.channelId)}" title="Reply on ${escapeHtml(m.channel)}"` : ''}>
         <div class="msg-card-head"><span>${escapeHtml(m.from)}<span class="dim">${m.channel !== m.from ? ' · ' + escapeHtml(m.channel) : ''} · ${clock(m.ts)}</span></span>
           <button class="x" data-action="message-read" data-id="${escapeHtml(m.id)}" aria-label="Dismiss">×</button></div>
         <div class="msg-card-text">${escapeHtml(m.text)}</div>
-      </div>`).join('') + (unread > shown.length ? `<div class="dim small">and ${unread - shown.length} more on the Messages page</div>` : ''));
+      </div>`).join('') + (unread > shown.length ? `<div class="dim small">${say(`and ${unread - shown.length} more on the Messages page`, `and ${unread - shown.length} more on the Messages page, you’re famous`)}</div>` : ''));
   }
 
   $('row-presence').hidden = !presence.length;
   setHtml('presence-lines', presence.map(p => {
     const minutes = Math.max(1, Math.ceil((p.until - Date.now()) / 60000));
-    return `<div class="line"><span>${escapeHtml(p.from)}</span><span class="dim">${p.state === 'break' ? 'on a break' : 'focusing'} · ${awayText(minutes)} left</span></div>`;
+    return `<div class="line"><span>${escapeHtml(p.from)}</span><span class="dim">${p.state === 'break' ? say('on a break', 'chilling', 'on a break, lucky') : say('focusing', 'locked in', 'grinding')} · ${awayText(minutes)} left</span></div>`;
   }).join(''));
 
   $('row-countdowns').hidden = !countdowns.length;
   setHtml('countdown-lines', countdowns.map(c => `<div class="line"><span>${escapeHtml(c.title)}${c.shared ? ' <i class="shared" title="Shared">♥</i>' : ''}</span><span class="dim">${escapeHtml(c.text)}</span></div>`).join(''));
 
-  $('timer-label').textContent = state.timer.running ? (state.timer.mode === 'break' ? 'Break' : 'Focus session') : 'Focus timer';
+  $('timer-label').textContent = state.timer.running ? (state.timer.mode === 'break' ? say('Break', 'Break, you earned it', 'Chill break') : say('Focus session', 'Locked in, don’t disturb', 'Grind mode on')) : say('Focus timer', 'Focus timer (go on, press it)', 'Focus timer, if you dare');
   $('timer-time').textContent = mmss(seconds);
   $('timer-toggle').textContent = state.timer.running ? 'Pause' : 'Start';
 
   $('row-class').hidden = !cls;
   if(cls){
-    $('class-label').textContent = cls.on ? `On now · ends ${clock(cls.end)}` : `Next class · ${clock(cls.start)} (in ${awayText(cls.minutes)})`;
+    $('class-label').textContent = cls.on ? say(`On now · ends ${clock(cls.end)}`, `On now · freedom at ${clock(cls.end)}`, `On now · ends ${clock(cls.end)}, stay awake`) : say(`Next class · ${clock(cls.start)} (in ${awayText(cls.minutes)})`, `Next class · ${clock(cls.start)} (in ${awayText(cls.minutes)}, don’t bunk)`, `Next class · ${clock(cls.start)} (in ${awayText(cls.minutes)}, chalo)`);
     $('class-title').textContent = cls.subject;
     $('class-sub').textContent = cls.room || '';
   }
 
   $('row-media').hidden = !hasMedia;
   if(hasMedia){
-    $('media-label').textContent = playing ? 'Playing' : 'Paused';
-    $('media-title').textContent = media.title || 'Unknown track';
+    $('media-label').textContent = playing ? say('Playing', 'Vibing to', 'Now bumping') : say('Paused', 'Paused (vibe on hold)', 'Paused, bro');
+    $('media-title').textContent = media.title || say('Unknown track', 'Mystery banger', 'Some track, no name');
     $('media-artist').textContent = media.artist || '';
     const toggleIcon = playing ? PAUSE_ICON : PLAY_ICON;
     if($('media-toggle').dataset.icon !== toggleIcon){ $('media-toggle').innerHTML = toggleIcon; $('media-toggle').dataset.icon = toggleIcon; }
@@ -211,7 +230,7 @@ function render(){
 
   $('row-mail').hidden = !state.mail.count;
   if(state.mail.count){
-    $('mail-label').textContent = state.mail.count === 1 ? '1 important email' : `${state.mail.count} important emails`;
+    $('mail-label').textContent = state.mail.count === 1 ? say('1 important email', '1 important email, adulting calls', '1 important email, ugh') : say(`${state.mail.count} important emails`, `${state.mail.count} important emails, adulting calls`, `${state.mail.count} important emails, ugh`);
     $('mail-title').textContent = state.mail.latest.subject;
     $('mail-from').textContent = state.mail.latest.from;
   }
@@ -222,6 +241,7 @@ function render(){
 
   $('quote-text').textContent = `“${state.quote}”`;
   $('quote-author').textContent = state.quoteAuthor || '';
+  voiceStatic();
 
   // --- Text box ---
   const modes = composeModes();
@@ -329,7 +349,7 @@ function submitCompose(){
   else if(composeMode === 'task') window.island.action({ type: 'quick-task', text });
   else window.island.action({ type: 'send-message', channelId: composeMode, text });
   input.value = '';
-  sentNote = composeMode === 'note' ? 'Saved to Notes' : composeMode === 'task' ? 'Added to Tasks' : 'Sent';
+  sentNote = composeMode === 'note' ? say('Saved to Notes', 'Saved to Notes. Big brain move', 'Saved to Notes, noted (lol)') : composeMode === 'task' ? say('Added to Tasks', 'Added to Tasks. Future you says thanks', 'Added to Tasks, now actually do it') : say('Sent', 'Sent, bro', 'Sent. Yeeted');
   clearTimeout(sentTimer);
   sentTimer = setTimeout(() => { sentNote = ''; render(); }, 1800);
   render();
@@ -350,7 +370,7 @@ document.addEventListener('click', (e) => {
   const nudgeBtn = e.target.closest('[data-nudge]');
   if(nudgeBtn){
     window.island.action({ type: 'send-message', channelId: composeMode, text: nudgeBtn.dataset.nudge, kind: 'nudge' });
-    sentNote = 'Sent'; clearTimeout(sentTimer); sentTimer = setTimeout(() => { sentNote = ''; render(); }, 1800);
+    sentNote = say('Sent', 'Sent, bro', 'Sent. Yeeted'); clearTimeout(sentTimer); sentTimer = setTimeout(() => { sentNote = ''; render(); }, 1800);
     return render();
   }
   const card = e.target.closest('[data-reply]');

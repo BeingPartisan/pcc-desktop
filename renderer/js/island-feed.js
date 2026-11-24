@@ -31,6 +31,7 @@ function islandSnapshot(){
     classes: islandClasses(),
     mail: { count: important.length, latest: important[0] ? { subject: important[0].subject, from: important[0].fromName || important[0].fromAddress } : null },
     quote: currentWidgetQuote, quoteAuthor: currentWidgetAuthor,
+    keepSimple: !!prefs().keepSimple,
     capture: !!prefs().islandCapture,
     musicBars: !!prefs().musicBars,
     musicLook: prefs().islandMusicLookOn ? (prefs().islandMusicLook || 'wave') : 'off',   // the island moving with the music (island/look.js)
